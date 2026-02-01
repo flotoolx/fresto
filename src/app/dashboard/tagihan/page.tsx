@@ -52,33 +52,36 @@ export default function TagihanPage() {
                 <p className="text-gray-500 text-sm mt-1">Monitor tagihan dan pembayaran Stokis</p>
             </div>
 
-            {/* Summary Cards */}
-            <div className="grid sm:grid-cols-3 gap-4">
-                <div className="bg-white rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-500 text-sm">Total Tagihan</span>
-                        <Receipt className="text-purple-500" size={20} />
+            {/* Summary Cards - Modern Gradient Design */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-2 mb-2">
+                        <Receipt size={16} className="opacity-80" />
+                        <span className="text-xs text-white/80">Total Tagihan</span>
                     </div>
-                    <div className="text-2xl font-bold text-gray-800">Rp 0</div>
-                    <div className="text-sm mt-1 text-gray-500">Dari 0 Stokis</div>
+                    <p className="text-xl font-bold">Rp 0</p>
+                    <p className="text-xs text-white/60 mt-1">Dari 0 Stokis</p>
                 </div>
 
-                <div className="bg-white rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-500 text-sm">Sudah Lunas</span>
-                        <CheckCircle className="text-green-500" size={20} />
+                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle size={16} className="opacity-80" />
+                        <span className="text-xs text-white/80">Sudah Lunas</span>
                     </div>
-                    <div className="text-2xl font-bold text-green-600">0</div>
-                    <div className="text-sm mt-1 text-gray-500">Stokis</div>
+                    <p className="text-xl font-bold">0</p>
+                    <p className="text-xs text-white/60 mt-1">Stokis</p>
                 </div>
 
-                <div className="bg-white rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-500 text-sm">Belum Lunas</span>
-                        <AlertCircle className="text-red-500" size={20} />
+                <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle size={16} className="opacity-80" />
+                        <span className="text-xs text-white/80">Belum Lunas</span>
                     </div>
-                    <div className="text-2xl font-bold text-red-600">0</div>
-                    <div className="text-sm mt-1 text-gray-500">Stokis</div>
+                    <p className="text-xl font-bold">0</p>
+                    <p className="text-xs text-white/60 mt-1">Stokis</p>
                 </div>
             </div>
 
