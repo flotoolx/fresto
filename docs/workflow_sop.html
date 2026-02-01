@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D'Fresto - Workflow & SOP Documentation</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            line-height: 1.6; 
+            color: #333; 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+        .header { 
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white; 
+            padding: 40px; 
+            border-radius: 16px; 
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(220, 38, 38, 0.3);
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 1.1em; }
+        .card { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 30px; 
+            margin-bottom: 25px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        .card h2 { 
+            color: #dc2626; 
+            margin-bottom: 20px; 
+            padding-bottom: 10px;
+            border-bottom: 2px solid #fee2e2;
+        }
+        .mermaid { 
+            background: #f8fafc; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin: 20px 0;
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 20px 0;
+        }
+        th, td { 
+            padding: 12px 16px; 
+            text-align: left; 
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th { 
+            background: #fef2f2; 
+            color: #dc2626;
+            font-weight: 600;
+        }
+        tr:hover { background: #fafafa; }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-approved { background: #dbeafe; color: #1e40af; }
+        .badge-shipped { background: #d1fae5; color: #065f46; }
+        .cost-table td:last-child { text-align: right; font-weight: 600; }
+        .total-row { background: #fef2f2; font-size: 1.2em; }
+        .total-row td { color: #dc2626; font-weight: 700; }
+        .sop-box {
+            background: #f1f5f9;
+            border-left: 4px solid #dc2626;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .sop-box h4 { color: #dc2626; margin-bottom: 10px; }
+        .phase { 
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+        }
+        .phase h4 { color: #b91c1c; margin-bottom: 15px; }
+        .footer { 
+            text-align: center; 
+            padding: 30px; 
+            color: #6b7280;
+            font-size: 0.9em;
+        }
+        @media print {
+            body { background: white; }
+            .container { max-width: 100%; padding: 20px; }
+            .card { box-shadow: none; border: 1px solid #e5e7eb; }
+            .mermaid { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍗 D'Fresto</h1>
+            <p>Sistem Manajemen Franchise - Workflow & SOP Documentation</p>
+        </div>
+
+        <!-- System Overview -->
+        <div class="card">
+            <h2>📊 System Overview</h2>
+            <div class="mermaid">
+flowchart TD
+    subgraph PUSAT["🔴 PUSAT"]
+        A[Admin Dashboard]
+        B[User Management]
+        C[Product Management]
+    end
+    
+    subgraph FINANCE["💰 FINANCE"]
+        F[Approve PO]
+        G[Monitor Tagihan]
+    end
+    
+    subgraph GUDANG["📦 GUDANG"]
+        H[PO Masuk]
+        I[Inventory]
+    end
+    
+    subgraph STOKIS["🏪 STOKIS"]
+        K[Order ke Pusat]
+        M[Order Mitra]
+    end
+    
+    subgraph MITRA["🍗 MITRA"]
+        N[Order Barang]
+    end
+    
+    N --> M
+    M --> K
+    K --> A
+    A --> F
+    F --> H
+    H --> STOKIS
+            </div>
+        </div>
+
+        <!-- Order Flow Mitra -->
+        <div class="card">
+            <h2>🔄 Order Flow: Mitra → Stokis</h2>
+            <div class="mermaid">
+stateDiagram-v2
+    [*] --> PENDING: Mitra Submit
+    PENDING --> APPROVED: Stokis Approve
+    PENDING --> CANCELLED: Reject
+    APPROVED --> PROCESSING: Process
+    PROCESSING --> SHIPPED: Ship
+    SHIPPED --> RECEIVED: Confirm
+    RECEIVED --> [*]
+            </div>
+            <table>
+                <tr><th>Status</th><th>Actor</th><th>Action</th></tr>
+                <tr><td><span class="status-badge badge-pending">PENDING</span></td><td>Mitra</td><td>Membuat order baru</td></tr>
+                <tr><td><span class="status-badge badge-approved">APPROVED</span></td><td>Stokis</td><td>Menyetujui order</td></tr>
+                <tr><td><span class="status-badge badge-approved">PROCESSING</span></td><td>Stokis</td><td>Memproses order</td></tr>
+                <tr><td><span class="status-badge badge-shipped">SHIPPED</span></td><td>Stokis</td><td>Mengirim barang</td></tr>
+                <tr><td><span class="status-badge badge-shipped">RECEIVED</span></td><td>Mitra</td><td>Konfirmasi terima</td></tr>
+            </table>
+        </div>
+
+        <!-- Order Flow Stokis -->
+        <div class="card">
+            <h2>🔄 Order Flow: Stokis → Pusat</h2>
+            <div class="mermaid">
+stateDiagram-v2
+    [*] --> PENDING: Submit
+    PENDING --> APPROVED: Pusat OK
+    APPROVED --> FINANCE: Forward
+    FINANCE --> PO_ISSUED: Approve
+    PO_ISSUED --> PROCESSING: Gudang
+    PROCESSING --> SHIPPED: Ship
+    SHIPPED --> RECEIVED: Confirm
+    RECEIVED --> [*]
+            </div>
+        </div>
+
+        <!-- Role Responsibilities -->
+        <div class="card">
+            <h2>👥 Role Responsibilities</h2>
+            <table>
+                <tr><th>Role</th><th>Tanggung Jawab</th></tr>
+                <tr><td>🔴 Pusat</td><td>Master data, Approval order Stokis, Analytics & monitoring</td></tr>
+                <tr><td>💰 Finance</td><td>Approve PO, Monitor tagihan, Financial reporting</td></tr>
+                <tr><td>📦 Gudang</td><td>Inventory management, Process PO, Shipping</td></tr>
+                <tr><td>🏪 Stokis</td><td>Order ke Pusat, Manage Mitra, Process Mitra orders</td></tr>
+                <tr><td>🍗 Mitra</td><td>Order barang, Track pesanan, Confirm delivery</td></tr>
+            </table>
+        </div>
+
+        <!-- SOP -->
+        <div class="card">
+            <h2>📋 Standard Operating Procedures</h2>
+            
+            <div class="sop-box">
+                <h4>SOP-001: Order Processing Time</h4>
+                <ul>
+                    <li>Mitra Order → Stokis: <strong>Max 1 hari kerja</strong></li>
+                    <li>Stokis Order → Pusat: <strong>Max 1 hari kerja</strong></li>
+                    <li>Finance Approval: <strong>Max 4 jam kerja</strong></li>
+                    <li>Gudang Processing: <strong>Max 1 hari kerja</strong></li>
+                </ul>
+            </div>
+
+            <div class="sop-box">
+                <h4>SOP-002: Inventory Management</h4>
+                <ul>
+                    <li>Stock check: Setiap hari pukul 08:00</li>
+                    <li>Low stock alert: Jika qty < minStock</li>
+                    <li>Adjustment: Wajib isi alasan</li>
+                    <li>Monthly audit: Setiap tanggal 1</li>
+                </ul>
+            </div>
+
+            <div class="sop-box">
+                <h4>SOP-003: Issue Escalation</h4>
+                <ul>
+                    <li>Level 1: Mitra → Stokis (via sistem/WA)</li>
+                    <li>Level 2: Stokis → Pusat (via sistem)</li>
+                    <li>Response time: <strong>Max 2 jam kerja</strong></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Roadmap -->
+        <div class="card">
+            <h2>🎯 Development Roadmap</h2>
+            
+            <div class="phase">
+                <h4>Phase 1 (1-2 bulan)</h4>
+                <ul>
+                    <li>✅ Core system complete</li>
+                    <li>⬜ WhatsApp notification</li>
+                    <li>⬜ Bulk order approval</li>
+                </ul>
+            </div>
+
+            <div class="phase">
+                <h4>Phase 2 (3-4 bulan)</h4>
+                <ul>
+                    <li>⬜ Payment gateway integration</li>
+                    <li>⬜ Credit limit system</li>
+                    <li>⬜ Mobile app</li>
+                </ul>
+            </div>
+
+            <div class="phase">
+                <h4>Phase 3 (5-6 bulan)</h4>
+                <ul>
+                    <li>⬜ Demand forecasting</li>
+                    <li>⬜ Geographic analytics</li>
+                    <li>⬜ Multi-branch support</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>📄 D'Fresto Workflow & SOP Documentation</p>
+            <p>Generated: Februari 2026</p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+</body>
+</html>

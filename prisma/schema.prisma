@@ -1,0 +1,211 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PUSAT
+  FINANCE
+  GUDANG
+  STOKIS
+  MITRA
+}
+
+enum StokisOrderStatus {
+  PENDING_PUSAT
+  PENDING_FINANCE
+  PO_ISSUED
+  PROCESSING
+  SHIPPED
+  RECEIVED
+  CANCELLED
+}
+
+enum MitraOrderStatus {
+  PENDING
+  APPROVED
+  PROCESSING
+  SHIPPED
+  RECEIVED
+  CANCELLED
+}
+
+model User {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  password    String
+  phone       String?
+  role        Role
+  address     String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Mitra belongs to a Stokis
+  stokisId    String?
+  stokis      User?    @relation("MitraToStokis", fields: [stokisId], references: [id])
+  mitras      User[]   @relation("MitraToStokis")
+
+  // Gudang assignment
+  gudangId    String?
+  gudang      Gudang?  @relation(fields: [gudangId], references: [id])
+
+  // Orders
+  stokisOrders        StokisOrder[]  @relation("StokisOrders")
+  mitraOrdersAsMitra  MitraOrder[]   @relation("MitraOrders")
+  mitraOrdersAsStokis MitraOrder[]   @relation("StokisForMitraOrders")
+
+  // Inventory
+  inventories Inventory[]
+  
+  // Push Subscriptions
+  pushSubscriptions PushSubscription[]
+}
+
+// Push Notification Subscriptions
+model PushSubscription {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription String   @db.Text
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, subscription])
+}
+
+model Gudang {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  address     String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  users       User[]
+  products    Product[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  sku         String   @unique
+  unit        String   // pcs, kg, box
+  price       Decimal  @db.Decimal(12, 2)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  gudangId    String
+  gudang      Gudang   @relation(fields: [gudangId], references: [id])
+
+  inventories         Inventory[]
+  stokisOrderItems    StokisOrderItem[]
+  mitraOrderItems     MitraOrderItem[]
+}
+
+model Inventory {
+  id          String   @id @default(cuid())
+  quantity    Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+}
+
+// Order from Stokis to Pusat
+model StokisOrder {
+  id          String            @id @default(cuid())
+  orderNumber String            @unique
+  status      StokisOrderStatus @default(PENDING_PUSAT)
+  totalAmount Decimal           @db.Decimal(12, 2)
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Timestamps for each status
+  pusatApproveAt   DateTime?
+  financeApproveAt DateTime?
+  poIssuedAt       DateTime?
+  shippedAt        DateTime?
+  receivedAt       DateTime?
+
+  stokisId    String
+  stokis      User              @relation("StokisOrders", fields: [stokisId], references: [id])
+  items       StokisOrderItem[]
+  invoice     Invoice?
+}
+
+// Invoice for Stokis Orders
+enum InvoiceStatus {
+  UNPAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  orderId       String        @unique
+  order         StokisOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  amount        Decimal       @db.Decimal(12, 2)
+  dueDate       DateTime
+  paidAt        DateTime?
+  status        InvoiceStatus @default(UNPAID)
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model StokisOrderItem {
+  id          String   @id @default(cuid())
+  quantity    Int
+  price       Decimal  @db.Decimal(12, 2)
+
+  orderId     String
+  order       StokisOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product     @relation(fields: [productId], references: [id])
+}
+
+// Order from Mitra to Stokis
+model MitraOrder {
+  id          String           @id @default(cuid())
+  orderNumber String           @unique
+  status      MitraOrderStatus @default(PENDING)
+  totalAmount Decimal          @db.Decimal(12, 2)
+  notes       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  approvedAt  DateTime?
+  shippedAt   DateTime?
+  receivedAt  DateTime?
+
+  mitraId     String
+  mitra       User             @relation("MitraOrders", fields: [mitraId], references: [id])
+  stokisId    String
+  stokis      User             @relation("StokisForMitraOrders", fields: [stokisId], references: [id])
+  items       MitraOrderItem[]
+}
+
+model MitraOrderItem {
+  id          String   @id @default(cuid())
+  quantity    Int
+  price       Decimal  @db.Decimal(12, 2)
+
+  orderId     String
+  order       MitraOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product    @relation(fields: [productId], references: [id])
+}
