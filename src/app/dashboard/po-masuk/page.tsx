@@ -103,39 +103,39 @@ export default function GudangPOMasukPage() {
                     <p className="text-gray-500">Tidak ada PO yang perlu diproses</p>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {orders.map((order) => {
                         const isPOIssued = order.status === "PO_ISSUED"
                         const isProcessing = order.status === "PROCESSING"
                         return (
                             <div
                                 key={order.id}
-                                className="bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                                className={`bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all border-l-4 ${isPOIssued ? "border-l-blue-500" : "border-l-purple-500"}`}
                                 onClick={() => setSelectedOrder(order)}
                             >
                                 <div className="flex justify-between items-start mb-3">
                                     <div>
-                                        <h3 className="font-semibold text-gray-800">{order.orderNumber}</h3>
-                                        <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
+                                        <h3 className="font-semibold text-gray-800 text-sm">{order.orderNumber}</h3>
+                                        <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
                                     </div>
-                                    <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm ${isPOIssued ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
+                                    <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${isPOIssued ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white" : "bg-gradient-to-r from-purple-500 to-purple-600 text-white"
                                         }`}>
-                                        {isPOIssued ? <Clock size={16} /> : <Package size={16} />}
-                                        {isPOIssued ? "PO Baru" : "Sedang Diproses"}
+                                        {isPOIssued ? <Clock size={12} /> : <Package size={12} />}
+                                        {isPOIssued ? "PO Baru" : "Diproses"}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <div>
                                         <span className="text-sm font-medium text-gray-700">{order.stokis.name}</span>
                                         {order.stokis.address && (
-                                            <p className="text-xs text-gray-500">{order.stokis.address}</p>
+                                            <p className="text-xs text-gray-500 truncate max-w-[150px]">{order.stokis.address}</p>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="font-semibold text-blue-600">
+                                        <span className="font-bold text-blue-600 text-sm">
                                             {formatCurrency(Number(order.totalAmount))}
                                         </span>
-                                        <ChevronRight size={18} className="text-gray-400" />
+                                        <ChevronRight size={16} className="text-gray-400" />
                                     </div>
                                 </div>
                             </div>

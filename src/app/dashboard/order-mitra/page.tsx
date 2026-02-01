@@ -110,21 +110,22 @@ export default function StokisOrderMitraPage() {
                     <p className="text-gray-500">Belum ada order dari mitra</p>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {orders.map((order) => {
                         const status = statusConfig[order.status] || statusConfig.PENDING
+                        const isPending = order.status === "PENDING"
                         return (
                             <div
                                 key={order.id}
-                                className="bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                                className={`bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all border-l-4 ${isPending ? "border-l-amber-500" : "border-l-emerald-500"}`}
                                 onClick={() => setSelectedOrder(order)}
                             >
                                 <div className="flex justify-between items-start mb-3">
                                     <div>
-                                        <h3 className="font-semibold text-gray-800">{order.orderNumber}</h3>
-                                        <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
+                                        <h3 className="font-semibold text-gray-800 text-sm">{order.orderNumber}</h3>
+                                        <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
                                     </div>
-                                    <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm ${status.color}`}>
+                                    <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${isPending ? "bg-gradient-to-r from-amber-500 to-yellow-600 text-white" : "bg-gradient-to-r from-emerald-500 to-teal-600 text-white"}`}>
                                         {status.icon}
                                         {status.label}
                                     </span>
@@ -133,14 +134,14 @@ export default function StokisOrderMitraPage() {
                                     <div>
                                         <span className="text-sm font-medium text-gray-700">{order.mitra.name}</span>
                                         {order.mitra.address && (
-                                            <p className="text-xs text-gray-500">{order.mitra.address}</p>
+                                            <p className="text-xs text-gray-500 truncate max-w-[150px]">{order.mitra.address}</p>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="font-semibold text-green-600">
+                                        <span className="font-bold text-emerald-600 text-sm">
                                             {formatCurrency(Number(order.totalAmount))}
                                         </span>
-                                        <ChevronRight size={18} className="text-gray-400" />
+                                        <ChevronRight size={16} className="text-gray-400" />
                                     </div>
                                 </div>
                             </div>

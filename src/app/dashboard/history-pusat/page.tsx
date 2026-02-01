@@ -126,21 +126,23 @@ export default function StokisOrderHistoryPage() {
                     </button>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {orders.map((order) => {
                         const status = statusConfig[order.status] || statusConfig.PENDING
+                        const isCompleted = order.status === "RECEIVED"
+                        const isShipped = order.status === "SHIPPED"
                         return (
                             <div
                                 key={order.id}
-                                className="bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                                className={`bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all border-l-4 ${isCompleted ? "border-l-emerald-500" : isShipped ? "border-l-indigo-500" : "border-l-amber-500"}`}
                                 onClick={() => setSelectedOrder(order)}
                             >
                                 <div className="flex justify-between items-start mb-3">
                                     <div>
-                                        <h3 className="font-semibold text-gray-800">{order.orderNumber}</h3>
-                                        <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
+                                        <h3 className="font-semibold text-gray-800 text-sm">{order.orderNumber}</h3>
+                                        <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
                                     </div>
-                                    <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm ${status.color}`}>
+                                    <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${isCompleted ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white" : isShipped ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white" : "bg-gradient-to-r from-amber-500 to-yellow-600 text-white"}`}>
                                         {status.icon}
                                         {status.label}
                                     </span>
@@ -149,7 +151,7 @@ export default function StokisOrderHistoryPage() {
                                     <span className="text-sm text-gray-600">
                                         {order.items.length} produk
                                     </span>
-                                    <span className="font-semibold text-green-600">
+                                    <span className="font-bold text-emerald-600 text-sm">
                                         {formatCurrency(Number(order.totalAmount))}
                                     </span>
                                 </div>
