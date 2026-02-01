@@ -118,7 +118,7 @@ export default function GudangPOMasukPage() {
                                         <h3 className="font-semibold text-gray-800 text-sm">{order.orderNumber}</h3>
                                         <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
                                     </div>
-                                    <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${isPOIssued ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white" : "bg-gradient-to-r from-purple-500 to-purple-600 text-white"
+                                    <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${isPOIssued ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-purple-100 text-purple-700 border-purple-200"
                                         }`}>
                                         {isPOIssued ? <Clock size={12} /> : <Package size={12} />}
                                         {isPOIssued ? "PO Baru" : "Diproses"}
