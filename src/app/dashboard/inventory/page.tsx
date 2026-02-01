@@ -157,49 +157,49 @@ export default function InventoryPage() {
                     <p className="text-gray-500">Tidak ada data inventory</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {filteredInventory.map((item) => {
                         const isLow = item.quantity <= item.minStock
                         return (
                             <div
                                 key={item.id}
-                                className={`bg-white rounded-xl p-4 shadow-sm border-2 ${isLow ? "border-yellow-400" : "border-transparent"}`}
+                                className={`bg-white rounded-xl p-4 shadow-sm border-l-4 hover:shadow-md transition-shadow ${isLow ? "border-l-amber-500" : "border-l-blue-500"}`}
                             >
                                 <div className="flex justify-between items-start mb-2">
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="font-semibold text-gray-800 text-sm md:text-base truncate">{item.product.name}</h3>
-                                        <p className="text-xs text-gray-500 truncate">{item.product.sku}</p>
+                                        <h3 className="font-semibold text-gray-800 text-sm truncate">{item.product.name}</h3>
+                                        <p className="text-[10px] text-gray-500 font-mono">{item.product.sku}</p>
                                     </div>
                                     {isLow && (
-                                        <span className="p-1 bg-yellow-100 rounded ml-2">
-                                            <AlertTriangle size={12} className="text-yellow-600" />
+                                        <span className="p-1 bg-amber-100 rounded ml-2">
+                                            <AlertTriangle size={12} className="text-amber-600" />
                                         </span>
                                     )}
                                 </div>
 
                                 <div className="text-center py-3">
-                                    <span className={`text-2xl md:text-3xl font-bold ${isLow ? "text-yellow-600" : "text-blue-600"}`}>
+                                    <span className={`text-2xl md:text-3xl font-bold ${isLow ? "text-amber-600" : "text-blue-600"}`}>
                                         {item.quantity}
                                     </span>
-                                    <span className="text-gray-500 text-sm md:text-lg ml-1">{item.product.unit}</span>
+                                    <span className="text-gray-500 text-sm ml-1">{item.product.unit}</span>
                                 </div>
 
-                                <div className="flex justify-between items-center text-xs text-gray-500 mb-3">
+                                <div className="flex justify-between items-center text-[10px] text-gray-500 mb-3">
                                     <span>Min: {item.minStock}</span>
-                                    <span className="bg-gray-100 px-2 py-0.5 rounded truncate max-w-[80px]">{item.product.gudang.name}</span>
+                                    <span className="bg-slate-100 px-2 py-0.5 rounded truncate max-w-[80px]">{item.product.gudang.name}</span>
                                 </div>
 
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => openAdjustModal(item, "subtract")}
-                                        className="flex-1 py-2 border rounded-lg flex items-center justify-center gap-1 text-red-600 hover:bg-red-50 transition-colors text-sm"
+                                        className="flex-1 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg flex items-center justify-center gap-1 hover:from-red-600 hover:to-rose-700 transition-all text-xs font-medium shadow-sm"
                                     >
                                         <Minus size={14} />
                                         <span className="hidden sm:inline">Kurangi</span>
                                     </button>
                                     <button
                                         onClick={() => openAdjustModal(item, "add")}
-                                        className="flex-1 py-2 border rounded-lg flex items-center justify-center gap-1 text-green-600 hover:bg-green-50 transition-colors text-sm"
+                                        className="flex-1 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg flex items-center justify-center gap-1 hover:from-emerald-600 hover:to-teal-700 transition-all text-xs font-medium shadow-sm"
                                     >
                                         <Plus size={14} />
                                         <span className="hidden sm:inline">Tambah</span>
@@ -277,8 +277,8 @@ export default function InventoryPage() {
                                     onClick={handleAdjust}
                                     disabled={submitting || !adjustAmount}
                                     className={`flex-1 py-2.5 text-white rounded-lg font-medium disabled:opacity-50 ${adjustmentType === "add"
-                                            ? "bg-green-500 hover:bg-green-600"
-                                            : "bg-red-500 hover:bg-red-600"
+                                        ? "bg-green-500 hover:bg-green-600"
+                                        : "bg-red-500 hover:bg-red-600"
                                         }`}
                                 >
                                     {submitting ? "Memproses..." : adjustmentType === "add" ? "Tambah" : "Kurangi"}
