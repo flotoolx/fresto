@@ -53,7 +53,7 @@ export default function ExportButton({
         <>
             <button
                 onClick={() => setShowModal(true)}
-                className={`flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors ${className}`}
+                className={`flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all ${className}`}
             >
                 <Download size={18} />
                 {buttonText}

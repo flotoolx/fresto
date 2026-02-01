@@ -141,35 +141,39 @@ export default function InvoicesPage() {
                 </Link>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid sm:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-500 text-sm">Total Invoice</span>
-                        <Receipt className="text-purple-500" size={20} />
+            {/* Stats Cards - Modern Gradient Design */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-2 mb-2">
+                        <Receipt size={16} className="opacity-80" />
+                        <span className="text-xs text-white/80">Total Invoice</span>
                     </div>
-                    <div className="text-2xl font-bold text-gray-800">{stats.total}</div>
+                    <p className="text-xl font-bold">{stats.total}</p>
                 </div>
-                <div className="bg-white rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-500 text-sm">Belum Bayar</span>
-                        <Clock className="text-yellow-500" size={20} />
+                <div className="bg-gradient-to-br from-amber-500 to-yellow-600 rounded-xl p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-2 mb-2">
+                        <Clock size={16} className="opacity-80" />
+                        <span className="text-xs text-white/80">Belum Bayar</span>
                     </div>
-                    <div className="text-2xl font-bold text-yellow-600">{stats.unpaid}</div>
+                    <p className="text-xl font-bold">{stats.unpaid}</p>
                 </div>
-                <div className="bg-white rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-500 text-sm">Overdue</span>
-                        <AlertTriangle className="text-red-500" size={20} />
+                <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-2 mb-2">
+                        <AlertTriangle size={16} className="opacity-80" />
+                        <span className="text-xs text-white/80">Overdue</span>
                     </div>
-                    <div className="text-2xl font-bold text-red-600">{stats.overdue}</div>
+                    <p className="text-xl font-bold">{stats.overdue}</p>
                 </div>
-                <div className="bg-white rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-500 text-sm">Outstanding</span>
-                        <CheckCircle className="text-green-500" size={20} />
+                <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle size={16} className="opacity-80" />
+                        <span className="text-xs text-white/80">Outstanding</span>
                     </div>
-                    <div className="text-xl font-bold text-red-600">{formatCurrency(stats.totalUnpaid)}</div>
+                    <p className="text-xl font-bold">{formatCurrency(stats.totalUnpaid)}</p>
                 </div>
             </div>
 
@@ -214,8 +218,8 @@ export default function InvoicesPage() {
                         <div
                             key={invoice.id}
                             className={`bg-white rounded-xl p-5 shadow-sm border-l-4 ${isPaid ? "border-l-green-500" :
-                                    isOverdue ? "border-l-red-500" :
-                                        "border-l-yellow-500"
+                                isOverdue ? "border-l-red-500" :
+                                    "border-l-yellow-500"
                                 }`}
                         >
                             {/* Card Header */}
@@ -225,8 +229,8 @@ export default function InvoicesPage() {
                                     <p className="text-sm text-gray-500">{invoice.order.orderNumber}</p>
                                 </div>
                                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isPaid ? "bg-green-100 text-green-700" :
-                                        isOverdue ? "bg-red-100 text-red-700" :
-                                            "bg-yellow-100 text-yellow-700"
+                                    isOverdue ? "bg-red-100 text-red-700" :
+                                        "bg-yellow-100 text-yellow-700"
                                     }`}>
                                     {invoice.status}
                                 </span>
