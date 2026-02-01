@@ -125,7 +125,7 @@ export default function StokisOrderMitraPage() {
                                         <h3 className="font-semibold text-gray-800 text-sm">{order.orderNumber}</h3>
                                         <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
                                     </div>
-                                    <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${isPending ? "bg-gradient-to-r from-amber-500 to-yellow-600 text-white" : "bg-gradient-to-r from-emerald-500 to-teal-600 text-white"}`}>
+                                    <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${status.color.replace('bg-', 'border-').replace('100', '200')} ${status.color}`}>
                                         {status.icon}
                                         {status.label}
                                     </span>

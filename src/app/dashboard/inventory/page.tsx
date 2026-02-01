@@ -192,14 +192,14 @@ export default function InventoryPage() {
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => openAdjustModal(item, "subtract")}
-                                        className="flex-1 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg flex items-center justify-center gap-1 hover:from-red-600 hover:to-rose-700 transition-all text-xs font-medium shadow-sm"
+                                        className="flex-1 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg flex items-center justify-center gap-1 hover:bg-red-100 hover:border-red-200 transition-all text-xs font-medium"
                                     >
                                         <Minus size={14} />
                                         <span className="hidden sm:inline">Kurangi</span>
                                     </button>
                                     <button
                                         onClick={() => openAdjustModal(item, "add")}
-                                        className="flex-1 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg flex items-center justify-center gap-1 hover:from-emerald-600 hover:to-teal-700 transition-all text-xs font-medium shadow-sm"
+                                        className="flex-1 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg flex items-center justify-center gap-1 hover:bg-emerald-100 hover:border-emerald-200 transition-all text-xs font-medium"
                                     >
                                         <Plus size={14} />
                                         <span className="hidden sm:inline">Tambah</span>
