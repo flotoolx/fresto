@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ShoppingCart, Clock, CheckCircle, Truck, Package, XCircle, ChevronRight } from "lucide-react"
+import { ShoppingCart, Clock, CheckCircle, Truck, Package, XCircle, ChevronRight, Printer } from "lucide-react"
+import ExportButton from "@/components/ExportButton"
+import Link from "next/link"
 
 interface OrderItem {
     id: string
@@ -98,11 +100,16 @@ export default function PusatOrdersStokisPage() {
     return (
         <div className="space-y-6">
             <div className="bg-white rounded-xl p-6 shadow-sm">
-                <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <ShoppingCart className="text-red-600" />
-                    Order dari Stokis
-                </h1>
-                <p className="text-gray-500 text-sm mt-1">Approve order dari Stokis untuk diteruskan ke Finance</p>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <ShoppingCart className="text-red-600" />
+                            Order dari Stokis
+                        </h1>
+                        <p className="text-gray-500 text-sm mt-1">Approve order dari Stokis untuk diteruskan ke Finance</p>
+                    </div>
+                    <ExportButton endpoint="/api/export/orders" type="stokis" buttonText="Export" />
+                </div>
             </div>
 
             {orders.length === 0 ? (
@@ -221,6 +228,18 @@ export default function PusatOrdersStokisPage() {
                                                 Tolak Order
                                             </button>
                                         </>
+                                    )}
+
+                                    {/* Print PO Button - show for PO_ISSUED and later statuses */}
+                                    {["PO_ISSUED", "PROCESSING", "SHIPPED", "RECEIVED"].includes(selectedOrder.status) && (
+                                        <Link
+                                            href={`/po/stokis/${selectedOrder.id}`}
+                                            target="_blank"
+                                            className="w-full py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 flex items-center justify-center gap-2"
+                                        >
+                                            <Printer size={18} />
+                                            Print PO
+                                        </Link>
                                     )}
                                 </div>
                             </div>

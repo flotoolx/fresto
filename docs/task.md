@@ -118,6 +118,90 @@
 
 ---
 
+## Phase 5: Stokis & Lokasi Management ⏳ PLANNED
+
+### Database Schema
+- [ ] Tambah enum Province (34 provinsi Indonesia)
+- [ ] Tambah enum MitraRegistrationStatus (PENDING, APPROVED, REJECTED, INACTIVE)
+- [ ] Tambah field lokasi pada User (province, city, district, postalCode)
+- [ ] Tambah field mitraStatus, mitraApprovedAt, mitraApprovedBy pada User
+- [ ] Tambah model StokisProductPrice (harga custom per stokis)
+- [ ] Migration script untuk data existing (mitra dengan stokisId → APPROVED)
+
+### API Endpoints
+- [ ] /api/mitra-registration - Stokis ajukan mitra
+- [ ] /api/mitra-registration/[id] - Pusat approve/reject
+- [ ] /api/mitra-registration/pending - List pending untuk Pusat
+- [ ] /api/stokis-prices - CRUD harga custom (Pusat set)
+- [ ] /api/stokis-prices/by-stokis/[id] - Harga per stokis
+- [ ] /api/locations/provinces - List provinsi
+- [ ] /api/stokis/by-province - Filter stokis per provinsi
+- [ ] /api/province-coverage - Statistik coverage stokis/mitra per provinsi
+- [ ] Update /api/users - Tambah field lokasi, validasi province wajib untuk STOKIS
+- [ ] Update /api/orders/mitra - Validasi mitraStatus APPROVED, gunakan harga custom
+
+### Dashboard Pages - Stokis
+- [ ] /dashboard/kelola-mitra - Halaman ajukan & lihat mitra (tidak bisa approve)
+- [ ] /dashboard/harga-stokis - Halaman lihat harga (VIEW ONLY)
+
+### Dashboard Pages - Pusat
+- [ ] /dashboard/approve-mitra - Halaman approve/reject pengajuan mitra
+- [ ] /dashboard/harga-stokis - Halaman kelola harga per stokis
+- [ ] /dashboard/province-coverage - Halaman coverage provinsi (stokis/mitra per provinsi)
+- [ ] Update /dashboard/users - Tambah kolom province & filter
+
+### Dashboard Pages - Finance
+- [x] /dashboard/laporan-harga - Halaman view laporan harga + margin (VIEW ONLY)
+- [x] /dashboard/pembayaran - Halaman input pembayaran PO (Finance) - dari Component 11
+- [ ] Update /dashboard/reports - Tambah filter by province
+- [x] Update /dashboard/approve-po - Tampilkan sisa tagihan stokis, tombol Adjust PO - dari Component 10
+- [ ] Update /dashboard/tagihan - Tambah view Per Stokis, summary, export
+
+### Export Features - Mitra
+- [x] /api/export/mitra-orders - Export pesanan mitra PDF/Excel (menggunakan /api/export/orders?type=mitra)
+- [x] Update order page - Tambah ExportButton (sudah ada di /dashboard/history)
+
+### Export Features - Gudang
+- [x] /api/export/gudang-po - Export PO gudang PDF/Excel
+- [x] Update /dashboard/po-masuk - Tambah ExportButton
+
+### Finance Enhancements
+- [x] /api/stokis/[id]/outstanding - API cek sisa tagihan stokis
+- [x] Update /api/orders/stokis/[id] - Tambah action adjust PO
+- [x] Tampilkan warning jika stokis punya tunggakan di Approve PO
+- [x] Tombol Adjust PO untuk kurangi quantity di PO
+
+### Pembayaran (Payment) - Finance
+- [x] /api/payments - API input pembayaran (list, create)
+- [x] /api/payments/[id] - API pembayaran detail/delete
+- [x] Model Payment dengan PaymentMethod enum
+- [x] Support partial payment (cicilan)
+- [ ] Upload bukti transfer (placeholder ready)
+- [x] Auto-update invoice status ke PAID jika lunas
+- [x] /dashboard/pembayaran - Halaman input pembayaran
+
+### Adjust PO - Stokis
+- [x] Update /dashboard/history-pusat - Tambah tombol Adjust PO untuk status PENDING
+- [x] Modal edit quantity items dengan +/- buttons
+- [x] API adjust order sebelum diapprove (reuse dari Component 10)
+- [x] Tombol batalkan order untuk status PENDING
+
+### PO PDF Export
+- [x] /api/po/stokis/[id]/pdf - Generate PO PDF (sudah ada)
+- [x] Update /dashboard/history-pusat - Tambah tombol Print PO (Stokis)
+- [x] Update /dashboard/approve-po - Tambah tombol Print PO (Finance)
+- [x] Update /dashboard/po-masuk - Tambah tombol Print PO (Gudang)
+
+### Order Flow
+- [ ] Update order page - Cek mitraStatus APPROVED sebelum order
+- [ ] Tampilkan pesan jika PENDING/REJECTED
+- [ ] Gunakan harga custom stokis jika ada
+
+### UI Updates
+- [ ] Update sidebar layout - Tambah menu baru per role (Stokis, Pusat, Finance, termasuk Pembayaran)
+
+---
+
 ## Test Accounts
 
 | Role | Email | Password |

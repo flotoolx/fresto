@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Receipt, Clock, CheckCircle, Truck, Package, XCircle, ArrowLeft, FileText, Printer } from "lucide-react"
+import { Receipt, Clock, CheckCircle, Truck, Package, XCircle, ArrowLeft, FileText, Printer, Edit3 } from "lucide-react"
 import ExportButton from "@/components/ExportButton"
 import Link from "next/link"
 
@@ -25,6 +25,8 @@ interface StokisOrder {
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+    PENDING_PUSAT: { label: "Menunggu Pusat", color: "bg-yellow-100 text-yellow-700", icon: <Clock size={16} /> },
+    PENDING_FINANCE: { label: "Menunggu Finance", color: "bg-orange-100 text-orange-700", icon: <Clock size={16} /> },
     PENDING: { label: "Menunggu Approval", color: "bg-yellow-100 text-yellow-700", icon: <Clock size={16} /> },
     APPROVED: { label: "Disetujui", color: "bg-blue-100 text-blue-700", icon: <CheckCircle size={16} /> },
     PO_ISSUED: { label: "PO Diterbitkan", color: "bg-purple-100 text-purple-700", icon: <FileText size={16} /> },
@@ -32,6 +34,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
     SHIPPED: { label: "Dikirim", color: "bg-cyan-100 text-cyan-700", icon: <Truck size={16} /> },
     RECEIVED: { label: "Diterima", color: "bg-green-100 text-green-700", icon: <CheckCircle size={16} /> },
     REJECTED: { label: "Ditolak", color: "bg-red-100 text-red-700", icon: <XCircle size={16} /> },
+    CANCELLED: { label: "Dibatalkan", color: "bg-red-100 text-red-700", icon: <XCircle size={16} /> },
 }
 
 export default function StokisOrderHistoryPage() {
@@ -39,6 +42,10 @@ export default function StokisOrderHistoryPage() {
     const [orders, setOrders] = useState<StokisOrder[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedOrder, setSelectedOrder] = useState<StokisOrder | null>(null)
+    const [showAdjustModal, setShowAdjustModal] = useState(false)
+    const [adjustedItems, setAdjustedItems] = useState<{ id: string; quantity: number }[]>([])
+    const [adjustNotes, setAdjustNotes] = useState("")
+    const [updating, setUpdating] = useState(false)
 
     useEffect(() => {
         fetchOrders()
@@ -72,6 +79,59 @@ export default function StokisOrderHistoryPage() {
         }
     }
 
+    const handleCancel = async (orderId: string) => {
+        if (!confirm("Apakah Anda yakin ingin membatalkan order ini?")) return
+        try {
+            const res = await fetch(`/api/orders/stokis/${orderId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: "CANCELLED" }),
+            })
+            if (res.ok) {
+                fetchOrders()
+                setSelectedOrder(null)
+            }
+        } catch (err) {
+            console.error("Error cancelling order:", err)
+        }
+    }
+
+    const openAdjustModal = () => {
+        if (!selectedOrder) return
+        setAdjustedItems(selectedOrder.items.map(item => ({ id: item.id, quantity: item.quantity })))
+        setAdjustNotes("")
+        setShowAdjustModal(true)
+    }
+
+    const submitAdjustment = async () => {
+        if (!selectedOrder) return
+        setUpdating(true)
+        try {
+            const res = await fetch(`/api/orders/stokis/${selectedOrder.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "adjust",
+                    adjustedItems: adjustedItems.filter(item => item.quantity > 0),
+                    notes: adjustNotes
+                }),
+            })
+            if (res.ok) {
+                fetchOrders()
+                setSelectedOrder(null)
+                setShowAdjustModal(false)
+            } else {
+                const err = await res.json()
+                alert(err.error || "Gagal menyimpan perubahan")
+            }
+        } catch (err) {
+            console.error("Error adjusting order:", err)
+            alert("Terjadi kesalahan")
+        } finally {
+            setUpdating(false)
+        }
+    }
+
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat("id-ID", {
             style: "currency",
@@ -86,6 +146,10 @@ export default function StokisOrderHistoryPage() {
             timeStyle: "short",
         }).format(new Date(date))
     }
+
+    const canAdjust = (status: string) => ["PENDING_PUSAT", "PENDING_FINANCE"].includes(status)
+    const canCancel = (status: string) => ["PENDING_PUSAT", "PENDING_FINANCE"].includes(status)
+    const hasPO = (status: string) => ["PO_ISSUED", "PROCESSING", "SHIPPED", "RECEIVED"].includes(status)
 
     if (loading) {
         return (
@@ -131,10 +195,11 @@ export default function StokisOrderHistoryPage() {
                         const status = statusConfig[order.status] || statusConfig.PENDING
                         const isCompleted = order.status === "RECEIVED"
                         const isShipped = order.status === "SHIPPED"
+                        const isPending = canAdjust(order.status)
                         return (
                             <div
                                 key={order.id}
-                                className={`bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all border-l-4 ${isCompleted ? "border-l-emerald-500" : isShipped ? "border-l-indigo-500" : "border-l-amber-500"}`}
+                                className={`bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all border-l-4 ${isCompleted ? "border-l-emerald-500" : isShipped ? "border-l-indigo-500" : isPending ? "border-l-amber-500" : "border-l-blue-500"}`}
                                 onClick={() => setSelectedOrder(order)}
                             >
                                 <div className="flex justify-between items-start mb-3">
@@ -162,9 +227,9 @@ export default function StokisOrderHistoryPage() {
             )}
 
             {/* Order Detail Modal */}
-            {selectedOrder && (
+            {selectedOrder && !showAdjustModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl max-w-lg w-full max-h-[80vh] overflow-y-auto">
+                    <div className="bg-white rounded-xl max-w-lg w-full max-h-[85vh] overflow-y-auto">
                         <div className="p-6">
                             <div className="flex justify-between items-start mb-4">
                                 <div>
@@ -214,24 +279,163 @@ export default function StokisOrderHistoryPage() {
                                     </div>
                                 )}
 
-                                {selectedOrder.status === "SHIPPED" && (
-                                    <button
-                                        onClick={() => handleReceive(selectedOrder.id)}
-                                        className="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600"
-                                    >
-                                        Konfirmasi Terima
-                                    </button>
-                                )}
+                                {/* Action Buttons */}
+                                <div className="space-y-2 pt-2">
+                                    {/* Confirm Receive */}
+                                    {selectedOrder.status === "SHIPPED" && (
+                                        <button
+                                            onClick={() => handleReceive(selectedOrder.id)}
+                                            className="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600"
+                                        >
+                                            Konfirmasi Terima
+                                        </button>
+                                    )}
 
-                                {/* Print PO Button */}
-                                <Link
-                                    href={`/po/stokis/${selectedOrder.id}`}
-                                    target="_blank"
-                                    className="w-full py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 flex items-center justify-center gap-2"
+                                    {/* Adjust PO Button - for PENDING statuses */}
+                                    {canAdjust(selectedOrder.status) && (
+                                        <button
+                                            onClick={openAdjustModal}
+                                            className="w-full py-3 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 flex items-center justify-center gap-2"
+                                        >
+                                            <Edit3 size={18} />
+                                            Adjust PO
+                                        </button>
+                                    )}
+
+                                    {/* Cancel Button - for PENDING statuses */}
+                                    {canCancel(selectedOrder.status) && (
+                                        <button
+                                            onClick={() => handleCancel(selectedOrder.id)}
+                                            className="w-full py-3 bg-red-100 text-red-600 rounded-lg font-semibold hover:bg-red-200"
+                                        >
+                                            Batalkan Order
+                                        </button>
+                                    )}
+
+                                    {/* Print PO Button - for PO_ISSUED+ */}
+                                    {hasPO(selectedOrder.status) && (
+                                        <Link
+                                            href={`/po/stokis/${selectedOrder.id}`}
+                                            target="_blank"
+                                            className="w-full py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 flex items-center justify-center gap-2"
+                                        >
+                                            <Printer size={18} />
+                                            Print PO
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Adjust PO Modal */}
+            {showAdjustModal && selectedOrder && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl max-w-lg w-full max-h-[85vh] overflow-y-auto">
+                        <div className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <h2 className="text-lg font-bold text-gray-900">Adjust PO</h2>
+                                    <p className="text-sm text-gray-500">{selectedOrder.orderNumber}</p>
+                                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs mt-2 ${statusConfig[selectedOrder.status]?.color || "bg-gray-100 text-gray-700"}`}>
+                                        {statusConfig[selectedOrder.status]?.label}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={() => setShowAdjustModal(false)}
+                                    className="text-gray-500 hover:text-gray-700 text-xl"
                                 >
-                                    <Printer size={18} />
-                                    Print PO
-                                </Link>
+                                    ✕
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <h3 className="font-semibold mb-2 text-gray-900">Edit Items</h3>
+                                    {selectedOrder.items.map((item, idx) => {
+                                        const adjusted = adjustedItems.find(a => a.id === item.id)
+                                        const qty = adjusted?.quantity ?? item.quantity
+                                        return (
+                                            <div key={item.id} className="flex justify-between items-center py-3 border-b">
+                                                <div className="flex-1">
+                                                    <span className="text-gray-800 font-medium">{item.product.name}</span>
+                                                    <p className="text-xs text-gray-500">@{formatCurrency(Number(item.price))}/{item.product.unit}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            const newItems = [...adjustedItems]
+                                                            newItems[idx] = { ...newItems[idx], quantity: Math.max(0, qty - 1) }
+                                                            setAdjustedItems(newItems)
+                                                        }}
+                                                        className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center font-bold"
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <span className="w-10 text-center font-medium text-gray-900">{qty}</span>
+                                                    <button
+                                                        onClick={() => {
+                                                            const newItems = [...adjustedItems]
+                                                            newItems[idx] = { ...newItems[idx], quantity: qty + 1 }
+                                                            setAdjustedItems(newItems)
+                                                        }}
+                                                        className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center font-bold"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+
+                                {/* Total Comparison */}
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                    <div className="flex justify-between text-sm text-gray-600 mb-1">
+                                        <span>Total (sebelum)</span>
+                                        <span>{formatCurrency(Number(selectedOrder.totalAmount))}</span>
+                                    </div>
+                                    <div className="flex justify-between font-bold text-gray-900">
+                                        <span>Total (baru)</span>
+                                        <span className="text-green-600">
+                                            {formatCurrency(
+                                                adjustedItems.reduce((sum, adj) => {
+                                                    const item = selectedOrder.items.find(i => i.id === adj.id)
+                                                    return sum + (Number(item?.price || 0) * adj.quantity)
+                                                }, 0)
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Alasan Perubahan</label>
+                                    <textarea
+                                        value={adjustNotes}
+                                        onChange={(e) => setAdjustNotes(e.target.value)}
+                                        placeholder="Contoh: Kurangi qty karena stok masih cukup"
+                                        className="w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-400"
+                                        rows={2}
+                                    />
+                                </div>
+
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        onClick={() => setShowAdjustModal(false)}
+                                        className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-lg font-semibold hover:bg-gray-200"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        onClick={submitAdjustment}
+                                        disabled={updating || adjustedItems.every((a, i) => a.quantity === selectedOrder.items[i].quantity)}
+                                        className="flex-1 py-3 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 disabled:opacity-50"
+                                    >
+                                        {updating ? "Menyimpan..." : "Simpan Perubahan"}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

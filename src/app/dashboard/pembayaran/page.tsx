@@ -1,0 +1,445 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { CreditCard, Search, ChevronDown, AlertTriangle, CheckCircle, X, Upload } from "lucide-react"
+
+interface Invoice {
+    id: string
+    invoiceNumber: string
+    amount: number
+    paidAmount: number
+    dueDate: string
+    status: string
+    order: {
+        orderNumber: string
+        stokis: { id: string; name: string }
+    }
+}
+
+interface Stokis {
+    id: string
+    name: string
+}
+
+interface PaymentForm {
+    invoiceId: string
+    amount: number
+    paymentDate: string
+    method: string
+    proofImage: string
+    notes: string
+}
+
+const paymentMethods = [
+    { value: "TRANSFER_BCA", label: "Transfer BCA" },
+    { value: "TRANSFER_MANDIRI", label: "Transfer Mandiri" },
+    { value: "TRANSFER_BRI", label: "Transfer BRI" },
+    { value: "CASH", label: "Cash" },
+    { value: "OTHER", label: "Lainnya" },
+]
+
+export default function PembayaranPage() {
+    const [invoices, setInvoices] = useState<Invoice[]>([])
+    const [stokisList, setStokisList] = useState<Stokis[]>([])
+    const [loading, setLoading] = useState(true)
+    const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
+    const [showPaymentModal, setShowPaymentModal] = useState(false)
+    const [submitting, setSubmitting] = useState(false)
+
+    // Filters
+    const [filterStokis, setFilterStokis] = useState("")
+    const [filterStatus, setFilterStatus] = useState("")
+    const [searchQuery, setSearchQuery] = useState("")
+
+    // Payment form
+    const [paymentForm, setPaymentForm] = useState<PaymentForm>({
+        invoiceId: "",
+        amount: 0,
+        paymentDate: new Date().toISOString().split("T")[0],
+        method: "TRANSFER_BCA",
+        proofImage: "",
+        notes: ""
+    })
+
+    useEffect(() => {
+        fetchInvoices()
+        fetchStokisList()
+    }, [])
+
+    const fetchInvoices = async () => {
+        try {
+            const res = await fetch("/api/invoices?status=unpaid,overdue")
+            const data = await res.json()
+            setInvoices(data)
+        } catch (err) {
+            console.error("Error fetching invoices:", err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const fetchStokisList = async () => {
+        try {
+            const res = await fetch("/api/stokis")
+            const data = await res.json()
+            setStokisList(data)
+        } catch (err) {
+            console.error("Error fetching stokis:", err)
+        }
+    }
+
+    const openPaymentModal = (invoice: Invoice) => {
+        setSelectedInvoice(invoice)
+        const remaining = Number(invoice.amount) - Number(invoice.paidAmount)
+        setPaymentForm({
+            invoiceId: invoice.id,
+            amount: remaining,
+            paymentDate: new Date().toISOString().split("T")[0],
+            method: "TRANSFER_BCA",
+            proofImage: "",
+            notes: ""
+        })
+        setShowPaymentModal(true)
+    }
+
+    const handleSubmitPayment = async () => {
+        if (!selectedInvoice || paymentForm.amount <= 0) return
+
+        setSubmitting(true)
+        try {
+            const res = await fetch("/api/payments", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(paymentForm)
+            })
+
+            if (res.ok) {
+                fetchInvoices()
+                setShowPaymentModal(false)
+                setSelectedInvoice(null)
+            } else {
+                const err = await res.json()
+                alert(err.error || "Gagal menyimpan pembayaran")
+            }
+        } catch (err) {
+            console.error("Error submitting payment:", err)
+            alert("Terjadi kesalahan")
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0,
+        }).format(amount)
+    }
+
+    const formatDate = (date: string) => {
+        return new Intl.DateTimeFormat("id-ID", {
+            dateStyle: "medium",
+        }).format(new Date(date))
+    }
+
+    // Filter invoices
+    const filteredInvoices = invoices.filter(inv => {
+        if (filterStokis && inv.order.stokis.id !== filterStokis) return false
+        if (filterStatus && inv.status !== filterStatus) return false
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase()
+            if (!inv.invoiceNumber.toLowerCase().includes(query) &&
+                !inv.order.stokis.name.toLowerCase().includes(query)) {
+                return false
+            }
+        }
+        return true
+    })
+
+    // Calculate summary
+    const totalUnpaid = filteredInvoices
+        .filter(inv => inv.status === "UNPAID")
+        .reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
+    const totalOverdue = filteredInvoices
+        .filter(inv => inv.status === "OVERDUE")
+        .reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin h-8 w-8 border-4 border-purple-500 border-t-transparent rounded-full" />
+            </div>
+        )
+    }
+
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <CreditCard className="text-purple-600" />
+                            Input Pembayaran
+                        </h1>
+                        <p className="text-gray-500 text-sm mt-1">Kelola pembayaran invoice dari Stokis</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Filters */}
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+                <div className="flex flex-wrap gap-3">
+                    <div className="relative">
+                        <select
+                            value={filterStokis}
+                            onChange={(e) => setFilterStokis(e.target.value)}
+                            className="appearance-none bg-gray-50 border rounded-lg px-4 py-2 pr-8 text-gray-700 text-sm"
+                        >
+                            <option value="">Semua Stokis</option>
+                            {stokisList.map(s => (
+                                <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    </div>
+                    <div className="relative">
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="appearance-none bg-gray-50 border rounded-lg px-4 py-2 pr-8 text-gray-700 text-sm"
+                        >
+                            <option value="">Semua Status</option>
+                            <option value="UNPAID">Belum Bayar</option>
+                            <option value="OVERDUE">Jatuh Tempo</option>
+                        </select>
+                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    </div>
+                    <div className="relative flex-1 min-w-[200px]">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Cari invoice..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-gray-50 border rounded-lg pl-10 pr-4 py-2 text-gray-700 text-sm"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Summary */}
+            <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white rounded-xl p-4 shadow-sm">
+                    <p className="text-sm text-gray-500">Total Belum Lunas</p>
+                    <p className="text-xl font-bold text-orange-600">{formatCurrency(totalUnpaid)}</p>
+                </div>
+                <div className="bg-white rounded-xl p-4 shadow-sm">
+                    <p className="text-sm text-gray-500">Total Jatuh Tempo</p>
+                    <p className="text-xl font-bold text-red-600">{formatCurrency(totalOverdue)}</p>
+                </div>
+            </div>
+
+            {/* Invoice List */}
+            {filteredInvoices.length === 0 ? (
+                <div className="bg-white rounded-xl p-12 shadow-sm text-center">
+                    <CheckCircle className="w-16 h-16 text-green-300 mx-auto mb-4" />
+                    <p className="text-gray-500">Tidak ada tagihan yang perlu dibayar</p>
+                </div>
+            ) : (
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+                                <tr>
+                                    <th className="px-4 py-3 text-left">Invoice</th>
+                                    <th className="px-4 py-3 text-left">Stokis</th>
+                                    <th className="px-4 py-3 text-right">Total</th>
+                                    <th className="px-4 py-3 text-right">Sisa</th>
+                                    <th className="px-4 py-3 text-center">Jatuh Tempo</th>
+                                    <th className="px-4 py-3 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {filteredInvoices.map(inv => {
+                                    const remaining = Number(inv.amount) - Number(inv.paidAmount)
+                                    const isOverdue = inv.status === "OVERDUE"
+                                    return (
+                                        <tr key={inv.id} className={isOverdue ? "bg-red-50" : ""}>
+                                            <td className="px-4 py-3">
+                                                <span className="font-medium text-gray-900">{inv.invoiceNumber}</span>
+                                                <p className="text-xs text-gray-500">{inv.order.orderNumber}</p>
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-700">{inv.order.stokis.name}</td>
+                                            <td className="px-4 py-3 text-right text-gray-700">
+                                                {formatCurrency(Number(inv.amount))}
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-medium text-gray-900">
+                                                {formatCurrency(remaining)}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${isOverdue
+                                                        ? "bg-red-100 text-red-700"
+                                                        : "bg-gray-100 text-gray-600"
+                                                    }`}>
+                                                    {isOverdue && <AlertTriangle size={12} />}
+                                                    {formatDate(inv.dueDate)}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <button
+                                                    onClick={() => openPaymentModal(inv)}
+                                                    className="px-3 py-1.5 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600"
+                                                >
+                                                    Bayar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Payment Modal */}
+            {showPaymentModal && selectedInvoice && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <h2 className="text-lg font-bold text-gray-900">Input Pembayaran</h2>
+                                    <p className="text-sm text-gray-500">{selectedInvoice.invoiceNumber}</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowPaymentModal(false)}
+                                    className="text-gray-500 hover:text-gray-700"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            {/* Invoice Summary */}
+                            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                                <p className="font-medium text-gray-900">{selectedInvoice.order.stokis.name}</p>
+                                <div className="mt-2 space-y-1 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500">Total Invoice</span>
+                                        <span className="text-gray-900">{formatCurrency(Number(selectedInvoice.amount))}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500">Sudah Dibayar</span>
+                                        <span className="text-green-600">{formatCurrency(Number(selectedInvoice.paidAmount))}</span>
+                                    </div>
+                                    <div className="flex justify-between font-medium border-t pt-1">
+                                        <span className="text-gray-700">Sisa Tagihan</span>
+                                        <span className="text-purple-600">
+                                            {formatCurrency(Number(selectedInvoice.amount) - Number(selectedInvoice.paidAmount))}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Form */}
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Jumlah Bayar
+                                    </label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">Rp</span>
+                                        <input
+                                            type="number"
+                                            value={paymentForm.amount}
+                                            onChange={(e) => setPaymentForm(prev => ({ ...prev, amount: Number(e.target.value) }))}
+                                            className="w-full border rounded-lg pl-10 pr-4 py-2 text-gray-900"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={() => setPaymentForm(prev => ({
+                                            ...prev,
+                                            amount: Number(selectedInvoice.amount) - Number(selectedInvoice.paidAmount)
+                                        }))}
+                                        className="text-sm text-purple-600 mt-1 hover:underline"
+                                    >
+                                        Bayar Lunas
+                                    </button>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Tanggal Pembayaran
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={paymentForm.paymentDate}
+                                        onChange={(e) => setPaymentForm(prev => ({ ...prev, paymentDate: e.target.value }))}
+                                        className="w-full border rounded-lg px-4 py-2 text-gray-900"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Metode Pembayaran
+                                    </label>
+                                    <select
+                                        value={paymentForm.method}
+                                        onChange={(e) => setPaymentForm(prev => ({ ...prev, method: e.target.value }))}
+                                        className="w-full border rounded-lg px-4 py-2 text-gray-900"
+                                    >
+                                        {paymentMethods.map(m => (
+                                            <option key={m.value} value={m.value}>{m.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Bukti Transfer (opsional)
+                                    </label>
+                                    <div className="border-2 border-dashed rounded-lg p-4 text-center text-gray-500">
+                                        <Upload className="mx-auto mb-2" size={24} />
+                                        <p className="text-sm">Fitur upload akan tersedia</p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Catatan (opsional)
+                                    </label>
+                                    <textarea
+                                        value={paymentForm.notes}
+                                        onChange={(e) => setPaymentForm(prev => ({ ...prev, notes: e.target.value }))}
+                                        placeholder="Catatan tambahan..."
+                                        className="w-full border rounded-lg px-4 py-2 text-gray-900"
+                                        rows={2}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={() => setShowPaymentModal(false)}
+                                    className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-lg font-medium hover:bg-gray-200"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    onClick={handleSubmitPayment}
+                                    disabled={submitting || paymentForm.amount <= 0}
+                                    className="flex-1 py-3 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 disabled:opacity-50"
+                                >
+                                    {submitting ? "Menyimpan..." : "Simpan Pembayaran"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}

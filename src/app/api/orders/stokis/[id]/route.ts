@@ -6,6 +6,11 @@ import { StokisOrderStatus, Role } from "@prisma/client"
 import { sendPushToUser, sendPushToRole, PushTemplates } from "@/lib/push"
 import { generateInvoice } from "@/lib/invoice"
 
+interface AdjustedItem {
+    id: string
+    quantity: number
+}
+
 // PATCH update stokis order status
 export async function PATCH(
     request: Request,
@@ -20,6 +25,115 @@ export async function PATCH(
         const { id } = await params
         const { role, id: userId } = session.user
         const body = await request.json()
+
+        // Handle adjust action
+        if (body.action === "adjust") {
+            // Only FINANCE and STOKIS can adjust
+            if (!["FINANCE", "STOKIS"].includes(role)) {
+                return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+            }
+
+            const { adjustedItems, notes } = body as {
+                adjustedItems: AdjustedItem[]
+                notes?: string
+            }
+
+            const order = await prisma.stokisOrder.findUnique({
+                where: { id },
+                include: {
+                    items: true,
+                    stokis: { select: { id: true, name: true } }
+                }
+            })
+
+            if (!order) {
+                return NextResponse.json({ error: "Order not found" }, { status: 404 })
+            }
+
+            // Stokis can only adjust their own orders in PENDING states
+            if (role === "STOKIS") {
+                if (order.stokisId !== userId) {
+                    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+                }
+                if (!["PENDING_PUSAT", "PENDING_FINANCE"].includes(order.status)) {
+                    return NextResponse.json({ error: "Cannot adjust order in this status" }, { status: 400 })
+                }
+            }
+
+            // Finance can only adjust PENDING_FINANCE orders
+            if (role === "FINANCE" && order.status !== "PENDING_FINANCE") {
+                return NextResponse.json({ error: "Cannot adjust order in this status" }, { status: 400 })
+            }
+
+            // Update items and recalculate total
+            let newTotal = 0
+            for (const adj of adjustedItems) {
+                const item = order.items.find(i => i.id === adj.id)
+                if (item && adj.quantity >= 0) {
+                    if (adj.quantity === 0) {
+                        // Delete item if quantity is 0
+                        await prisma.stokisOrderItem.delete({ where: { id: adj.id } })
+                    } else if (adj.quantity !== item.quantity) {
+                        // Update quantity if changed
+                        await prisma.stokisOrderItem.update({
+                            where: { id: adj.id },
+                            data: { quantity: adj.quantity }
+                        })
+                        newTotal += Number(item.price) * adj.quantity
+                    } else {
+                        newTotal += Number(item.price) * item.quantity
+                    }
+                }
+            }
+
+            // Update order with new total and notes
+            const updateData: Record<string, unknown> = {
+                totalAmount: newTotal,
+            }
+
+            // Append adjustment notes
+            if (notes) {
+                const existingNotes = order.notes || ""
+                updateData.notes = existingNotes
+                    ? `${existingNotes}\n[ADJUSTED] ${notes}`
+                    : `[ADJUSTED] ${notes}`
+            }
+
+            // If Finance adjusts, also approve the PO
+            if (role === "FINANCE") {
+                updateData.status = "PO_ISSUED" as StokisOrderStatus
+                updateData.financeApproveAt = new Date()
+                updateData.poIssuedAt = new Date()
+
+                // Generate Invoice
+                try {
+                    await generateInvoice(order.id)
+                } catch (invoiceError) {
+                    console.error("Invoice generation error:", invoiceError)
+                }
+
+                // Notify
+                await sendPushToRole("GUDANG" as Role, PushTemplates.poApproved(order.orderNumber))
+                await sendPushToUser(order.stokisId, {
+                    title: "✅ PO Disetujui (Adjusted)",
+                    body: `PO ${order.orderNumber} telah disesuaikan dan disetujui`,
+                    url: "/dashboard/history-pusat"
+                })
+            }
+
+            const updated = await prisma.stokisOrder.update({
+                where: { id },
+                data: updateData,
+                include: {
+                    items: { include: { product: true } },
+                    stokis: { select: { name: true } },
+                },
+            })
+
+            return NextResponse.json(updated)
+        }
+
+        // Handle status change
         const { status } = body as { status: StokisOrderStatus }
 
         const order = await prisma.stokisOrder.findUnique({
@@ -126,3 +240,4 @@ export async function PATCH(
         return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
 }
+

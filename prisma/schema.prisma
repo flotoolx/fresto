@@ -152,6 +152,14 @@ enum InvoiceStatus {
   CANCELLED
 }
 
+enum PaymentMethod {
+  TRANSFER_BCA
+  TRANSFER_MANDIRI
+  TRANSFER_BRI
+  CASH
+  OTHER
+}
+
 model Invoice {
   id            String        @id @default(cuid())
   invoiceNumber String        @unique
@@ -162,9 +170,29 @@ model Invoice {
   dueDate       DateTime
   paidAt        DateTime?
   status        InvoiceStatus @default(UNPAID)
+  paidAmount    Decimal       @db.Decimal(12, 2) @default(0) // Track partial payments
+  
+  payments      Payment[]     // Relation to payments
   
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  invoiceId     String
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  amount        Decimal       @db.Decimal(12, 2)
+  paymentDate   DateTime
+  method        PaymentMethod
+  proofImage    String?       // URL or base64 of uploaded proof
+  notes         String?
+  
+  createdAt     DateTime      @default(now())
+  createdBy     String        // User ID of Finance who created this
+  
+  @@index([invoiceId])
 }
 
 model StokisOrderItem {

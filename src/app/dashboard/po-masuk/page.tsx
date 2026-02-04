@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Package, Clock, Truck, ChevronRight } from "lucide-react"
+import { Package, Clock, Truck, ChevronRight, Printer } from "lucide-react"
+import ExportButton from "@/components/ExportButton"
+import Link from "next/link"
 
 interface OrderItem {
     id: string
@@ -90,11 +92,16 @@ export default function GudangPOMasukPage() {
     return (
         <div className="space-y-6">
             <div className="bg-white rounded-xl p-6 shadow-sm">
-                <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <Package className="text-blue-600" />
-                    PO Masuk
-                </h1>
-                <p className="text-gray-500 text-sm mt-1">Proses dan kirim pesanan ke Stokis</p>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <Package className="text-blue-600" />
+                            PO Masuk
+                        </h1>
+                        <p className="text-gray-500 text-sm mt-1">Proses dan kirim pesanan ke Stokis</p>
+                    </div>
+                    <ExportButton endpoint="/api/export/gudang-po" type="gudang" buttonText="Export" />
+                </div>
             </div>
 
             {orders.length === 0 ? (
@@ -192,6 +199,16 @@ export default function GudangPOMasukPage() {
                                 </div>
 
                                 <div className="space-y-2 pt-4">
+                                    {/* Print PO Button - Opens print preview page like Stokis */}
+                                    <Link
+                                        href={`/po/stokis/${selectedOrder.id}`}
+                                        target="_blank"
+                                        className="w-full py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 flex items-center justify-center gap-2"
+                                    >
+                                        <Printer size={18} />
+                                        Print PO (Picking List)
+                                    </Link>
+
                                     {selectedOrder.status === "PO_ISSUED" && (
                                         <button
                                             onClick={() => updateStatus(selectedOrder.id, "PROCESSING")}

@@ -16,7 +16,10 @@ import {
     X,
     Receipt,
     Store,
-    HelpCircle
+    HelpCircle,
+    CreditCard,
+    FileText,
+    FileSpreadsheet
 } from "lucide-react"
 import { useState } from "react"
 
@@ -31,9 +34,12 @@ const roleMenus: Record<string, { label: string; href: string; icon: React.React
     ],
     FINANCE: [
         { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
-        { label: "Invoices", href: "/dashboard/invoices", icon: <Receipt size={20} /> },
-        { label: "Laporan", href: "/dashboard/reports", icon: <BarChart3 size={20} /> },
         { label: "Approve PO", href: "/dashboard/approve-po", icon: <ShoppingCart size={20} /> },
+        { label: "Pembayaran", href: "/dashboard/pembayaran", icon: <CreditCard size={20} /> },
+        { label: "Tagihan", href: "/dashboard/tagihan", icon: <FileText size={20} /> },
+        { label: "Invoices", href: "/dashboard/invoices", icon: <Receipt size={20} /> },
+        { label: "Laporan Harga", href: "/dashboard/laporan-harga", icon: <FileSpreadsheet size={20} /> },
+        { label: "Laporan", href: "/dashboard/reports", icon: <BarChart3 size={20} /> },
     ],
     GUDANG: [
         { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
@@ -101,8 +107,8 @@ export default function Sidebar() {
                                     href={menu.href}
                                     onClick={() => setMobileOpen(false)}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                                            ? `${accentColor} text-white font-medium shadow-md`
-                                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                        ? `${accentColor} text-white font-medium shadow-md`
+                                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                                         }`}
                                 >
                                     <span className={isActive ? "text-white" : "text-gray-400"}>
