@@ -931,6 +931,7 @@ console.log('REMINDER: Update province untuk semua stokis existing!')
 | Finance | finance@dfresto.com | password123 |
 | Stokis | stokis.jakarta@dfresto.com | password123 |
 | Mitra | mitra1@dfresto.com | password123 |
+| DC | dc.jakarta@dfresto.com | dc123456 |
 
 ---
 

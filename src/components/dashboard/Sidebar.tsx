@@ -36,7 +36,7 @@ const roleMenus: Record<string, { label: string; href: string; icon: React.React
         { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
         { label: "Approve PO", href: "/dashboard/approve-po", icon: <ShoppingCart size={20} /> },
         { label: "Pembayaran", href: "/dashboard/pembayaran", icon: <CreditCard size={20} /> },
-        { label: "Tagihan", href: "/dashboard/tagihan", icon: <FileText size={20} /> },
+        // { label: "Tagihan", href: "/dashboard/tagihan", icon: <FileText size={20} /> }, // HIDDEN - Phase 7
         { label: "Invoices", href: "/dashboard/invoices", icon: <Receipt size={20} /> },
         { label: "Laporan Harga", href: "/dashboard/laporan-harga", icon: <FileSpreadsheet size={20} /> },
         { label: "Laporan", href: "/dashboard/reports", icon: <BarChart3 size={20} /> },
@@ -154,7 +154,7 @@ export default function Sidebar() {
 
     return (
         <>
-            {/* Hamburger Toggle */}
+            {/* Mobile Hamburger Toggle - Only visible on mobile */}
             <button
                 onClick={() => setMobileOpen(!mobileOpen)}
                 className="fixed top-4 left-4 z-50 p-2.5 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all lg:hidden"
@@ -163,28 +163,24 @@ export default function Sidebar() {
                 {mobileOpen ? <X size={22} className="text-gray-700" /> : <Menu size={22} className="text-gray-700" />}
             </button>
 
-            {/* Desktop hamburger for sidebar toggle */}
-            <button
-                onClick={() => setMobileOpen(!mobileOpen)}
-                className="hidden lg:flex fixed top-4 left-4 z-50 p-2.5 bg-white rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100"
-                aria-label="Toggle Menu"
-            >
-                <Menu size={20} className="text-gray-600" />
-            </button>
-
-            {/* Mobile Overlay */}
+            {/* Mobile Overlay - Only on mobile when sidebar is open */}
             {mobileOpen && (
                 <div
-                    className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+                    className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden"
                     onClick={() => setMobileOpen(false)}
                 />
             )}
 
-            {/* Sidebar */}
+            {/* Mobile Sidebar - Toggle on mobile */}
             <aside
-                className={`fixed top-0 left-0 h-full w-72 z-40 transform transition-transform duration-300 ease-out shadow-2xl lg:shadow-lg ${mobileOpen ? "translate-x-0" : "-translate-x-full"
+                className={`fixed top-0 left-0 h-full w-72 z-40 transform transition-transform duration-300 ease-out shadow-2xl lg:hidden ${mobileOpen ? "translate-x-0" : "-translate-x-full"
                     }`}
             >
+                <SidebarContent />
+            </aside>
+
+            {/* Desktop Sidebar - Always visible */}
+            <aside className="hidden lg:block fixed top-0 left-0 h-full w-72 z-40 shadow-sm">
                 <SidebarContent />
             </aside>
         </>

@@ -18,8 +18,8 @@ export default async function DashboardLayout({
         <div className="min-h-screen bg-slate-50">
             <Sidebar />
 
-            {/* Top Header Bar */}
-            <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 z-30 flex items-center justify-between px-6 lg:px-8">
+            {/* Top Header Bar - with left margin for fixed sidebar on desktop */}
+            <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 z-30 flex items-center justify-between px-6 lg:pl-80 lg:pr-8">
                 <div className="flex items-center gap-4 ml-14 lg:ml-0">
                     <h2 className="text-lg font-semibold text-gray-800 hidden sm:block">
                         D&apos;Fresto Dashboard
@@ -39,8 +39,8 @@ export default async function DashboardLayout({
                 </div>
             </header>
 
-            {/* Main Content - with padding for header */}
-            <main className="pt-20 px-4 lg:px-8 pb-8 min-h-screen">
+            {/* Main Content - with left margin for fixed sidebar on desktop */}
+            <main className="pt-20 px-4 lg:pl-80 lg:pr-8 pb-8 min-h-screen">
                 <div className="max-w-7xl mx-auto animate-fade-in">
                     {children}
                 </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ShoppingCart, Plus, Minus, Trash2 } from "lucide-react"
+import { ShoppingCart, Plus, Minus, Trash2, Check } from "lucide-react"
 
 interface Product {
     id: string
@@ -26,6 +26,7 @@ export default function MitraOrderPage() {
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState("")
+    const [recentlyAdded, setRecentlyAdded] = useState<Set<string>>(new Set())
 
     useEffect(() => {
         fetchProducts()
@@ -55,6 +56,16 @@ export default function MitraOrderPage() {
             }
             return [...prev, { product, quantity: 1 }]
         })
+
+        // Visual feedback for mobile
+        setRecentlyAdded((prev) => new Set(prev).add(product.id))
+        setTimeout(() => {
+            setRecentlyAdded((prev) => {
+                const next = new Set(prev)
+                next.delete(product.id)
+                return next
+            })
+        }, 800)
     }
 
     const updateQuantity = (productId: string, delta: number) => {
@@ -173,9 +184,12 @@ export default function MitraOrderPage() {
                                         </div>
                                         <button
                                             onClick={() => addToCart(product)}
-                                            className="p-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                                            className={`p-2 rounded-lg transition-all duration-300 ${recentlyAdded.has(product.id)
+                                                    ? "bg-green-500 text-white scale-110"
+                                                    : "bg-orange-500 text-white hover:bg-orange-600"
+                                                }`}
                                         >
-                                            <Plus size={18} />
+                                            {recentlyAdded.has(product.id) ? <Check size={18} /> : <Plus size={18} />}
                                         </button>
                                     </div>
                                 </div>

@@ -95,6 +95,7 @@ export default function ReportsPage() {
     const [loading, setLoading] = useState(true)
     const [year, setYear] = useState(new Date().getFullYear())
     const [period, setPeriod] = useState(30)
+    const [invoiceFilter, setInvoiceFilter] = useState<"all" | "dc" | "stokis">("all")
 
     // Report data
     const [summary, setSummary] = useState<SummaryData | null>(null)
@@ -276,7 +277,7 @@ export default function ReportsPage() {
 
     const tabs = [
         { id: "overview", label: "Overview", icon: TrendingUp },
-        { id: "monthly", label: "Penjualan Bulanan", icon: Calendar },
+        // { id: "monthly", label: "Penjualan Bulanan", icon: Calendar }, // HIDDEN - Phase 7
         { id: "products", label: "Produk Terlaris", icon: Package },
         { id: "stokis", label: "Performa Stokis", icon: Users },
         { id: "invoice", label: "Umur Piutang", icon: Receipt }
@@ -649,49 +650,81 @@ export default function ReportsPage() {
                             {/* Invoice Aging */}
                             {activeTab === "invoice" && invoiceAging && (
                                 <div className="space-y-4">
+                                    {/* Filter Buttons */}
+                                    <div className="flex gap-2 flex-wrap">
+                                        {["all", "dc", "stokis"].map((filter) => (
+                                            <button
+                                                key={filter}
+                                                onClick={() => setInvoiceFilter(filter as "all" | "dc" | "stokis")}
+                                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${invoiceFilter === filter
+                                                        ? "bg-blue-500 text-white shadow-md"
+                                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                                    }`}
+                                            >
+                                                {filter === "all" ? "Semua" : filter === "dc" ? "DC" : "Stokis"}
+                                            </button>
+                                        ))}
+                                    </div>
+
                                     {/* Total Invoice Info */}
-                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                                        <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-4 text-white relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Receipt size={16} className="opacity-80" />
-                                                <span className="text-xs text-white/80">Total Outstanding</span>
+                                    <div className={`grid gap-3 ${invoiceFilter === "all" ? "grid-cols-2 lg:grid-cols-3" : "grid-cols-1 lg:grid-cols-2"}`}>
+                                        {(invoiceFilter === "all" || invoiceFilter === "dc" || invoiceFilter === "stokis") && (
+                                            <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-4 text-white relative overflow-hidden">
+                                                <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Receipt size={16} className="opacity-80" />
+                                                    <span className="text-xs text-white/80">Total Outstanding {invoiceFilter !== "all" ? `(${invoiceFilter.toUpperCase()})` : ""}</span>
+                                                </div>
+                                                <p className="text-xl font-bold">
+                                                    {formatCurrency(
+                                                        invoiceFilter === "all" ? invoiceAging.totalOutstanding :
+                                                            invoiceFilter === "dc" ? invoiceAging.dcAmount : invoiceAging.stokisAmount
+                                                    )}
+                                                </p>
+                                                <p className="text-xs text-white/60 mt-1">
+                                                    {invoiceFilter === "all" ? invoiceAging.totalInvoices :
+                                                        invoiceFilter === "dc" ? invoiceAging.dcCount : invoiceAging.stokisCount} Invoice
+                                                </p>
                                             </div>
-                                            <p className="text-xl font-bold">{formatCurrency(invoiceAging.totalOutstanding)}</p>
-                                            <p className="text-xs text-white/60 mt-1">{invoiceAging.totalInvoices} Invoice</p>
-                                        </div>
-                                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <p className="text-xs text-white/80 mb-1">DC</p>
-                                            <p className="text-xl font-bold">{invoiceAging.dcCount}</p>
-                                            <p className="text-xs text-white/60 mt-1">{formatCurrency(invoiceAging.dcAmount)}</p>
-                                        </div>
-                                        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <p className="text-xs text-white/80 mb-1">Stokis</p>
-                                            <p className="text-xl font-bold">{invoiceAging.stokisCount}</p>
-                                            <p className="text-xs text-white/60 mt-1">{formatCurrency(invoiceAging.stokisAmount)}</p>
-                                        </div>
+                                        )}
+                                        {(invoiceFilter === "all" || invoiceFilter === "dc") && (
+                                            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white relative overflow-hidden">
+                                                <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                                <p className="text-xs text-white/80 mb-1">DC</p>
+                                                <p className="text-xl font-bold">{invoiceAging.dcCount}</p>
+                                                <p className="text-xs text-white/60 mt-1">{formatCurrency(invoiceAging.dcAmount)}</p>
+                                            </div>
+                                        )}
+                                        {(invoiceFilter === "all" || invoiceFilter === "stokis") && (
+                                            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white relative overflow-hidden">
+                                                <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                                <p className="text-xs text-white/80 mb-1">Stokis</p>
+                                                <p className="text-xl font-bold">{invoiceAging.stokisCount}</p>
+                                                <p className="text-xs text-white/60 mt-1">{formatCurrency(invoiceAging.stokisAmount)}</p>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Visual Bar */}
-                                    <div className="bg-white rounded-xl p-4 border border-gray-100">
-                                        <h3 className="font-semibold text-gray-900 text-sm mb-3">Distribusi Piutang per Tipe</h3>
-                                        <div className="flex h-6 rounded-lg overflow-hidden">
-                                            {invoiceAging.totalOutstanding > 0 ? (
-                                                <>
-                                                    <div className="bg-gradient-to-r from-indigo-400 to-purple-500" style={{ width: `${(invoiceAging.dcAmount / invoiceAging.totalOutstanding) * 100}%` }} title={`DC: ${formatCurrency(invoiceAging.dcAmount)}`} />
-                                                    <div className="bg-gradient-to-r from-emerald-400 to-teal-500" style={{ width: `${(invoiceAging.stokisAmount / invoiceAging.totalOutstanding) * 100}%` }} title={`Stokis: ${formatCurrency(invoiceAging.stokisAmount)}`} />
-                                                </>
-                                            ) : (
-                                                <div className="w-full bg-gray-100 flex items-center justify-center text-gray-500 text-xs">Tidak ada piutang</div>
-                                            )}
+                                    {invoiceFilter === "all" && (
+                                        <div className="bg-white rounded-xl p-4 border border-gray-100">
+                                            <h3 className="font-semibold text-gray-900 text-sm mb-3">Distribusi Piutang per Tipe</h3>
+                                            <div className="flex h-6 rounded-lg overflow-hidden">
+                                                {invoiceAging.totalOutstanding > 0 ? (
+                                                    <>
+                                                        <div className="bg-gradient-to-r from-indigo-400 to-purple-500" style={{ width: `${(invoiceAging.dcAmount / invoiceAging.totalOutstanding) * 100}%` }} title={`DC: ${formatCurrency(invoiceAging.dcAmount)}`} />
+                                                        <div className="bg-gradient-to-r from-emerald-400 to-teal-500" style={{ width: `${(invoiceAging.stokisAmount / invoiceAging.totalOutstanding) * 100}%` }} title={`Stokis: ${formatCurrency(invoiceAging.stokisAmount)}`} />
+                                                    </>
+                                                ) : (
+                                                    <div className="w-full bg-gray-100 flex items-center justify-center text-gray-500 text-xs">Tidak ada piutang</div>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-4 mt-3 text-xs flex-wrap">
+                                                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gradient-to-r from-indigo-400 to-purple-500 rounded" /> DC</span>
+                                                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gradient-to-r from-emerald-400 to-teal-500 rounded" /> Stokis</span>
+                                            </div>
                                         </div>
-                                        <div className="flex gap-4 mt-3 text-xs flex-wrap">
-                                            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gradient-to-r from-indigo-400 to-purple-500 rounded" /> DC</span>
-                                            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gradient-to-r from-emerald-400 to-teal-500 rounded" /> Stokis</span>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
                             )}
                         </>
