@@ -157,9 +157,17 @@ export default function ReportsPage() {
             } else if (activeTab === "monthly") {
                 url += `type=monthly-sales&year=${year}`
             } else if (activeTab === "products") {
-                url += `type=top-products&period=${period}`
+                if (useCustomDate) {
+                    url += `type=top-products&dateFrom=${customDateFrom}&dateTo=${customDateTo}`
+                } else {
+                    url += `type=top-products&period=${period}`
+                }
             } else if (activeTab === "stokis") {
-                url += `type=stokis-performance&period=${period}`
+                if (useCustomDate) {
+                    url += `type=stokis-performance&dateFrom=${customDateFrom}&dateTo=${customDateTo}`
+                } else {
+                    url += `type=stokis-performance&period=${period}`
+                }
             } else if (activeTab === "invoice") {
                 url += `type=invoice-aging`
             }
@@ -479,8 +487,8 @@ export default function ReportsPage() {
                                 </div>
                             )}
 
-                            {/* Custom date range - Only for Overview tab */}
-                            {activeTab === "overview" && (
+                            {/* Custom date range - For Overview, Products, and Stokis tabs */}
+                            {(activeTab === "overview" || activeTab === "products" || activeTab === "stokis") && (
                                 <>
                                     <button
                                         onClick={() => setUseCustomDate(!useCustomDate)}

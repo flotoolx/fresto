@@ -37,9 +37,9 @@ export async function GET(request: Request) {
             case "monthly-sales":
                 return await getMonthlySalesReport(year)
             case "top-products":
-                return await getTopProductsReport(dateFrom)
+                return await getTopProductsReport(dateFrom, dateTo)
             case "stokis-performance":
-                return await getStokisPerformanceReport(dateFrom)
+                return await getStokisPerformanceReport(dateFrom, dateTo)
             case "invoice-aging":
                 return await getInvoiceAgingReport()
             case "summary":
@@ -167,15 +167,19 @@ async function getMonthlySalesReport(year: number) {
 }
 
 // Top Products Report
-async function getTopProductsReport(dateFrom: Date) {
+async function getTopProductsReport(dateFrom: Date, dateTo?: Date) {
+    const dateFilter = dateTo
+        ? { gte: dateFrom, lte: dateTo }
+        : { gte: dateFrom }
+
     // Get all order items
     const stokisItems = await prisma.stokisOrderItem.findMany({
-        where: { order: { createdAt: { gte: dateFrom } } },
+        where: { order: { createdAt: dateFilter } },
         include: { product: { select: { id: true, name: true, sku: true, unit: true } } }
     })
 
     const mitraItems = await prisma.mitraOrderItem.findMany({
-        where: { order: { createdAt: { gte: dateFrom } } },
+        where: { order: { createdAt: dateFilter } },
         include: { product: { select: { id: true, name: true, sku: true, unit: true } } }
     })
 
@@ -219,16 +223,20 @@ async function getTopProductsReport(dateFrom: Date) {
 }
 
 // Stokis Performance Report
-async function getStokisPerformanceReport(dateFrom: Date) {
+async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date) {
+    const dateFilter = dateTo
+        ? { gte: dateFrom, lte: dateTo }
+        : { gte: dateFrom }
+
     const stokisOrders = await prisma.stokisOrder.findMany({
-        where: { createdAt: { gte: dateFrom } },
+        where: { createdAt: dateFilter },
         include: {
             stokis: { select: { id: true, name: true, address: true, phone: true } }
         }
     })
 
     const mitraOrders = await prisma.mitraOrder.findMany({
-        where: { createdAt: { gte: dateFrom } },
+        where: { createdAt: dateFilter },
         include: {
             stokis: { select: { id: true, name: true } }
         }
