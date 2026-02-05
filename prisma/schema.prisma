@@ -43,6 +43,8 @@ model User {
   phone       String?
   role        Role
   address     String?
+  province    String?  // Province for unique code generation (e.g., "Jawa Barat")
+  uniqueCode  String?  @unique // Unique code (e.g., "MTR-JABAR-001")
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

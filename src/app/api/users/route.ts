@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcrypt"
+import { generateUniqueCode } from "@/lib/unique-code"
 
 export async function GET() {
     try {
@@ -20,6 +21,8 @@ export async function GET() {
                 role: true,
                 phone: true,
                 address: true,
+                province: true,
+                uniqueCode: true,
                 stokis: {
                     select: { name: true },
                 },
@@ -44,7 +47,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json()
-        const { name, email, password, role, phone, address, stokisId } = body
+        const { name, email, password, role, phone, address, province, stokisId } = body
 
         // Validation
         if (!name || !email || !password || !role) {
@@ -60,6 +63,12 @@ export async function POST(request: Request) {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10)
 
+        // Generate unique code for MITRA, STOKIS, DC
+        let uniqueCode: string | null = null
+        if (["MITRA", "STOKIS", "DC"].includes(role) && province) {
+            uniqueCode = await generateUniqueCode(role, province)
+        }
+
         // Create user
         const user = await prisma.user.create({
             data: {
@@ -69,6 +78,8 @@ export async function POST(request: Request) {
                 role,
                 phone: phone || null,
                 address: address || null,
+                province: province || null,
+                uniqueCode,
                 stokisId: stokisId || null,
             },
             select: {
@@ -76,6 +87,7 @@ export async function POST(request: Request) {
                 name: true,
                 email: true,
                 role: true,
+                uniqueCode: true,
             },
         })
 
