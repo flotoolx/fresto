@@ -247,14 +247,55 @@ export default function ReportsPage() {
                 ])
             })
         } else if (activeTab === "invoice" && invoiceAging) {
+            // Get invoices to export based on filter
+            const invoicesToExport = invoiceFilter === "all"
+                ? [...invoiceDetails.dc, ...invoiceDetails.stokis]
+                : invoiceFilter === "dc"
+                    ? invoiceDetails.dc
+                    : invoiceDetails.stokis
+
+            // Summary section
             autoTable(doc, {
                 startY: 35,
                 head: [["Kategori", "Jumlah Invoice", "Total Amount"]],
                 body: [
-                    ["DC", invoiceAging.dcCount.toString(), formatCurrency(invoiceAging.dcAmount)],
-                    ["Stokis", invoiceAging.stokisCount.toString(), formatCurrency(invoiceAging.stokisAmount)],
+                    ["Outstanding", invoiceAging.totalInvoices.toString(), formatCurrency(invoiceAging.totalOutstanding)],
+                    ["Belum Jatuh Tempo", (agingSummary?.belum_jatuh_tempo?.count || 0).toString(), formatCurrency(agingSummary?.belum_jatuh_tempo?.amount || 0)],
+                    ["1-7 Hari", (agingSummary?.["1_7_hari"]?.count || 0).toString(), formatCurrency(agingSummary?.["1_7_hari"]?.amount || 0)],
+                    ["8-30 Hari", (agingSummary?.["8_30_hari"]?.count || 0).toString(), formatCurrency(agingSummary?.["8_30_hari"]?.amount || 0)],
+                    ["30+ Hari", (agingSummary?.["30_plus"]?.count || 0).toString(), formatCurrency(agingSummary?.["30_plus"]?.amount || 0)],
                 ],
-                foot: [["TOTAL OUTSTANDING", invoiceAging.totalInvoices.toString(), formatCurrency(invoiceAging.totalOutstanding)]]
+                theme: "striped"
+            })
+
+            // Invoice details table
+            const lastY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || 80
+            doc.text("Daftar Invoice Umur Piutang", 14, lastY + 10)
+
+            const getAgingLabel = (category: string) => {
+                const labels: Record<string, string> = {
+                    belum_jatuh_tempo: "Belum Jatuh Tempo",
+                    "1_7_hari": "1-7 Hari",
+                    "8_30_hari": "8-30 Hari",
+                    "30_plus": "30+ Hari"
+                }
+                return labels[category] || category
+            }
+
+            autoTable(doc, {
+                startY: lastY + 15,
+                head: [["No. Invoice", "No. Order", "Stokis", "Jumlah", "Jatuh Tempo", "Kategori", "Status"]],
+                body: invoicesToExport.map(inv => [
+                    inv.invoiceNumber,
+                    inv.orderNumber,
+                    inv.stokisName,
+                    formatCurrency(inv.amount),
+                    new Date(inv.dueDate).toLocaleDateString("id-ID"),
+                    getAgingLabel(inv.agingCategory),
+                    inv.status === "OVERDUE" ? "Jatuh Tempo" : "Belum Bayar"
+                ]),
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [59, 130, 246] }
             })
         }
 
@@ -294,10 +335,53 @@ export default function ReportsPage() {
                 "Total Revenue": s.totalRevenue
             }))
         } else if (activeTab === "invoice" && invoiceAging) {
-            data = [
-                { Kategori: "DC", Jumlah: invoiceAging.dcCount, Amount: invoiceAging.dcAmount },
-                { Kategori: "Stokis", Jumlah: invoiceAging.stokisCount, Amount: invoiceAging.stokisAmount },
+            // Get invoices to export based on filter
+            const invoicesToExport = invoiceFilter === "all"
+                ? [...invoiceDetails.dc, ...invoiceDetails.stokis]
+                : invoiceFilter === "dc"
+                    ? invoiceDetails.dc
+                    : invoiceDetails.stokis
+
+            const getAgingLabel = (category: string) => {
+                const labels: Record<string, string> = {
+                    belum_jatuh_tempo: "Belum Jatuh Tempo",
+                    "1_7_hari": "1-7 Hari",
+                    "8_30_hari": "8-30 Hari",
+                    "30_plus": "30+ Hari"
+                }
+                return labels[category] || category
+            }
+
+            // Invoice details data
+            data = invoicesToExport.map((inv, i) => ({
+                "#": i + 1,
+                "No. Invoice": inv.invoiceNumber,
+                "No. Order": inv.orderNumber,
+                "Stokis": inv.stokisName,
+                "No. Telp": inv.stokisPhone || "-",
+                "Jumlah": inv.amount,
+                "Jatuh Tempo": new Date(inv.dueDate).toLocaleDateString("id-ID"),
+                "Kategori Umur": getAgingLabel(inv.agingCategory),
+                "Status": inv.status === "OVERDUE" ? "Jatuh Tempo" : "Belum Bayar"
+            }))
+
+            // Create summary data
+            const summaryData = [
+                { Kategori: "Total Outstanding", Jumlah: invoiceAging.totalInvoices, Amount: invoiceAging.totalOutstanding },
+                { Kategori: "Belum Jatuh Tempo", Jumlah: agingSummary?.belum_jatuh_tempo?.count || 0, Amount: agingSummary?.belum_jatuh_tempo?.amount || 0 },
+                { Kategori: "1-7 Hari", Jumlah: agingSummary?.["1_7_hari"]?.count || 0, Amount: agingSummary?.["1_7_hari"]?.amount || 0 },
+                { Kategori: "8-30 Hari", Jumlah: agingSummary?.["8_30_hari"]?.count || 0, Amount: agingSummary?.["8_30_hari"]?.amount || 0 },
+                { Kategori: "30+ Hari", Jumlah: agingSummary?.["30_plus"]?.count || 0, Amount: agingSummary?.["30_plus"]?.amount || 0 },
             ]
+
+            // Create workbook with two sheets
+            const wb = XLSX.utils.book_new()
+            const wsSummary = XLSX.utils.json_to_sheet(summaryData)
+            const wsDetails = XLSX.utils.json_to_sheet(data)
+            XLSX.utils.book_append_sheet(wb, wsSummary, "Ringkasan")
+            XLSX.utils.book_append_sheet(wb, wsDetails, "Detail Invoice")
+            XLSX.writeFile(wb, `${title.replace(/ /g, "_")}_${new Date().toISOString().split("T")[0]}.xlsx`)
+            return
         }
 
         if (data.length > 0) {
@@ -401,8 +485,8 @@ export default function ReportsPage() {
                                     <button
                                         onClick={() => setUseCustomDate(!useCustomDate)}
                                         className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${useCustomDate
-                                                ? "bg-blue-500 text-white"
-                                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                            ? "bg-blue-500 text-white"
+                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                                             }`}
                                     >
                                         <Calendar size={14} />
