@@ -24,6 +24,7 @@ interface SummaryData {
         mitraOrders: number
         totalStokisRevenue: number
         totalMitraRevenue: number
+        totalDcRevenue: number
         totalRevenue: number
     }
     users: {
@@ -33,6 +34,7 @@ interface SummaryData {
         totalMitra: number
         activeMitra: number
         inactiveMitra: number
+        totalDc: number
     }
     orderStatus: Record<string, number>
 }
@@ -570,25 +572,18 @@ export default function ReportsPage() {
                                                 <span className="text-xs text-white/80">Total Revenue</span>
                                             </div>
                                             <p className="text-xl font-bold">{formatCurrency(summary.summary.totalRevenue)}</p>
-                                            <p className="text-xs text-white/60 mt-1">{period} hari terakhir</p>
+                                            <p className="text-xs text-white/60 mt-1">
+                                                {useCustomDate ? `${customDateFrom} - ${customDateTo}` : `${period} hari terakhir`}
+                                            </p>
                                         </div>
-                                        <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-white relative overflow-hidden">
+                                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                             <div className="flex items-center gap-2 mb-2">
-                                                <ShoppingCart size={16} className="opacity-80" />
-                                                <span className="text-xs text-white/80">Total Order</span>
+                                                <Store size={16} className="opacity-80" />
+                                                <span className="text-xs text-white/80">Total DC</span>
                                             </div>
-                                            <p className="text-xl font-bold">{summary.summary.stokisOrders + summary.summary.mitraOrders}</p>
-                                            <p className="text-xs text-white/60 mt-1">Stokis: {summary.summary.stokisOrders} | Mitra: {summary.summary.mitraOrders}</p>
-                                        </div>
-                                        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Users size={16} className="opacity-80" />
-                                                <span className="text-xs text-white/80">Total Mitra</span>
-                                            </div>
-                                            <p className="text-xl font-bold">{summary.users.totalMitra}</p>
-                                            <p className="text-xs text-white/60 mt-1">{summary.users.activeMitra} aktif</p>
+                                            <p className="text-xl font-bold">{summary.users.totalDc}</p>
+                                            <p className="text-xs text-white/60 mt-1">Revenue: {formatCurrency(summary.summary.totalDcRevenue)}</p>
                                         </div>
                                         <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -597,7 +592,16 @@ export default function ReportsPage() {
                                                 <span className="text-xs text-white/80">Total Stokis</span>
                                             </div>
                                             <p className="text-xl font-bold">{summary.users.totalStokis}</p>
-                                            <p className="text-xs text-white/60 mt-1">{summary.users.activeStokis} aktif</p>
+                                            <p className="text-xs text-white/60 mt-1">Revenue: {formatCurrency(summary.summary.totalStokisRevenue)}</p>
+                                        </div>
+                                        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Users size={16} className="opacity-80" />
+                                                <span className="text-xs text-white/80">Total Mitra</span>
+                                            </div>
+                                            <p className="text-xl font-bold">{summary.users.totalMitra}</p>
+                                            <p className="text-xs text-white/60 mt-1">Revenue: {formatCurrency(summary.summary.totalMitraRevenue)}</p>
                                         </div>
                                     </div>
 

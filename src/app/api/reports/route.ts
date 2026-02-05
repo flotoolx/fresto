@@ -74,6 +74,9 @@ async function getSummaryReport(dateFrom: Date, dateTo: Date | undefined, period
     const totalStokisRevenue = stokisOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0)
     const totalMitraRevenue = mitraOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0)
 
+    // DC Revenue is from Stokis orders (DC sells to Stokis)
+    const totalDcRevenue = totalStokisRevenue
+
     // Order status breakdown
     const stokisStatusCounts = stokisOrders.reduce((acc, o) => {
         acc[o.status] = (acc[o.status] || 0) + 1
@@ -85,6 +88,7 @@ async function getSummaryReport(dateFrom: Date, dateTo: Date | undefined, period
     const activeMitra = new Set(mitraOrders.map(o => o.mitraId)).size
     const totalStokis = await prisma.user.count({ where: { role: "STOKIS", isActive: true } })
     const totalMitra = await prisma.user.count({ where: { role: "MITRA", isActive: true } })
+    const totalDc = await prisma.user.count({ where: { role: "DC", isActive: true } })
 
     return NextResponse.json({
         period,
@@ -93,6 +97,7 @@ async function getSummaryReport(dateFrom: Date, dateTo: Date | undefined, period
             mitraOrders: mitraOrders.length,
             totalStokisRevenue,
             totalMitraRevenue,
+            totalDcRevenue,
             totalRevenue: totalStokisRevenue + totalMitraRevenue
         },
         users: {
@@ -101,7 +106,8 @@ async function getSummaryReport(dateFrom: Date, dateTo: Date | undefined, period
             inactiveStokis: totalStokis - activeStokis,
             totalMitra,
             activeMitra,
-            inactiveMitra: totalMitra - activeMitra
+            inactiveMitra: totalMitra - activeMitra,
+            totalDc
         },
         orderStatus: stokisStatusCounts
     })
