@@ -308,8 +308,10 @@ Update ini menambahkan model dan field baru di Prisma schema:
 ssh dfresto@your_server_ip
 
 # Backup database
-pg_dump -U dfresto_user -d dfresto_db > ~/backup_$(date +%Y%m%d_%H%M%S).sql
+pg_dump -h localhost -U dfresto_user -d dfresto_db > ~/backup_$(date +%Y%m%d_%H%M%S).sql
 ```
+
+password db : dfresto!
 
 #### 2. Pull/Upload Kode Terbaru
 

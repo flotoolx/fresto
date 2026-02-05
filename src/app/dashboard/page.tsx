@@ -27,6 +27,24 @@ interface DashboardStats {
         stokis: number
         mitra: number
     }
+    revenue?: {
+        dc: number
+        stokis: number
+        mitra: number
+    }
+    outstanding?: {
+        dc: { count: number; amount: number }
+        stokis: { count: number; amount: number }
+    }
+}
+
+interface RecentOrder {
+    id: string
+    orderNumber: string
+    stokisName: string
+    totalAmount: number
+    status: string
+    createdAt: string
 }
 
 interface StatCard {
@@ -52,15 +70,22 @@ export default function DashboardPage() {
 
     const [stats, setStats] = useState<StatCard[]>([])
     const [loading, setLoading] = useState(true)
+    const [summaryData, setSummaryData] = useState<DashboardStats | null>(null)
+    const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
 
     useEffect(() => {
         async function fetchStats() {
             setLoading(true)
             try {
                 if (role === "PUSAT") {
-                    const res = await fetch(`/api/analytics/dashboard?start=${startDate}&end=${endDate}`)
-                    if (res.ok) {
-                        const data: DashboardStats = await res.json()
+                    const [dashRes, ordersRes] = await Promise.all([
+                        fetch(`/api/analytics/dashboard?start=${startDate}&end=${endDate}`),
+                        fetch(`/api/orders/stokis?limit=5`)
+                    ])
+
+                    if (dashRes.ok) {
+                        const data: DashboardStats = await dashRes.json()
+                        setSummaryData(data)
                         setStats([
                             { label: "Order Pending", value: data.pendingOrders, icon: ShoppingCart, gradient: "from-rose-500 to-pink-600", href: "/dashboard/orders-stokis" },
                             { label: "Total Mitra", value: data.totalMitra, icon: Users, gradient: "from-blue-500 to-blue-600" },
@@ -68,6 +93,20 @@ export default function DashboardPage() {
                             { label: "Total DC", value: data.totalDC, icon: Building2, gradient: "from-indigo-500 to-purple-600" },
                             { label: "Gudang Aktif", value: data.totalGudang, icon: Warehouse, gradient: "from-amber-500 to-orange-600" },
                         ])
+                    }
+
+                    if (ordersRes.ok) {
+                        const orders = await ordersRes.json()
+                        if (Array.isArray(orders)) {
+                            setRecentOrders(orders.slice(0, 5).map((o: { id: string; orderNumber: string; stokis?: { name: string }; totalAmount: number; status: string; createdAt: string }) => ({
+                                id: o.id,
+                                orderNumber: o.orderNumber,
+                                stokisName: o.stokis?.name || "-",
+                                totalAmount: Number(o.totalAmount),
+                                status: o.status,
+                                createdAt: o.createdAt
+                            })))
+                        }
                     }
                 } else if (role === "FINANCE") {
                     const res = await fetch(`/api/analytics/dashboard?start=${startDate}&end=${endDate}`)
@@ -307,33 +346,91 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* Info Cards */}
-            <div className="grid lg:grid-cols-2 gap-4">
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-2 mb-3">
-                        <div className="p-1.5 bg-gray-100 rounded-lg">
-                            <Activity size={16} className="text-gray-600" />
+            {/* Info Cards - Only for PUSAT role */}
+            {role === "PUSAT" && (
+                <div className="grid lg:grid-cols-2 gap-4">
+                    {/* Revenue Summary */}
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="p-1.5 bg-blue-100 rounded-lg">
+                                <TrendingUp size={16} className="text-blue-600" />
+                            </div>
+                            <h2 className="text-sm font-semibold text-gray-900">Ringkasan Revenue</h2>
                         </div>
-                        <h2 className="text-sm font-semibold text-gray-900">Ringkasan</h2>
+                        {summaryData ? (
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                                    <span className="text-sm text-gray-600">Revenue Stokis</span>
+                                    <span className="text-sm font-semibold text-emerald-600">
+                                        Rp {(summaryData.revenue?.stokis || 0).toLocaleString("id-ID")}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                                    <span className="text-sm text-gray-600">Invoice Outstanding</span>
+                                    <span className="text-sm font-semibold text-amber-600">
+                                        {summaryData.outstanding?.stokis?.count || 0} invoice
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between py-2">
+                                    <span className="text-sm text-gray-600">Total Outstanding</span>
+                                    <span className="text-sm font-semibold text-rose-600">
+                                        Rp {(summaryData.outstanding?.stokis?.amount || 0).toLocaleString("id-ID")}
+                                    </span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center py-4">
+                                <Activity size={24} className="mx-auto mb-2 text-gray-300" />
+                                <p className="text-gray-400 text-sm">Memuat data...</p>
+                            </div>
+                        )}
                     </div>
-                    <div className="text-center py-6">
-                        <Activity size={32} className="mx-auto mb-2 text-gray-300" />
-                        <p className="text-gray-400 text-sm">Lihat laporan di menu Laporan</p>
+
+                    {/* Recent Orders */}
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1.5 bg-emerald-100 rounded-lg">
+                                    <ShoppingCart size={16} className="text-emerald-600" />
+                                </div>
+                                <h2 className="text-sm font-semibold text-gray-900">Order Terbaru</h2>
+                            </div>
+                            <Link href="/dashboard/orders-stokis" className="text-xs text-blue-600 hover:underline">
+                                Lihat Semua
+                            </Link>
+                        </div>
+                        {recentOrders.length > 0 ? (
+                            <div className="space-y-2">
+                                {recentOrders.map((order) => (
+                                    <div key={order.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-900">{order.orderNumber}</p>
+                                            <p className="text-xs text-gray-500">{order.stokisName}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm font-semibold text-gray-900">
+                                                Rp {order.totalAmount.toLocaleString("id-ID")}
+                                            </p>
+                                            <span className={`text-xs px-2 py-0.5 rounded-full ${order.status === "RECEIVED" ? "bg-emerald-100 text-emerald-700" :
+                                                    order.status === "PENDING_PUSAT" ? "bg-amber-100 text-amber-700" :
+                                                        order.status === "PO_ISSUED" ? "bg-blue-100 text-blue-700" :
+                                                            "bg-gray-100 text-gray-600"
+                                                }`}>
+                                                {order.status.replace(/_/g, " ")}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-4">
+                                <ShoppingCart size={24} className="mx-auto mb-2 text-gray-300" />
+                                <p className="text-gray-400 text-sm">Belum ada order</p>
+                            </div>
+                        )}
                     </div>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-2 mb-3">
-                        <div className="p-1.5 bg-emerald-100 rounded-lg">
-                            <TrendingUp size={16} className="text-emerald-600" />
-                        </div>
-                        <h2 className="text-sm font-semibold text-gray-900">Aktivitas Terbaru</h2>
-                    </div>
-                    <div className="text-center py-6">
-                        <TrendingUp size={32} className="mx-auto mb-2 text-gray-300" />
-                        <p className="text-gray-400 text-sm">Belum ada aktivitas</p>
-                    </div>
-                </div>
-            </div>
+            )}
         </div>
     )
 }
