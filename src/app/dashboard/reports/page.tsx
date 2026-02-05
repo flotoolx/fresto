@@ -80,14 +80,11 @@ interface StokisPerf {
 }
 
 interface InvoiceAgingSummary {
-    currentCount: number
-    currentAmount: number
-    overdue1_7Count: number
-    overdue1_7Amount: number
-    overdue8_30Count: number
-    overdue8_30Amount: number
-    overdue30plusCount: number
-    overdue30plusAmount: number
+    dcCount: number
+    dcAmount: number
+    stokisCount: number
+    stokisAmount: number
+    totalInvoices: number
     totalOutstanding: number
 }
 
@@ -209,12 +206,10 @@ export default function ReportsPage() {
                 startY: 35,
                 head: [["Kategori", "Jumlah Invoice", "Total Amount"]],
                 body: [
-                    ["Belum Jatuh Tempo", invoiceAging.currentCount.toString(), formatCurrency(invoiceAging.currentAmount)],
-                    ["1-7 Hari Overdue", invoiceAging.overdue1_7Count.toString(), formatCurrency(invoiceAging.overdue1_7Amount)],
-                    ["8-30 Hari Overdue", invoiceAging.overdue8_30Count.toString(), formatCurrency(invoiceAging.overdue8_30Amount)],
-                    ["30+ Hari Overdue", invoiceAging.overdue30plusCount.toString(), formatCurrency(invoiceAging.overdue30plusAmount)],
+                    ["DC", invoiceAging.dcCount.toString(), formatCurrency(invoiceAging.dcAmount)],
+                    ["Stokis", invoiceAging.stokisCount.toString(), formatCurrency(invoiceAging.stokisAmount)],
                 ],
-                foot: [["TOTAL OUTSTANDING", "-", formatCurrency(invoiceAging.totalOutstanding)]]
+                foot: [["TOTAL OUTSTANDING", invoiceAging.totalInvoices.toString(), formatCurrency(invoiceAging.totalOutstanding)]]
             })
         }
 
@@ -255,10 +250,8 @@ export default function ReportsPage() {
             }))
         } else if (activeTab === "invoice" && invoiceAging) {
             data = [
-                { Kategori: "Belum Jatuh Tempo", Jumlah: invoiceAging.currentCount, Amount: invoiceAging.currentAmount },
-                { Kategori: "1-7 Hari Overdue", Jumlah: invoiceAging.overdue1_7Count, Amount: invoiceAging.overdue1_7Amount },
-                { Kategori: "8-30 Hari Overdue", Jumlah: invoiceAging.overdue8_30Count, Amount: invoiceAging.overdue8_30Amount },
-                { Kategori: "30+ Hari Overdue", Jumlah: invoiceAging.overdue30plusCount, Amount: invoiceAging.overdue30plusAmount },
+                { Kategori: "DC", Jumlah: invoiceAging.dcCount, Amount: invoiceAging.dcAmount },
+                { Kategori: "Stokis", Jumlah: invoiceAging.stokisCount, Amount: invoiceAging.stokisAmount },
             ]
         }
 
@@ -656,62 +649,47 @@ export default function ReportsPage() {
                             {/* Invoice Aging */}
                             {activeTab === "invoice" && invoiceAging && (
                                 <div className="space-y-4">
-                                    {/* Stats Grid - Compact */}
-                                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                                    {/* Total Invoice Info */}
+                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                                         <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                             <div className="flex items-center gap-2 mb-2">
                                                 <Receipt size={16} className="opacity-80" />
-                                                <span className="text-xs text-white/80">Outstanding</span>
+                                                <span className="text-xs text-white/80">Total Outstanding</span>
                                             </div>
                                             <p className="text-xl font-bold">{formatCurrency(invoiceAging.totalOutstanding)}</p>
+                                            <p className="text-xs text-white/60 mt-1">{invoiceAging.totalInvoices} Invoice</p>
+                                        </div>
+                                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            <p className="text-xs text-white/80 mb-1">DC</p>
+                                            <p className="text-xl font-bold">{invoiceAging.dcCount}</p>
+                                            <p className="text-xs text-white/60 mt-1">{formatCurrency(invoiceAging.dcAmount)}</p>
                                         </div>
                                         <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <p className="text-xs text-white/80 mb-1">Belum Jatuh Tempo</p>
-                                            <p className="text-xl font-bold">{invoiceAging.currentCount}</p>
-                                            <p className="text-xs text-white/60 mt-1">{formatCurrency(invoiceAging.currentAmount)}</p>
-                                        </div>
-                                        <div className="bg-gradient-to-br from-amber-500 to-yellow-600 rounded-xl p-4 text-white relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <p className="text-xs text-white/80 mb-1">1-7 Hari</p>
-                                            <p className="text-xl font-bold">{invoiceAging.overdue1_7Count}</p>
-                                            <p className="text-xs text-white/60 mt-1">{formatCurrency(invoiceAging.overdue1_7Amount)}</p>
-                                        </div>
-                                        <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-xl p-4 text-white relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <p className="text-xs text-white/80 mb-1">8-30 Hari</p>
-                                            <p className="text-xl font-bold">{invoiceAging.overdue8_30Count}</p>
-                                            <p className="text-xs text-white/60 mt-1">{formatCurrency(invoiceAging.overdue8_30Amount)}</p>
-                                        </div>
-                                        <div className="bg-gradient-to-br from-red-600 to-rose-700 rounded-xl p-4 text-white relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <p className="text-xs text-white/80 mb-1">30+ Hari</p>
-                                            <p className="text-xl font-bold">{invoiceAging.overdue30plusCount}</p>
-                                            <p className="text-xs text-white/60 mt-1">{formatCurrency(invoiceAging.overdue30plusAmount)}</p>
+                                            <p className="text-xs text-white/80 mb-1">Stokis</p>
+                                            <p className="text-xl font-bold">{invoiceAging.stokisCount}</p>
+                                            <p className="text-xs text-white/60 mt-1">{formatCurrency(invoiceAging.stokisAmount)}</p>
                                         </div>
                                     </div>
 
                                     {/* Visual Bar */}
                                     <div className="bg-white rounded-xl p-4 border border-gray-100">
-                                        <h3 className="font-semibold text-gray-900 text-sm mb-3">Distribusi Umur Piutang</h3>
+                                        <h3 className="font-semibold text-gray-900 text-sm mb-3">Distribusi Piutang per Tipe</h3>
                                         <div className="flex h-6 rounded-lg overflow-hidden">
                                             {invoiceAging.totalOutstanding > 0 ? (
                                                 <>
-                                                    <div className="bg-gradient-to-r from-emerald-400 to-emerald-500" style={{ width: `${(invoiceAging.currentAmount / invoiceAging.totalOutstanding) * 100}%` }} title={`Belum Jatuh Tempo: ${formatCurrency(invoiceAging.currentAmount)}`} />
-                                                    <div className="bg-gradient-to-r from-yellow-400 to-yellow-500" style={{ width: `${(invoiceAging.overdue1_7Amount / invoiceAging.totalOutstanding) * 100}%` }} title={`1-7 Hari: ${formatCurrency(invoiceAging.overdue1_7Amount)}`} />
-                                                    <div className="bg-gradient-to-r from-orange-400 to-orange-500" style={{ width: `${(invoiceAging.overdue8_30Amount / invoiceAging.totalOutstanding) * 100}%` }} title={`8-30 Hari: ${formatCurrency(invoiceAging.overdue8_30Amount)}`} />
-                                                    <div className="bg-gradient-to-r from-red-400 to-red-500" style={{ width: `${(invoiceAging.overdue30plusAmount / invoiceAging.totalOutstanding) * 100}%` }} title={`30+ Hari: ${formatCurrency(invoiceAging.overdue30plusAmount)}`} />
+                                                    <div className="bg-gradient-to-r from-indigo-400 to-purple-500" style={{ width: `${(invoiceAging.dcAmount / invoiceAging.totalOutstanding) * 100}%` }} title={`DC: ${formatCurrency(invoiceAging.dcAmount)}`} />
+                                                    <div className="bg-gradient-to-r from-emerald-400 to-teal-500" style={{ width: `${(invoiceAging.stokisAmount / invoiceAging.totalOutstanding) * 100}%` }} title={`Stokis: ${formatCurrency(invoiceAging.stokisAmount)}`} />
                                                 </>
                                             ) : (
                                                 <div className="w-full bg-gray-100 flex items-center justify-center text-gray-500 text-xs">Tidak ada piutang</div>
                                             )}
                                         </div>
                                         <div className="flex gap-4 mt-3 text-xs flex-wrap">
-                                            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gradient-to-r from-emerald-400 to-emerald-500 rounded" /> Belum Jatuh Tempo</span>
-                                            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded" /> 1-7 Hari</span>
-                                            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gradient-to-r from-orange-400 to-orange-500 rounded" /> 8-30 Hari</span>
-                                            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gradient-to-r from-red-400 to-red-500 rounded" /> 30+ Hari</span>
+                                            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gradient-to-r from-indigo-400 to-purple-500 rounded" /> DC</span>
+                                            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gradient-to-r from-emerald-400 to-teal-500 rounded" /> Stokis</span>
                                         </div>
                                     </div>
                                 </div>

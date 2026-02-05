@@ -28,8 +28,12 @@ export async function GET(request: Request) {
         }
 
         // Filter by status
+        // Filter by status
         if (status && status !== "ALL") {
-            where.status = status
+            const statuses = status.split(",").map(s => s.trim().toUpperCase())
+            if (statuses.length > 0) {
+                where.status = { in: statuses }
+            }
         }
 
         const invoices = await prisma.invoice.findMany({

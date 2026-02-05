@@ -59,6 +59,12 @@ const roleMenus: Record<string, { label: string; href: string; icon: React.React
         { label: "Order Barang", href: "/dashboard/order", icon: <ShoppingCart size={20} /> },
         { label: "Riwayat Order", href: "/dashboard/history", icon: <Receipt size={20} /> },
     ],
+    DC: [
+        { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
+        { label: "Kelola Stokis", href: "/dashboard/dc-stokis", icon: <Store size={20} /> },
+        { label: "Monitoring Order", href: "/dashboard/dc-orders", icon: <ShoppingCart size={20} /> },
+        { label: "Laporan", href: "/dashboard/reports", icon: <BarChart3 size={20} /> },
+    ],
 }
 
 const roleAccentColors: Record<string, string> = {
@@ -67,6 +73,7 @@ const roleAccentColors: Record<string, string> = {
     GUDANG: "bg-cyan-500",
     STOKIS: "bg-emerald-500",
     MITRA: "bg-orange-500",
+    DC: "bg-indigo-500",
 }
 
 export default function Sidebar() {

@@ -53,12 +53,16 @@ async function main() {
         { name: 'Kantong Plastik', sku: 'KRG-004', unit: 'pack', price: 10000, gudangId: gudangKering.id },
     ]
 
+    // Map SKU to ID for later use
+    const productMap = new Map<string, string>()
+
     for (const product of products) {
-        await prisma.product.upsert({
+        const p = await prisma.product.upsert({
             where: { sku: product.sku },
             update: {},
             create: product,
         })
+        productMap.set(product.sku, p.id)
     }
     console.log('✅ Products created')
 
@@ -175,14 +179,144 @@ async function main() {
     })
 
     console.log('✅ Users created')
-    console.log('')
-    console.log('📋 Test Accounts:')
-    console.log('   Pusat:   admin@dfresto.com / password123')
-    console.log('   Finance: finance@dfresto.com / password123')
-    console.log('   Gudang:  gudang.ayam@dfresto.com / password123')
-    console.log('   Stokis:  stokis.jakarta@dfresto.com / password123')
-    console.log('   Mitra:   mitra1@dfresto.com / password123')
-    console.log('')
+
+    // --- PHASE 5 DUMMY DATA ---
+    console.log('🌱 Seeding Phase 5 Dummy Data...')
+
+    // 1. Create Stokis Prices (Laporan Harga)
+    await prisma.stokisPrice.createMany({
+        data: [
+            { stokisId: stokis1.id, productId: productMap.get(products[0].sku)!, customPrice: 38000 }, // Margin +3000
+            { stokisId: stokis1.id, productId: productMap.get(products[1].sku)!, customPrice: 50000 }, // Margin -5000 (Diskon)
+            { stokisId: stokis1.id, productId: productMap.get(products[2].sku)!, customPrice: 48000 }, // Margin +3000
+        ],
+        skipDuplicates: true,
+    })
+    console.log('✅ Stokis Prices created')
+
+    // 2. Create Orders with various statuses
+
+    // Order 1: PENDING_PUSAT (Can initiate Adjust PO by Stokis)
+    await prisma.stokisOrder.create({
+        data: {
+            orderNumber: 'ORD-HJ-001', // History Jakarta 001
+            stokisId: stokis1.id,
+            status: 'PENDING_PUSAT',
+            totalAmount: 35000 * 10 + 55000 * 5,
+            items: {
+                create: [
+                    { productId: productMap.get(products[0].sku)!, quantity: 10, price: 35000 },
+                    { productId: productMap.get(products[1].sku)!, quantity: 5, price: 55000 },
+                ]
+            }
+        }
+    })
+
+    // Order 2: PENDING_FINANCE (Can initiate Adjust PO by Finance)
+    await prisma.stokisOrder.create({
+        data: {
+            orderNumber: 'ORD-HJ-002',
+            stokisId: stokis1.id,
+            status: 'PENDING_FINANCE',
+            totalAmount: 45000 * 20,
+            items: {
+                create: [
+                    { productId: productMap.get(products[2].sku)!, quantity: 20, price: 45000 },
+                ]
+            }
+        }
+    })
+
+    // Order 3: PO_ISSUED (For Print PO & Gudang Process)
+    await prisma.stokisOrder.create({
+        data: {
+            orderNumber: 'ORD-HJ-003',
+            stokisId: stokis1.id,
+            status: 'PO_ISSUED',
+            totalAmount: 25000 * 50,
+            poIssuedAt: new Date(),
+            items: {
+                create: [
+                    { productId: productMap.get(products[3].sku)!, quantity: 50, price: 25000 },
+                ]
+            }
+        }
+    })
+
+    // Order 4: SHIPPED (For Confirm Receive)
+    await prisma.stokisOrder.create({
+        data: {
+            orderNumber: 'ORD-HJ-004',
+            stokisId: stokis1.id,
+            status: 'SHIPPED',
+            totalAmount: 18000 * 100,
+            poIssuedAt: new Date(Date.now() - 86400000), // yesterday
+            items: {
+                create: [
+                    { productId: productMap.get(products[6].sku)!, quantity: 100, price: 18000 },
+                ]
+            }
+        }
+    })
+
+    // Order 5: RECEIVED & UNPAID (For Payment Input)
+    const orderUnpaid = await prisma.stokisOrder.create({
+        data: {
+            orderNumber: 'ORD-HJ-005',
+            stokisId: stokis1.id,
+            status: 'RECEIVED',
+            totalAmount: 1000000,
+            poIssuedAt: new Date(Date.now() - 172800000), // 2 days ago
+            items: {
+                create: [
+                    { productId: productMap.get(products[0].sku)!, quantity: 20, price: 35000 },
+                    { productId: productMap.get(products[3].sku)!, quantity: 12, price: 25000 },
+                ]
+            }
+        }
+    })
+
+    // Invoice for Order 5 (UNPAID)
+    await prisma.invoice.create({
+        data: {
+            invoiceNumber: 'INV-HJ-005',
+            orderId: orderUnpaid.id,
+            amount: 1000000,
+            paidAmount: 0,
+            status: 'UNPAID',
+            dueDate: new Date(Date.now() + 86400000 * 7), // Due in 7 days
+        }
+    })
+
+    // Order 6: RECEIVED & OVERDUE
+    const orderOverdue = await prisma.stokisOrder.create({
+        data: {
+            orderNumber: 'ORD-HJ-006',
+            stokisId: stokis1.id,
+            status: 'RECEIVED',
+            totalAmount: 500000,
+            poIssuedAt: new Date(Date.now() - 86400000 * 30), // 30 days ago
+            items: {
+                create: [
+                    { productId: productMap.get(products[1].sku)!, quantity: 10, price: 50000 },
+                ]
+            }
+        }
+    })
+
+    // Invoice for Order 6 (OVERDUE)
+    await prisma.invoice.create({
+        data: {
+            invoiceNumber: 'INV-HJ-006',
+            orderId: orderOverdue.id,
+            amount: 500000,
+            paidAmount: 200000, // Partial payment
+            status: 'OVERDUE',
+            dueDate: new Date(Date.now() - 86400000 * 1), // Due yesterday
+        }
+    })
+
+    console.log('✅ Phase 5 Orders & Invoices created')
     console.log('🎉 Seeding completed!')
 }
 

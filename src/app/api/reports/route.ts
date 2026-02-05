@@ -290,63 +290,48 @@ async function getStokisPerformanceReport(dateFrom: Date) {
     })
 }
 
-// Invoice Aging Report
+// Invoice Aging Report - Categorized by DC/Stokis
 async function getInvoiceAgingReport() {
     const invoices = await prisma.invoice.findMany({
         where: { status: { in: ["UNPAID", "OVERDUE"] } },
         include: {
             order: {
                 include: {
-                    stokis: { select: { name: true, email: true, phone: true } }
+                    stokis: { select: { id: true, name: true, email: true, phone: true, role: true } }
                 }
             }
         },
         orderBy: { dueDate: "asc" }
     })
 
-    const now = new Date()
+    // Categorize by type (DC vs Stokis)
+    // For now, all invoices are from Stokis since DC invoice system is not implemented yet
+    // In the future, DC invoices can be identified by order type or a separate field
+    const dcInvoices = invoices.filter(inv => {
+        // Placeholder: DC invoices would be identified differently
+        // For now, return empty array as DC invoice system is not implemented
+        return false
+    })
 
-    // Categorize by aging
-    const aging = {
-        current: [] as typeof invoices,      // Not yet due
-        overdue1_7: [] as typeof invoices,   // 1-7 days overdue
-        overdue8_30: [] as typeof invoices,  // 8-30 days overdue
-        overdue30plus: [] as typeof invoices // 30+ days overdue
-    }
-
-    for (const inv of invoices) {
-        const daysOverdue = Math.floor((now.getTime() - new Date(inv.dueDate).getTime()) / (1000 * 60 * 60 * 24))
-
-        if (daysOverdue <= 0) {
-            aging.current.push(inv)
-        } else if (daysOverdue <= 7) {
-            aging.overdue1_7.push(inv)
-        } else if (daysOverdue <= 30) {
-            aging.overdue8_30.push(inv)
-        } else {
-            aging.overdue30plus.push(inv)
-        }
-    }
+    const stokisInvoices = invoices.filter(inv => {
+        // All current invoices are from Stokis orders
+        return true
+    })
 
     const summary = {
-        currentCount: aging.current.length,
-        currentAmount: aging.current.reduce((sum, i) => sum + Number(i.amount), 0),
-        overdue1_7Count: aging.overdue1_7.length,
-        overdue1_7Amount: aging.overdue1_7.reduce((sum, i) => sum + Number(i.amount), 0),
-        overdue8_30Count: aging.overdue8_30.length,
-        overdue8_30Amount: aging.overdue8_30.reduce((sum, i) => sum + Number(i.amount), 0),
-        overdue30plusCount: aging.overdue30plus.length,
-        overdue30plusAmount: aging.overdue30plus.reduce((sum, i) => sum + Number(i.amount), 0),
+        dcCount: dcInvoices.length,
+        dcAmount: dcInvoices.reduce((sum, i) => sum + Number(i.amount), 0),
+        stokisCount: stokisInvoices.length,
+        stokisAmount: stokisInvoices.reduce((sum, i) => sum + Number(i.amount), 0),
+        totalInvoices: invoices.length,
         totalOutstanding: invoices.reduce((sum, i) => sum + Number(i.amount), 0)
     }
 
     return NextResponse.json({
         summary,
-        aging: {
-            current: aging.current.map(formatInvoice),
-            overdue1_7: aging.overdue1_7.map(formatInvoice),
-            overdue8_30: aging.overdue8_30.map(formatInvoice),
-            overdue30plus: aging.overdue30plus.map(formatInvoice)
+        details: {
+            dc: dcInvoices.map(formatInvoice),
+            stokis: stokisInvoices.map(formatInvoice)
         }
     })
 }
