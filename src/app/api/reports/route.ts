@@ -17,8 +17,21 @@ export async function GET(request: Request) {
         const year = parseInt(searchParams.get("year") || new Date().getFullYear().toString())
         const month = searchParams.get("month") ? parseInt(searchParams.get("month")!) : null
 
-        const dateFrom = new Date()
-        dateFrom.setDate(dateFrom.getDate() - period)
+        // Support custom date range
+        const customDateFrom = searchParams.get("dateFrom")
+        const customDateTo = searchParams.get("dateTo")
+
+        let dateFrom: Date
+        let dateTo: Date | undefined
+
+        if (customDateFrom && customDateTo) {
+            dateFrom = new Date(customDateFrom)
+            dateTo = new Date(customDateTo)
+            dateTo.setHours(23, 59, 59, 999) // End of day
+        } else {
+            dateFrom = new Date()
+            dateFrom.setDate(dateFrom.getDate() - period)
+        }
 
         switch (reportType) {
             case "monthly-sales":
@@ -31,7 +44,7 @@ export async function GET(request: Request) {
                 return await getInvoiceAgingReport()
             case "summary":
             default:
-                return await getSummaryReport(dateFrom, period)
+                return await getSummaryReport(dateFrom, dateTo, period)
         }
     } catch (error) {
         console.error("Error fetching reports:", error)
@@ -40,15 +53,20 @@ export async function GET(request: Request) {
 }
 
 // Summary Report
-async function getSummaryReport(dateFrom: Date, period: number) {
+async function getSummaryReport(dateFrom: Date, dateTo: Date | undefined, period: number) {
+    // Build date filter
+    const dateFilter = dateTo
+        ? { gte: dateFrom, lte: dateTo }
+        : { gte: dateFrom }
+
     // Orders summary
     const stokisOrders = await prisma.stokisOrder.findMany({
-        where: { createdAt: { gte: dateFrom } },
+        where: { createdAt: dateFilter },
         include: { stokis: { select: { name: true } } }
     })
 
     const mitraOrders = await prisma.mitraOrder.findMany({
-        where: { createdAt: { gte: dateFrom } },
+        where: { createdAt: dateFilter },
         include: { mitra: { select: { name: true } } }
     })
 
@@ -290,7 +308,7 @@ async function getStokisPerformanceReport(dateFrom: Date) {
     })
 }
 
-// Invoice Aging Report - Categorized by DC/Stokis
+// Invoice Aging Report - Categorized by DC/Stokis with aging buckets
 async function getInvoiceAgingReport() {
     const invoices = await prisma.invoice.findMany({
         where: { status: { in: ["UNPAID", "OVERDUE"] } },
@@ -304,19 +322,51 @@ async function getInvoiceAgingReport() {
         orderBy: { dueDate: "asc" }
     })
 
-    // Categorize by type (DC vs Stokis)
-    // For now, all invoices are from Stokis since DC invoice system is not implemented yet
-    // In the future, DC invoices can be identified by order type or a separate field
-    const dcInvoices = invoices.filter(inv => {
-        // Placeholder: DC invoices would be identified differently
-        // For now, return empty array as DC invoice system is not implemented
-        return false
+    const now = new Date()
+
+    // Calculate aging for each invoice
+    const invoicesWithAging = invoices.map(inv => {
+        const dueDate = new Date(inv.dueDate)
+        const daysDiff = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))
+
+        let agingCategory: string
+        if (daysDiff < 0) {
+            agingCategory = "belum_jatuh_tempo"
+        } else if (daysDiff <= 7) {
+            agingCategory = "1_7_hari"
+        } else if (daysDiff <= 30) {
+            agingCategory = "8_30_hari"
+        } else {
+            agingCategory = "30_plus"
+        }
+
+        return {
+            ...inv,
+            daysDiff,
+            agingCategory
+        }
     })
 
-    const stokisInvoices = invoices.filter(inv => {
-        // All current invoices are from Stokis orders
-        return true
-    })
+    // Categorize by type (DC vs Stokis) - for now all are Stokis
+    const dcInvoices = invoicesWithAging.filter(inv => false) // DC invoices not implemented yet
+    const stokisInvoices = invoicesWithAging
+
+    // Calculate aging buckets
+    const agingBuckets = {
+        belum_jatuh_tempo: { count: 0, amount: 0, invoices: [] as typeof invoicesWithAging },
+        "1_7_hari": { count: 0, amount: 0, invoices: [] as typeof invoicesWithAging },
+        "8_30_hari": { count: 0, amount: 0, invoices: [] as typeof invoicesWithAging },
+        "30_plus": { count: 0, amount: 0, invoices: [] as typeof invoicesWithAging }
+    }
+
+    for (const inv of invoicesWithAging) {
+        const bucket = agingBuckets[inv.agingCategory as keyof typeof agingBuckets]
+        if (bucket) {
+            bucket.count++
+            bucket.amount += Number(inv.amount)
+            bucket.invoices.push(inv)
+        }
+    }
 
     const summary = {
         dcCount: dcInvoices.length,
@@ -327,11 +377,19 @@ async function getInvoiceAgingReport() {
         totalOutstanding: invoices.reduce((sum, i) => sum + Number(i.amount), 0)
     }
 
+    const agingSummary = {
+        belum_jatuh_tempo: { count: agingBuckets.belum_jatuh_tempo.count, amount: agingBuckets.belum_jatuh_tempo.amount },
+        "1_7_hari": { count: agingBuckets["1_7_hari"].count, amount: agingBuckets["1_7_hari"].amount },
+        "8_30_hari": { count: agingBuckets["8_30_hari"].count, amount: agingBuckets["8_30_hari"].amount },
+        "30_plus": { count: agingBuckets["30_plus"].count, amount: agingBuckets["30_plus"].amount }
+    }
+
     return NextResponse.json({
         summary,
+        agingSummary,
         details: {
-            dc: dcInvoices.map(formatInvoice),
-            stokis: stokisInvoices.map(formatInvoice)
+            dc: dcInvoices.map(formatInvoiceWithAging),
+            stokis: stokisInvoices.map(formatInvoiceWithAging)
         }
     })
 }
@@ -361,3 +419,31 @@ function formatInvoice(inv: {
         status: inv.status
     }
 }
+
+function formatInvoiceWithAging(inv: {
+    id: string
+    invoiceNumber: string
+    amount: unknown
+    dueDate: Date
+    status: string
+    daysDiff: number
+    agingCategory: string
+    order: {
+        orderNumber: string
+        stokis: { name: string; email: string; phone: string | null }
+    }
+}) {
+    return {
+        id: inv.id,
+        invoiceNumber: inv.invoiceNumber,
+        orderNumber: inv.order.orderNumber,
+        stokisName: inv.order.stokis.name,
+        stokisPhone: inv.order.stokis.phone,
+        amount: Number(inv.amount),
+        dueDate: inv.dueDate,
+        daysDiff: inv.daysDiff,
+        agingCategory: inv.agingCategory,
+        status: inv.status
+    }
+}
+

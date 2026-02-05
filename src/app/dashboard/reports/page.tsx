@@ -88,6 +88,31 @@ interface InvoiceAgingSummary {
     totalOutstanding: number
 }
 
+interface AgingBucket {
+    count: number
+    amount: number
+}
+
+interface AgingSummary {
+    belum_jatuh_tempo: AgingBucket
+    "1_7_hari": AgingBucket
+    "8_30_hari": AgingBucket
+    "30_plus": AgingBucket
+}
+
+interface InvoiceDetail {
+    id: string
+    invoiceNumber: string
+    orderNumber: string
+    stokisName: string
+    stokisPhone: string | null
+    amount: number
+    dueDate: string
+    daysDiff: number
+    agingCategory: string
+    status: string
+}
+
 type TabType = "overview" | "monthly" | "products" | "stokis" | "invoice"
 
 export default function ReportsPage() {
@@ -97,23 +122,38 @@ export default function ReportsPage() {
     const [period, setPeriod] = useState(30)
     const [invoiceFilter, setInvoiceFilter] = useState<"all" | "dc" | "stokis">("all")
 
+    // Custom date range for Overview
+    const [useCustomDate, setUseCustomDate] = useState(false)
+    const [customDateFrom, setCustomDateFrom] = useState(() => {
+        const d = new Date()
+        d.setDate(d.getDate() - 30)
+        return d.toISOString().split("T")[0]
+    })
+    const [customDateTo, setCustomDateTo] = useState(() => new Date().toISOString().split("T")[0])
+
     // Report data
     const [summary, setSummary] = useState<SummaryData | null>(null)
     const [monthlySales, setMonthlySales] = useState<MonthlySales | null>(null)
     const [topProducts, setTopProducts] = useState<TopProduct[]>([])
     const [stokisPerf, setStokisPerf] = useState<StokisPerf[]>([])
     const [invoiceAging, setInvoiceAging] = useState<InvoiceAgingSummary | null>(null)
+    const [agingSummary, setAgingSummary] = useState<AgingSummary | null>(null)
+    const [invoiceDetails, setInvoiceDetails] = useState<{ dc: InvoiceDetail[]; stokis: InvoiceDetail[] }>({ dc: [], stokis: [] })
 
     useEffect(() => {
         fetchReport()
-    }, [activeTab, year, period])
+    }, [activeTab, year, period, useCustomDate, customDateFrom, customDateTo])
 
     const fetchReport = async () => {
         setLoading(true)
         try {
             let url = "/api/reports?"
             if (activeTab === "overview") {
-                url += `type=summary&period=${period}`
+                if (useCustomDate) {
+                    url += `type=summary&dateFrom=${customDateFrom}&dateTo=${customDateTo}`
+                } else {
+                    url += `type=summary&period=${period}`
+                }
             } else if (activeTab === "monthly") {
                 url += `type=monthly-sales&year=${year}`
             } else if (activeTab === "products") {
@@ -131,7 +171,11 @@ export default function ReportsPage() {
                 else if (activeTab === "monthly") setMonthlySales(data)
                 else if (activeTab === "products") setTopProducts(data.topProducts || [])
                 else if (activeTab === "stokis") setStokisPerf(data.stokisPerformance || [])
-                else if (activeTab === "invoice") setInvoiceAging(data.summary)
+                else if (activeTab === "invoice") {
+                    setInvoiceAging(data.summary)
+                    setAgingSummary(data.agingSummary)
+                    setInvoiceDetails(data.details || { dc: [], stokis: [] })
+                }
             }
         } catch (error) {
             console.error("Error fetching report:", error)
@@ -333,19 +377,58 @@ export default function ReportsPage() {
                         </div>
                     )}
                     {(activeTab === "overview" || activeTab === "products" || activeTab === "stokis") && (
-                        <div className="flex items-center gap-2">
-                            <label className="text-sm text-gray-600">Periode:</label>
-                            <select
-                                value={period}
-                                onChange={e => setPeriod(parseInt(e.target.value))}
-                                className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value={7}>7 Hari</option>
-                                <option value={30}>30 Hari</option>
-                                <option value={90}>90 Hari</option>
-                                <option value={365}>1 Tahun</option>
-                            </select>
-                        </div>
+                        <>
+                            {/* Preset period selector */}
+                            {!useCustomDate && (
+                                <div className="flex items-center gap-2">
+                                    <label className="text-sm text-gray-600">Periode:</label>
+                                    <select
+                                        value={period}
+                                        onChange={e => setPeriod(parseInt(e.target.value))}
+                                        className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                        <option value={7}>7 Hari</option>
+                                        <option value={30}>30 Hari</option>
+                                        <option value={90}>90 Hari</option>
+                                        <option value={365}>1 Tahun</option>
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* Custom date range - Only for Overview tab */}
+                            {activeTab === "overview" && (
+                                <>
+                                    <button
+                                        onClick={() => setUseCustomDate(!useCustomDate)}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${useCustomDate
+                                                ? "bg-blue-500 text-white"
+                                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                            }`}
+                                    >
+                                        <Calendar size={14} />
+                                        Custom
+                                    </button>
+
+                                    {useCustomDate && (
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="date"
+                                                value={customDateFrom}
+                                                onChange={e => setCustomDateFrom(e.target.value)}
+                                                className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            />
+                                            <span className="text-gray-400">-</span>
+                                            <input
+                                                type="date"
+                                                value={customDateTo}
+                                                onChange={e => setCustomDateTo(e.target.value)}
+                                                className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            />
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </>
                     )}
                     <button
                         onClick={fetchReport}
@@ -657,8 +740,8 @@ export default function ReportsPage() {
                                                 key={filter}
                                                 onClick={() => setInvoiceFilter(filter as "all" | "dc" | "stokis")}
                                                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${invoiceFilter === filter
-                                                        ? "bg-blue-500 text-white shadow-md"
-                                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                                    ? "bg-blue-500 text-white shadow-md"
+                                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                                                     }`}
                                             >
                                                 {filter === "all" ? "Semua" : filter === "dc" ? "DC" : "Stokis"}
@@ -666,65 +749,126 @@ export default function ReportsPage() {
                                         ))}
                                     </div>
 
-                                    {/* Total Invoice Info */}
-                                    <div className={`grid gap-3 ${invoiceFilter === "all" ? "grid-cols-2 lg:grid-cols-3" : "grid-cols-1 lg:grid-cols-2"}`}>
-                                        {(invoiceFilter === "all" || invoiceFilter === "dc" || invoiceFilter === "stokis") && (
-                                            <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-4 text-white relative overflow-hidden">
-                                                <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <Receipt size={16} className="opacity-80" />
-                                                    <span className="text-xs text-white/80">Total Outstanding {invoiceFilter !== "all" ? `(${invoiceFilter.toUpperCase()})` : ""}</span>
-                                                </div>
-                                                <p className="text-xl font-bold">
-                                                    {formatCurrency(
-                                                        invoiceFilter === "all" ? invoiceAging.totalOutstanding :
-                                                            invoiceFilter === "dc" ? invoiceAging.dcAmount : invoiceAging.stokisAmount
-                                                    )}
-                                                </p>
-                                                <p className="text-xs text-white/60 mt-1">
-                                                    {invoiceFilter === "all" ? invoiceAging.totalInvoices :
-                                                        invoiceFilter === "dc" ? invoiceAging.dcCount : invoiceAging.stokisCount} Invoice
-                                                </p>
+                                    {/* Aging Category Cards - Matching user's image */}
+                                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                                        {/* Outstanding */}
+                                        <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-4 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Receipt size={14} className="opacity-80" />
+                                                <span className="text-xs text-white/80">Outstanding</span>
                                             </div>
-                                        )}
-                                        {(invoiceFilter === "all" || invoiceFilter === "dc") && (
-                                            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white relative overflow-hidden">
-                                                <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                                <p className="text-xs text-white/80 mb-1">DC</p>
-                                                <p className="text-xl font-bold">{invoiceAging.dcCount}</p>
-                                                <p className="text-xs text-white/60 mt-1">{formatCurrency(invoiceAging.dcAmount)}</p>
-                                            </div>
-                                        )}
-                                        {(invoiceFilter === "all" || invoiceFilter === "stokis") && (
-                                            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white relative overflow-hidden">
-                                                <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                                <p className="text-xs text-white/80 mb-1">Stokis</p>
-                                                <p className="text-xl font-bold">{invoiceAging.stokisCount}</p>
-                                                <p className="text-xs text-white/60 mt-1">{formatCurrency(invoiceAging.stokisAmount)}</p>
-                                            </div>
-                                        )}
+                                            <p className="text-lg font-bold">
+                                                {formatCurrency(
+                                                    invoiceFilter === "all" ? invoiceAging.totalOutstanding :
+                                                        invoiceFilter === "dc" ? invoiceAging.dcAmount : invoiceAging.stokisAmount
+                                                )}
+                                            </p>
+                                        </div>
+
+                                        {/* Belum Jatuh Tempo */}
+                                        <div className="bg-gradient-to-br from-amber-500 to-yellow-600 rounded-xl p-4 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            <p className="text-xs text-white/80 mb-1">Belum Jatuh Tempo</p>
+                                            <p className="text-xl font-bold">{agingSummary?.belum_jatuh_tempo?.count || 0}</p>
+                                            <p className="text-xs text-white/60 mt-1">{formatCurrency(agingSummary?.belum_jatuh_tempo?.amount || 0)}</p>
+                                        </div>
+
+                                        {/* 1-7 Hari */}
+                                        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-4 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            <p className="text-xs text-white/80 mb-1">1-7 Hari</p>
+                                            <p className="text-xl font-bold">{agingSummary?.["1_7_hari"]?.count || 0}</p>
+                                            <p className="text-xs text-white/60 mt-1">{formatCurrency(agingSummary?.["1_7_hari"]?.amount || 0)}</p>
+                                        </div>
+
+                                        {/* 8-30 Hari */}
+                                        <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl p-4 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            <p className="text-xs text-white/80 mb-1">8-30 Hari</p>
+                                            <p className="text-xl font-bold">{agingSummary?.["8_30_hari"]?.count || 0}</p>
+                                            <p className="text-xs text-white/60 mt-1">{formatCurrency(agingSummary?.["8_30_hari"]?.amount || 0)}</p>
+                                        </div>
+
+                                        {/* 30+ Hari */}
+                                        <div className="bg-gradient-to-br from-rose-600 to-red-700 rounded-xl p-4 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            <p className="text-xs text-white/80 mb-1">30+ Hari</p>
+                                            <p className="text-xl font-bold">{agingSummary?.["30_plus"]?.count || 0}</p>
+                                            <p className="text-xs text-white/60 mt-1">{formatCurrency(agingSummary?.["30_plus"]?.amount || 0)}</p>
+                                        </div>
                                     </div>
 
-                                    {/* Visual Bar */}
-                                    {invoiceFilter === "all" && (
-                                        <div className="bg-white rounded-xl p-4 border border-gray-100">
-                                            <h3 className="font-semibold text-gray-900 text-sm mb-3">Distribusi Piutang per Tipe</h3>
-                                            <div className="flex h-6 rounded-lg overflow-hidden">
-                                                {invoiceAging.totalOutstanding > 0 ? (
-                                                    <>
-                                                        <div className="bg-gradient-to-r from-indigo-400 to-purple-500" style={{ width: `${(invoiceAging.dcAmount / invoiceAging.totalOutstanding) * 100}%` }} title={`DC: ${formatCurrency(invoiceAging.dcAmount)}`} />
-                                                        <div className="bg-gradient-to-r from-emerald-400 to-teal-500" style={{ width: `${(invoiceAging.stokisAmount / invoiceAging.totalOutstanding) * 100}%` }} title={`Stokis: ${formatCurrency(invoiceAging.stokisAmount)}`} />
-                                                    </>
-                                                ) : (
-                                                    <div className="w-full bg-gray-100 flex items-center justify-center text-gray-500 text-xs">Tidak ada piutang</div>
-                                                )}
-                                            </div>
-                                            <div className="flex gap-4 mt-3 text-xs flex-wrap">
-                                                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gradient-to-r from-indigo-400 to-purple-500 rounded" /> DC</span>
-                                                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gradient-to-r from-emerald-400 to-teal-500 rounded" /> Stokis</span>
-                                            </div>
+                                    {/* Invoice Details Table */}
+                                    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                                        <div className="p-4 border-b border-gray-100">
+                                            <h3 className="font-semibold text-gray-900 text-sm">Daftar Invoice Umur Piutang</h3>
                                         </div>
-                                    )}
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm">
+                                                <thead className="bg-gray-50 text-gray-600">
+                                                    <tr>
+                                                        <th className="text-left px-4 py-3 font-medium">No. Invoice</th>
+                                                        <th className="text-left px-4 py-3 font-medium">No. Order</th>
+                                                        <th className="text-left px-4 py-3 font-medium">Stokis</th>
+                                                        <th className="text-right px-4 py-3 font-medium">Jumlah</th>
+                                                        <th className="text-left px-4 py-3 font-medium">Jatuh Tempo</th>
+                                                        <th className="text-left px-4 py-3 font-medium">Kategori</th>
+                                                        <th className="text-left px-4 py-3 font-medium">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {(() => {
+                                                        const invoicesToShow = invoiceFilter === "all"
+                                                            ? [...invoiceDetails.dc, ...invoiceDetails.stokis]
+                                                            : invoiceFilter === "dc"
+                                                                ? invoiceDetails.dc
+                                                                : invoiceDetails.stokis
+
+                                                        if (invoicesToShow.length === 0) {
+                                                            return (
+                                                                <tr>
+                                                                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                                                                        Tidak ada invoice yang belum dibayar
+                                                                    </td>
+                                                                </tr>
+                                                            )
+                                                        }
+
+                                                        return invoicesToShow.map((invoice) => {
+                                                            const agingLabel = {
+                                                                belum_jatuh_tempo: { text: "Belum Jatuh Tempo", color: "bg-amber-100 text-amber-700" },
+                                                                "1_7_hari": { text: "1-7 Hari", color: "bg-orange-100 text-orange-700" },
+                                                                "8_30_hari": { text: "8-30 Hari", color: "bg-red-100 text-red-700" },
+                                                                "30_plus": { text: "30+ Hari", color: "bg-rose-100 text-rose-700" }
+                                                            }[invoice.agingCategory] || { text: invoice.agingCategory, color: "bg-gray-100 text-gray-700" }
+
+                                                            return (
+                                                                <tr key={invoice.id} className="hover:bg-gray-50">
+                                                                    <td className="px-4 py-3 font-mono text-gray-900">{invoice.invoiceNumber}</td>
+                                                                    <td className="px-4 py-3 text-gray-600">{invoice.orderNumber}</td>
+                                                                    <td className="px-4 py-3 text-gray-900">{invoice.stokisName}</td>
+                                                                    <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(invoice.amount)}</td>
+                                                                    <td className="px-4 py-3 text-gray-600">{new Date(invoice.dueDate).toLocaleDateString("id-ID")}</td>
+                                                                    <td className="px-4 py-3">
+                                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${agingLabel.color}`}>
+                                                                            {agingLabel.text}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="px-4 py-3">
+                                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${invoice.status === "OVERDUE" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"
+                                                                            }`}>
+                                                                            {invoice.status === "OVERDUE" ? "Jatuh Tempo" : "Belum Bayar"}
+                                                                        </span>
+                                                                    </td>
+                                                                </tr>
+                                                            )
+                                                        })
+                                                    })()}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </>

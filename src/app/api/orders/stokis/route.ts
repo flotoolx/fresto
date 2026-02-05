@@ -19,8 +19,8 @@ export async function GET() {
         let where = {}
         if (role === "STOKIS") {
             where = { stokisId: userId }
-        } else if (role === "PUSAT") {
-            // Can see all, optionally filter by status
+        } else if (role === "PUSAT" || role === "DC") {
+            // PUSAT and DC can see all orders
         } else if (role === "FINANCE") {
             where = { status: "PENDING_FINANCE" }
         } else if (role === "GUDANG") {
