@@ -34,6 +34,7 @@ interface StatCard {
     value: number
     icon: React.ComponentType<{ size?: number; className?: string }>
     gradient: string
+    href?: string
 }
 
 export default function DashboardPage() {
@@ -61,6 +62,7 @@ export default function DashboardPage() {
                     if (res.ok) {
                         const data: DashboardStats = await res.json()
                         setStats([
+                            { label: "Order Pending", value: data.pendingOrders, icon: ShoppingCart, gradient: "from-rose-500 to-pink-600", href: "/dashboard/orders-stokis" },
                             { label: "Total Mitra", value: data.totalMitra, icon: Users, gradient: "from-blue-500 to-blue-600" },
                             { label: "Total Stokis", value: data.totalStokis, icon: Store, gradient: "from-emerald-500 to-teal-600" },
                             { label: "Total DC", value: data.totalDC, icon: Building2, gradient: "from-indigo-500 to-purple-600" },
@@ -165,22 +167,38 @@ export default function DashboardPage() {
                     ))}
                 </div>
             ) : (
-                <div className={`grid grid-cols-2 lg:grid-cols-${Math.min(stats.length, 4)} gap-4`}>
-                    {stats.map((stat, index) => (
-                        <div
-                            key={index}
-                            className={`bg-gradient-to-br ${stat.gradient} rounded-xl p-4 text-white relative overflow-hidden shadow-md hover:shadow-lg transition-all`}
-                        >
-                            <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                            <div className="relative">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <stat.icon size={16} className="opacity-80" />
-                                    <span className="text-white/80 text-xs font-medium">{stat.label}</span>
+                <div className={`grid grid-cols-2 lg:grid-cols-${Math.min(stats.length, 5)} gap-4`}>
+                    {stats.map((stat, index) => {
+                        const CardContent = (
+                            <>
+                                <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                <div className="relative">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <stat.icon size={16} className="opacity-80" />
+                                        <span className="text-white/80 text-xs font-medium">{stat.label}</span>
+                                    </div>
+                                    <p className="text-2xl font-bold">{stat.value}</p>
                                 </div>
-                                <p className="text-2xl font-bold">{stat.value}</p>
+                            </>
+                        )
+
+                        return stat.href ? (
+                            <Link
+                                key={index}
+                                href={stat.href}
+                                className={`bg-gradient-to-br ${stat.gradient} rounded-xl p-4 text-white relative overflow-hidden shadow-md hover:shadow-lg hover:scale-105 transition-all cursor-pointer`}
+                            >
+                                {CardContent}
+                            </Link>
+                        ) : (
+                            <div
+                                key={index}
+                                className={`bg-gradient-to-br ${stat.gradient} rounded-xl p-4 text-white relative overflow-hidden shadow-md hover:shadow-lg transition-all`}
+                            >
+                                {CardContent}
                             </div>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             )}
 
