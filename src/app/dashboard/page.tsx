@@ -87,11 +87,11 @@ export default function DashboardPage() {
                         const data: DashboardStats = await dashRes.json()
                         setSummaryData(data)
                         setStats([
-                            { label: "Order Pending", value: data.pendingOrders, icon: ShoppingCart, gradient: "from-rose-500 to-pink-600", href: "/dashboard/orders-stokis" },
-                            { label: "Total Mitra", value: data.totalMitra, icon: Users, gradient: "from-blue-500 to-blue-600" },
-                            { label: "Total Stokis", value: data.totalStokis, icon: Store, gradient: "from-emerald-500 to-teal-600" },
-                            { label: "Total DC", value: data.totalDC, icon: Building2, gradient: "from-indigo-500 to-purple-600" },
-                            { label: "Gudang Aktif", value: data.totalGudang, icon: Warehouse, gradient: "from-amber-500 to-orange-600" },
+                            { label: "Order Pending", value: data.pendingOrders, icon: ShoppingCart, gradient: "from-[#E31E24] to-[#B91C22]", href: "/dashboard/orders-stokis" },
+                            { label: "Total Mitra", value: data.totalMitra, icon: Users, gradient: "from-[#5B2B4E] to-[#3D1C34]" },
+                            { label: "Total Stokis", value: data.totalStokis, icon: Store, gradient: "from-[#E31E24] to-[#5B2B4E]" },
+                            { label: "Total DC", value: data.totalDC, icon: Building2, gradient: "from-[#5B2B4E] to-[#E31E24]" },
+                            { label: "Gudang Aktif", value: data.totalGudang, icon: Warehouse, gradient: "from-[#FFD700] to-[#E6C200]" },
                         ])
                     }
 
@@ -113,21 +113,21 @@ export default function DashboardPage() {
                     if (res.ok) {
                         const data = await res.json()
                         setStats([
-                            { label: "Menunggu Approval", value: data.pendingOrders || 0, icon: ShoppingCart, gradient: "from-purple-500 to-violet-600" },
-                            { label: "Total Invoice", value: data.invoiceCount?.stokis || 0, icon: Activity, gradient: "from-blue-500 to-blue-600" },
+                            { label: "Menunggu Approval", value: data.pendingOrders || 0, icon: ShoppingCart, gradient: "from-[#5B2B4E] to-[#3D1C34]" },
+                            { label: "Total Invoice", value: data.invoiceCount?.stokis || 0, icon: Activity, gradient: "from-[#E31E24] to-[#B91C22]" },
                         ])
                     }
                 } else if (role === "DC") {
                     // DC-specific stats
                     setStats([
-                        { label: "Stokis Area", value: 0, icon: Store, gradient: "from-emerald-500 to-teal-600" },
-                        { label: "Order Aktif", value: 0, icon: ShoppingCart, gradient: "from-blue-500 to-blue-600" },
+                        { label: "Stokis Area", value: 0, icon: Store, gradient: "from-[#E31E24] to-[#5B2B4E]" },
+                        { label: "Order Aktif", value: 0, icon: ShoppingCart, gradient: "from-[#5B2B4E] to-[#3D1C34]" },
                     ])
                 } else if (role === "GUDANG") {
                     const res = await fetch("/api/orders/stokis?status=PO_ISSUED")
                     const orders = res.ok ? await res.json() : []
                     setStats([
-                        { label: "PO Masuk", value: Array.isArray(orders) ? orders.length : 0, icon: Package, gradient: "from-blue-500 to-blue-600" },
+                        { label: "PO Masuk", value: Array.isArray(orders) ? orders.length : 0, icon: Package, gradient: "from-[#E31E24] to-[#B91C22]" },
                     ])
                 } else if (role === "STOKIS") {
                     const [mitraRes, orderRes, invRes] = await Promise.all([
@@ -139,9 +139,9 @@ export default function DashboardPage() {
                     const orders = orderRes.ok ? await orderRes.json() : []
                     const inventory = invRes.ok ? await invRes.json() : []
                     setStats([
-                        { label: "Mitra Saya", value: Array.isArray(mitras) ? mitras.length : 0, icon: Users, gradient: "from-orange-500 to-red-500" },
-                        { label: "Order Masuk", value: Array.isArray(orders) ? orders.length : 0, icon: ShoppingCart, gradient: "from-emerald-500 to-teal-600" },
-                        { label: "Item Inventory", value: Array.isArray(inventory) ? inventory.length : 0, icon: Package, gradient: "from-blue-500 to-blue-600" },
+                        { label: "Mitra Saya", value: Array.isArray(mitras) ? mitras.length : 0, icon: Users, gradient: "from-[#E31E24] to-[#B91C22]" },
+                        { label: "Order Masuk", value: Array.isArray(orders) ? orders.length : 0, icon: ShoppingCart, gradient: "from-[#5B2B4E] to-[#3D1C34]" },
+                        { label: "Item Inventory", value: Array.isArray(inventory) ? inventory.length : 0, icon: Package, gradient: "from-[#FFD700] to-[#E6C200]" },
                     ])
                 } else if (role === "MITRA") {
                     const [pendingRes, totalRes] = await Promise.all([
@@ -151,8 +151,8 @@ export default function DashboardPage() {
                     const pending = pendingRes.ok ? await pendingRes.json() : []
                     const total = totalRes.ok ? await totalRes.json() : []
                     setStats([
-                        { label: "Order Aktif", value: Array.isArray(pending) ? pending.length : 0, icon: ShoppingCart, gradient: "from-orange-500 to-red-500" },
-                        { label: "Total Order", value: Array.isArray(total) ? total.length : 0, icon: TrendingUp, gradient: "from-emerald-500 to-teal-600" },
+                        { label: "Order Aktif", value: Array.isArray(pending) ? pending.length : 0, icon: ShoppingCart, gradient: "from-[#E31E24] to-[#B91C22]" },
+                        { label: "Total Order", value: Array.isArray(total) ? total.length : 0, icon: TrendingUp, gradient: "from-[#5B2B4E] to-[#3D1C34]" },
                     ])
                 }
             } catch (error) {
@@ -248,7 +248,8 @@ export default function DashboardPage() {
                     {role === "MITRA" && (
                         <Link
                             href="/dashboard/order"
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm text-sm font-medium"
+                            className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                            style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
                         >
                             <ShoppingCart size={16} />
                             Buat Order
@@ -259,7 +260,8 @@ export default function DashboardPage() {
                         <>
                             <Link
                                 href="/dashboard/order-pusat"
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-sm text-sm font-medium"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                                style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
                             >
                                 <ShoppingCart size={16} />
                                 Order ke Pusat
@@ -278,7 +280,8 @@ export default function DashboardPage() {
                         <>
                             <Link
                                 href="/dashboard/orders-stokis"
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm text-sm font-medium"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                                style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
                             >
                                 <ShoppingCart size={16} />
                                 Approve Order
@@ -286,7 +289,8 @@ export default function DashboardPage() {
                             </Link>
                             <Link
                                 href="/dashboard/reports"
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all shadow-sm text-sm font-medium"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                                style={{ background: 'linear-gradient(135deg, #5B2B4E 0%, #3D1C34 100%)' }}
                             >
                                 <TrendingUp size={16} />
                                 Laporan
@@ -298,7 +302,8 @@ export default function DashboardPage() {
                         <>
                             <Link
                                 href="/dashboard/approve-po"
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all shadow-sm text-sm font-medium"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                                style={{ background: 'linear-gradient(135deg, #5B2B4E 0%, #3D1C34 100%)' }}
                             >
                                 <ShoppingCart size={16} />
                                 Approve PO
@@ -306,7 +311,8 @@ export default function DashboardPage() {
                             </Link>
                             <Link
                                 href="/dashboard/invoices"
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm text-sm font-medium"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                                style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
                             >
                                 <Activity size={16} />
                                 Invoice
@@ -317,7 +323,8 @@ export default function DashboardPage() {
                     {role === "GUDANG" && (
                         <Link
                             href="/dashboard/po-masuk"
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm text-sm font-medium"
+                            className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                            style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
                         >
                             <Package size={16} />
                             Proses PO
@@ -328,7 +335,8 @@ export default function DashboardPage() {
                         <>
                             <Link
                                 href="/dashboard/dc-stokis"
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all shadow-sm text-sm font-medium"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                                style={{ background: 'linear-gradient(135deg, #5B2B4E 0%, #E31E24 100%)' }}
                             >
                                 <Store size={16} />
                                 Kelola Stokis
@@ -412,9 +420,9 @@ export default function DashboardPage() {
                                                 Rp {order.totalAmount.toLocaleString("id-ID")}
                                             </p>
                                             <span className={`text-xs px-2 py-0.5 rounded-full ${order.status === "RECEIVED" ? "bg-emerald-100 text-emerald-700" :
-                                                    order.status === "PENDING_PUSAT" ? "bg-amber-100 text-amber-700" :
-                                                        order.status === "PO_ISSUED" ? "bg-blue-100 text-blue-700" :
-                                                            "bg-gray-100 text-gray-600"
+                                                order.status === "PENDING_PUSAT" ? "bg-amber-100 text-amber-700" :
+                                                    order.status === "PO_ISSUED" ? "bg-blue-100 text-blue-700" :
+                                                        "bg-gray-100 text-gray-600"
                                                 }`}>
                                                 {order.status.replace(/_/g, " ")}
                                             </span>

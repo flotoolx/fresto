@@ -22,6 +22,7 @@ import {
     FileSpreadsheet
 } from "lucide-react"
 import { useState } from "react"
+import Image from "next/image"
 
 const roleMenus: Record<string, { label: string; href: string; icon: React.ReactNode }[]> = {
     PUSAT: [
@@ -68,12 +69,12 @@ const roleMenus: Record<string, { label: string; href: string; icon: React.React
 }
 
 const roleAccentColors: Record<string, string> = {
-    PUSAT: "bg-blue-500",
-    FINANCE: "bg-purple-500",
-    GUDANG: "bg-cyan-500",
-    STOKIS: "bg-emerald-500",
-    MITRA: "bg-orange-500",
-    DC: "bg-indigo-500",
+    PUSAT: "bg-[#E31E24]",
+    FINANCE: "bg-[#5B2B4E]",
+    GUDANG: "bg-[#E31E24]",
+    STOKIS: "bg-[#E31E24]",
+    MITRA: "bg-[#E31E24]",
+    DC: "bg-[#5B2B4E]",
 }
 
 export default function Sidebar() {
@@ -94,11 +95,18 @@ export default function Sidebar() {
             {/* Logo Header */}
             <div className="p-6 pb-4">
                 <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 ${accentColor} rounded-xl flex items-center justify-center shadow-lg`}>
-                        <span className="text-xl">🍗</span>
+                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg border border-gray-100 p-1">
+                        <Image
+                            src="/logo_dfresto.png"
+                            alt="D'Fresto"
+                            width={40}
+                            height={40}
+                            className="object-contain"
+                        />
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold text-gray-800 tracking-tight">D&apos;Fresto</h1>
+                        <h1 className="text-lg font-bold text-[#5B2B4E] tracking-tight">D&apos;Fresto</h1>
+                        <p className="text-xs text-gray-500">Sistem Franchise</p>
                     </div>
                 </div>
             </div>

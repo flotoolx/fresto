@@ -32,7 +32,7 @@ export default async function DashboardLayout({
                             <p className="text-sm font-medium text-gray-700">{session.user?.name}</p>
                             <p className="text-xs text-gray-500">{session.user?.role}</p>
                         </div>
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold shadow-md">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-semibold shadow-md" style={{ background: 'linear-gradient(135deg, #E31E24 0%, #5B2B4E 100%)' }}>
                             {session.user?.name?.[0] || "U"}
                         </div>
                     </div>

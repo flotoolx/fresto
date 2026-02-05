@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 
 export default function LoginPage() {
     const router = useRouter()
@@ -37,15 +38,21 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-400 via-red-500 to-yellow-500 p-4">
+        <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #5B2B4E 0%, #E31E24 50%, #FFD700 100%)' }}>
             <div className="w-full max-w-md">
                 {/* Logo & Title */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full shadow-lg mb-4">
-                        <span className="text-4xl">🍗</span>
+                    <div className="inline-flex items-center justify-center w-24 h-24 bg-white rounded-2xl shadow-2xl mb-4 p-2">
+                        <Image
+                            src="/logo_dfresto.png"
+                            alt="D'Fresto Logo"
+                            width={80}
+                            height={80}
+                            className="object-contain"
+                        />
                     </div>
                     <h1 className="text-3xl font-bold text-white drop-shadow-md">D&apos;Fresto</h1>
-                    <p className="text-white/80 mt-1">Sistem Manajemen Franchise</p>
+                    <p className="text-white/90 mt-1">Sistem Manajemen Franchise</p>
                 </div>
 
                 {/* Login Card */}
@@ -72,7 +79,7 @@ export default function LoginPage() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="email@dfresto.com"
                                 required
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E31E24] focus:border-[#E31E24] transition-colors text-gray-900"
                             />
                         </div>
 
@@ -87,14 +94,15 @@ export default function LoginPage() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••"
                                 required
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E31E24] focus:border-[#E31E24] transition-colors text-gray-900"
                             />
                         </div>
 
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-4 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 focus:ring-4 focus:ring-orange-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-3 px-4 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                            style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
                         >
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
@@ -111,10 +119,11 @@ export default function LoginPage() {
                     </form>
                 </div>
 
-                <p className="text-center text-white/70 text-sm mt-6">
+                <p className="text-center text-white/80 text-sm mt-6">
                     © 2026 D&apos;Fresto. All rights reserved.
                 </p>
             </div>
         </div>
     )
 }
+
