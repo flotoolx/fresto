@@ -324,8 +324,8 @@ async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date) {
 
 // Invoice Aging Report - Categorized by DC/Stokis with aging buckets
 async function getInvoiceAgingReport() {
-    const invoices = await prisma.invoice.findMany({
-        where: { status: { in: ["UNPAID", "OVERDUE"] } },
+    // Fetch ALL invoices (including paid) for complete reporting
+    const allInvoices = await prisma.invoice.findMany({
         include: {
             order: {
                 include: {
@@ -333,13 +333,17 @@ async function getInvoiceAgingReport() {
                 }
             }
         },
-        orderBy: { dueDate: "asc" }
+        orderBy: { createdAt: "desc" }
     })
 
     const now = new Date()
 
-    // Calculate aging for each invoice
-    const invoicesWithAging = invoices.map(inv => {
+    // Separate paid vs unpaid
+    const paidInvoices = allInvoices.filter(inv => inv.status === "PAID")
+    const unpaidInvoices = allInvoices.filter(inv => inv.status !== "PAID")
+
+    // Calculate aging for unpaid invoices
+    const invoicesWithAging = unpaidInvoices.map(inv => {
         const dueDate = new Date(inv.dueDate)
         const daysDiff = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))
 
@@ -382,13 +386,23 @@ async function getInvoiceAgingReport() {
         }
     }
 
+    // Summary for 3 cards: Total, Belum Dibayar, Lunas
     const summary = {
+        // Legacy fields for backward compatibility
         dcCount: dcInvoices.length,
         dcAmount: dcInvoices.reduce((sum, i) => sum + Number(i.amount), 0),
         stokisCount: stokisInvoices.length,
         stokisAmount: stokisInvoices.reduce((sum, i) => sum + Number(i.amount), 0),
-        totalInvoices: invoices.length,
-        totalOutstanding: invoices.reduce((sum, i) => sum + Number(i.amount), 0)
+        totalInvoices: unpaidInvoices.length,
+        totalOutstanding: unpaidInvoices.reduce((sum, i) => sum + Number(i.amount), 0),
+
+        // New fields for simplified 3-card view
+        totalPoCount: allInvoices.length,
+        totalPoAmount: allInvoices.reduce((sum, i) => sum + Number(i.amount), 0),
+        unpaidCount: unpaidInvoices.length,
+        unpaidAmount: unpaidInvoices.reduce((sum, i) => sum + Number(i.amount), 0),
+        paidCount: paidInvoices.length,
+        paidAmount: paidInvoices.reduce((sum, i) => sum + Number(i.amount), 0)
     }
 
     const agingSummary = {
@@ -444,6 +458,7 @@ function formatInvoiceWithAging(inv: {
     agingCategory: string
     order: {
         orderNumber: string
+        createdAt: Date
         stokis: { name: string; email: string; phone: string | null }
     }
 }) {
@@ -451,6 +466,7 @@ function formatInvoiceWithAging(inv: {
         id: inv.id,
         invoiceNumber: inv.invoiceNumber,
         orderNumber: inv.order.orderNumber,
+        orderCreatedAt: inv.order.createdAt,
         stokisName: inv.order.stokis.name,
         stokisPhone: inv.order.stokis.phone,
         amount: Number(inv.amount),

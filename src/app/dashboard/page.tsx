@@ -91,7 +91,6 @@ export default function DashboardPage() {
                             { label: "Total Mitra", value: data.totalMitra, icon: Users, gradient: "from-[#5B2B4E] to-[#3D1C34]" },
                             { label: "Total Stokis", value: data.totalStokis, icon: Store, gradient: "from-[#E31E24] to-[#5B2B4E]" },
                             { label: "Total DC", value: data.totalDC, icon: Building2, gradient: "from-[#5B2B4E] to-[#E31E24]" },
-                            { label: "Gudang Aktif", value: data.totalGudang, icon: Warehouse, gradient: "from-[#FFD700] to-[#E6C200]" },
                         ])
                     }
 

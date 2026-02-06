@@ -211,7 +211,7 @@
 | Gudang | gudang.ayam@dfresto.com | password123 |
 | Stokis | stokis.jakarta@dfresto.com | password123 |
 | Mitra | mitra1@dfresto.com | password123 |
-
+| DC | dc.jakarta@dfresto.com | dc123456 |
 ---
 
 ## Brand Identity Implementation ✅ COMPLETE
