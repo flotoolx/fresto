@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Printer, Download, ArrowLeft, Loader2, FileSpreadsheet } from "lucide-react"
 import { jsPDF } from "jspdf"
-import html2canvas from "html2canvas"
 import * as XLSX from "xlsx"
 
 interface InvoiceDetail {
@@ -100,69 +99,139 @@ export default function ReportPreviewPage() {
     }
 
     const handleDownloadPDF = async () => {
-        if (!reportRef.current) return
+        if (!data) return
 
         setPdfLoading(true)
         try {
-            // Capture the preview element with html2canvas
-            const canvas = await html2canvas(reportRef.current, {
-                scale: 2, // Higher quality
-                useCORS: true,
-                allowTaint: true,
-                logging: true, // Enable for debugging
-                backgroundColor: '#ffffff',
-                imageTimeout: 15000,
-                onclone: (clonedDoc) => {
-                    // Fix any potential styling issues in cloned document
-                    const clonedElement = clonedDoc.querySelector('[data-report-content]')
-                    if (clonedElement) {
-                        (clonedElement as HTMLElement).style.transform = 'none'
-                    }
+            const pdf = new jsPDF('p', 'mm', 'a4')
+            const pageWidth = pdf.internal.pageSize.getWidth()
+            const invoices = getInvoices()
+
+            // Try to load logo
+            try {
+                const logoImg = new window.Image()
+                logoImg.crossOrigin = "anonymous"
+                logoImg.src = "/logo_dfresto.png"
+                await new Promise((resolve, reject) => {
+                    logoImg.onload = resolve
+                    logoImg.onerror = reject
+                    setTimeout(reject, 3000) // Timeout after 3s
+                })
+                pdf.addImage(logoImg, 'PNG', 14, 10, 15, 15)
+            } catch (e) {
+                // Logo failed, continue without it
+            }
+
+            // Header
+            pdf.setFontSize(20)
+            pdf.setFont("helvetica", "bold")
+            pdf.text("D'Fresto", 32, 18)
+
+            pdf.setFontSize(10)
+            pdf.setFont("helvetica", "normal")
+            pdf.text("Franchise Ayam Goreng Premium", 32, 24)
+
+            // Report Title (right side)
+            pdf.setFontSize(14)
+            pdf.setFont("helvetica", "bold")
+            pdf.text("LAPORAN UMUR PIUTANG", pageWidth - 14, 15, { align: "right" })
+
+            pdf.setFontSize(9)
+            pdf.setFont("helvetica", "normal")
+            pdf.text(`Generated: ${new Date().toLocaleDateString("id-ID")}`, pageWidth - 14, 21, { align: "right" })
+
+            // Separator line
+            pdf.setDrawColor(50, 50, 50)
+            pdf.setLineWidth(0.5)
+            pdf.line(14, 30, pageWidth - 14, 30)
+
+            // Summary Cards as colored boxes (mimicking preview)
+            const summaryY = 35
+            const cardWidth = (pageWidth - 28 - 8) / 3  // 3 cards with gaps
+
+            // Total Card (slate)
+            pdf.setFillColor(71, 85, 105) // slate-600
+            pdf.roundedRect(14, summaryY, cardWidth, 25, 2, 2, 'F')
+            pdf.setTextColor(255, 255, 255)
+            pdf.setFontSize(8)
+            pdf.text("Total", 17, summaryY + 6)
+            pdf.setFontSize(12)
+            pdf.setFont("helvetica", "bold")
+            pdf.text(formatCurrency(data.summary.totalPoAmount), 17, summaryY + 14)
+            pdf.setFontSize(7)
+            pdf.setFont("helvetica", "normal")
+            pdf.text(`Total PO: ${data.summary.totalPoCount}`, 17, summaryY + 20)
+
+            // Belum Dibayar Card (amber)
+            pdf.setFillColor(245, 158, 11) // amber-500
+            pdf.roundedRect(14 + cardWidth + 4, summaryY, cardWidth, 25, 2, 2, 'F')
+            pdf.setFontSize(8)
+            pdf.text("Belum Dibayar", 17 + cardWidth + 4, summaryY + 6)
+            pdf.setFontSize(12)
+            pdf.setFont("helvetica", "bold")
+            pdf.text(formatCurrency(data.summary.unpaidAmount), 17 + cardWidth + 4, summaryY + 14)
+            pdf.setFontSize(7)
+            pdf.setFont("helvetica", "normal")
+            pdf.text(`Total PO: ${data.summary.unpaidCount}`, 17 + cardWidth + 4, summaryY + 20)
+
+            // Lunas Card (emerald)
+            pdf.setFillColor(16, 185, 129) // emerald-500
+            pdf.roundedRect(14 + (cardWidth + 4) * 2, summaryY, cardWidth, 25, 2, 2, 'F')
+            pdf.setFontSize(8)
+            pdf.text("Lunas", 17 + (cardWidth + 4) * 2, summaryY + 6)
+            pdf.setFontSize(12)
+            pdf.setFont("helvetica", "bold")
+            pdf.text(formatCurrency(data.summary.paidAmount), 17 + (cardWidth + 4) * 2, summaryY + 14)
+            pdf.setFontSize(7)
+            pdf.setFont("helvetica", "normal")
+            pdf.text(`Total PO: ${data.summary.paidCount}`, 17 + (cardWidth + 4) * 2, summaryY + 20)
+
+            // Reset text color
+            pdf.setTextColor(0, 0, 0)
+
+            // Invoice Table Title
+            pdf.setFontSize(11)
+            pdf.setFont("helvetica", "bold")
+            pdf.text("Daftar Invoice Umur Piutang", 14, summaryY + 35)
+
+            // Invoice Table using autoTable
+            const { default: autoTable } = await import('jspdf-autotable')
+
+            autoTable(pdf, {
+                startY: summaryY + 40,
+                head: [["Tanggal PO", "No. Invoice", "Konsumen", "Jumlah", "Status"]],
+                body: invoices.map(inv => [
+                    inv.orderCreatedAt ? formatDate(inv.orderCreatedAt) : "-",
+                    inv.invoiceNumber,
+                    inv.stokisName,
+                    formatCurrency(inv.amount),
+                    inv.status === "PAID" ? "Lunas" : "Belum Bayar"
+                ]),
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [50, 50, 50], textColor: [255, 255, 255] },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                columnStyles: {
+                    0: { cellWidth: 25 },
+                    3: { halign: 'right' },
+                    4: { halign: 'center' }
                 }
             })
 
-            const imgData = canvas.toDataURL('image/png')
-            const pdf = new jsPDF('p', 'mm', 'a4')
-
-            const pdfWidth = pdf.internal.pageSize.getWidth()
-            const pdfHeight = pdf.internal.pageSize.getHeight()
-            const imgWidth = canvas.width
-            const imgHeight = canvas.height
-            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight)
-            const imgX = (pdfWidth - imgWidth * ratio) / 2
-            const imgY = 0
-
-            // Calculate if we need multiple pages
-            const scaledHeight = imgHeight * ratio
-
-            if (scaledHeight <= pdfHeight) {
-                // Single page
-                pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, scaledHeight)
-            } else {
-                // Multiple pages needed
-                let remainingHeight = scaledHeight
-                let currentY = 0
-                let pageNumber = 0
-
-                while (remainingHeight > 0) {
-                    if (pageNumber > 0) {
-                        pdf.addPage()
-                    }
-
-                    // For multi-page, we need to slice the image
-                    const pageImgHeight = Math.min(pdfHeight, remainingHeight)
-                    pdf.addImage(imgData, 'PNG', imgX, -currentY, imgWidth * ratio, scaledHeight)
-
-                    remainingHeight -= pdfHeight
-                    currentY += pdfHeight
-                    pageNumber++
-                }
-            }
+            // Footer
+            const finalY = (pdf as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || 200
+            pdf.setFontSize(7)
+            pdf.setTextColor(128, 128, 128)
+            pdf.text(
+                `Dokumen ini dicetak dari sistem D'Fresto pada ${new Date().toLocaleString("id-ID")}`,
+                pageWidth / 2,
+                finalY + 10,
+                { align: "center" }
+            )
 
             pdf.save(`Laporan_Umur_Piutang_${new Date().toISOString().split("T")[0]}.pdf`)
         } catch (err) {
             console.error('Error generating PDF:', err)
-            alert('Gagal membuat PDF. Silakan gunakan tombol Print > Save as PDF.')
+            alert('Gagal membuat PDF: ' + (err instanceof Error ? err.message : 'Unknown error'))
         } finally {
             setPdfLoading(false)
         }
