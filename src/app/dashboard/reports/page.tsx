@@ -874,8 +874,8 @@ export default function ReportsPage() {
                                                 <Receipt size={14} className="opacity-80" />
                                                 <span className="text-xs text-white/80">Total</span>
                                             </div>
-                                            <p className="text-xl font-bold">{invoiceAging.totalPoCount || 0}</p>
-                                            <p className="text-xs text-white/60 mt-1">{formatCurrency(invoiceAging.totalPoAmount || 0)}</p>
+                                            <p className="text-xl font-bold">{formatCurrency(invoiceAging.totalPoAmount || 0)}</p>
+                                            <p className="text-xs text-white/60 mt-1">Total PO: {invoiceAging.totalPoCount || 0}</p>
                                         </div>
 
                                         {/* Belum Dibayar */}
@@ -885,8 +885,8 @@ export default function ReportsPage() {
                                                 <Receipt size={14} className="opacity-80" />
                                                 <span className="text-xs text-white/80">Belum Dibayar</span>
                                             </div>
-                                            <p className="text-xl font-bold">{invoiceAging.unpaidCount || 0}</p>
-                                            <p className="text-xs text-white/60 mt-1">{formatCurrency(invoiceAging.unpaidAmount || 0)}</p>
+                                            <p className="text-xl font-bold">{formatCurrency(invoiceAging.unpaidAmount || 0)}</p>
+                                            <p className="text-xs text-white/60 mt-1">Total PO: {invoiceAging.unpaidCount || 0}</p>
                                         </div>
 
                                         {/* Lunas */}
@@ -896,8 +896,8 @@ export default function ReportsPage() {
                                                 <Receipt size={14} className="opacity-80" />
                                                 <span className="text-xs text-white/80">Lunas</span>
                                             </div>
-                                            <p className="text-xl font-bold">{invoiceAging.paidCount || 0}</p>
-                                            <p className="text-xs text-white/60 mt-1">{formatCurrency(invoiceAging.paidAmount || 0)}</p>
+                                            <p className="text-xl font-bold">{formatCurrency(invoiceAging.paidAmount || 0)}</p>
+                                            <p className="text-xs text-white/60 mt-1">Total PO: {invoiceAging.paidCount || 0}</p>
                                         </div>
                                     </div>
 
