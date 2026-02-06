@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Printer, Download, ArrowLeft, Loader2, FileSpreadsheet } from "lucide-react"
-import Image from "next/image"
 import { jsPDF } from "jspdf"
 import html2canvas from "html2canvas"
 import * as XLSX from "xlsx"
@@ -109,8 +108,17 @@ export default function ReportPreviewPage() {
             const canvas = await html2canvas(reportRef.current, {
                 scale: 2, // Higher quality
                 useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff'
+                allowTaint: true,
+                logging: true, // Enable for debugging
+                backgroundColor: '#ffffff',
+                imageTimeout: 15000,
+                onclone: (clonedDoc) => {
+                    // Fix any potential styling issues in cloned document
+                    const clonedElement = clonedDoc.querySelector('[data-report-content]')
+                    if (clonedElement) {
+                        (clonedElement as HTMLElement).style.transform = 'none'
+                    }
+                }
             })
 
             const imgData = canvas.toDataURL('image/png')
@@ -282,12 +290,14 @@ export default function ReportPreviewPage() {
                     <div className="border-b-2 border-gray-800 pb-4 mb-6">
                         <div className="flex justify-between items-start">
                             <div className="flex items-center gap-3">
-                                <Image
+                                {/* Use standard img for html2canvas compatibility */}
+                                <img
                                     src="/logo_dfresto.png"
                                     alt="D'Fresto Logo"
                                     width={50}
                                     height={50}
                                     className="object-contain"
+                                    crossOrigin="anonymous"
                                 />
                                 <div>
                                     <h1 className="text-2xl font-bold text-gray-800">D'Fresto</h1>
