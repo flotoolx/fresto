@@ -114,22 +114,45 @@ export default function ReportPreviewPage() {
         doc.setFont("helvetica", "normal")
         doc.text("Franchise Ayam Goreng Premium", 14, 26)
 
-        // Report Title
+        // Report Title (right side)
         doc.setFontSize(16)
         doc.setFont("helvetica", "bold")
-        doc.text("Laporan Umur Piutang", 14, 40)
+        doc.text("LAPORAN UMUR PIUTANG", pageWidth - 14, 20, { align: "right" })
 
         doc.setFontSize(10)
         doc.setFont("helvetica", "normal")
-        doc.text(`Generated: ${new Date().toLocaleDateString("id-ID")}`, 14, 46)
+        doc.text(`Generated: ${new Date().toLocaleDateString("id-ID")}`, pageWidth - 14, 26, { align: "right" })
 
         // Separator Line
         doc.setLineWidth(0.5)
-        doc.line(14, 50, pageWidth - 14, 50)
+        doc.line(14, 32, pageWidth - 14, 32)
 
-        // Invoice table
+        // Summary Section (matching preview - before table)
+        doc.setFont("helvetica", "bold")
+        doc.setFontSize(10)
+        doc.text("Ringkasan:", 14, 40)
+
         autoTable(doc, {
-            startY: 55,
+            startY: 45,
+            head: [["Kategori", "Total PO", "Nominal"]],
+            body: [
+                ["Total", data.summary.totalPoCount.toString(), formatCurrency(data.summary.totalPoAmount)],
+                ["Belum Dibayar", data.summary.unpaidCount.toString(), formatCurrency(data.summary.unpaidAmount)],
+                ["Lunas", data.summary.paidCount.toString(), formatCurrency(data.summary.paidAmount)]
+            ],
+            theme: "grid",
+            headStyles: { fillColor: [50, 50, 50] },
+            styles: { fontSize: 9 }
+        })
+
+        // Invoice table (after summary)
+        const summaryEndY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || 80
+
+        doc.setFont("helvetica", "bold")
+        doc.text("Daftar Invoice Umur Piutang:", 14, summaryEndY + 10)
+
+        autoTable(doc, {
+            startY: summaryEndY + 15,
             head: [["Tanggal PO", "No. Invoice", "Konsumen", "Jumlah", "Status"]],
             body: invoices.map(inv => [
                 inv.orderCreatedAt ? formatDate(inv.orderCreatedAt) : "-",
@@ -142,23 +165,12 @@ export default function ReportPreviewPage() {
             headStyles: { fillColor: [50, 50, 50] }
         })
 
-        // Summary
-        const lastY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || 100
-
-        doc.setFont("helvetica", "bold")
-        doc.text("Ringkasan:", 14, lastY + 10)
-
-        autoTable(doc, {
-            startY: lastY + 15,
-            head: [["Kategori", "Total PO", "Nominal"]],
-            body: [
-                ["Total", data.summary.totalPoCount.toString(), formatCurrency(data.summary.totalPoAmount)],
-                ["Belum Dibayar", data.summary.unpaidCount.toString(), formatCurrency(data.summary.unpaidAmount)],
-                ["Lunas", data.summary.paidCount.toString(), formatCurrency(data.summary.paidAmount)]
-            ],
-            theme: "striped",
-            headStyles: { fillColor: [50, 50, 50] }
-        })
+        // Footer
+        const tableEndY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || 150
+        doc.setFontSize(8)
+        doc.setFont("helvetica", "normal")
+        doc.setTextColor(128, 128, 128)
+        doc.text(`Dokumen ini dicetak dari sistem D'Fresto pada ${new Date().toLocaleString("id-ID")}`, pageWidth / 2, tableEndY + 10, { align: "center" })
 
         doc.save(`Laporan_Umur_Piutang_${new Date().toISOString().split("T")[0]}.pdf`)
     }
@@ -304,8 +316,8 @@ export default function ReportPreviewPage() {
                                     <td className="border border-gray-300 p-2 text-right">{formatCurrency(inv.amount)}</td>
                                     <td className="border border-gray-300 p-2 text-center">
                                         <span className={`px-2 py-1 rounded text-xs font-bold ${inv.status === "PAID"
-                                                ? "bg-green-100 text-green-800"
-                                                : "bg-amber-100 text-amber-800"
+                                            ? "bg-green-100 text-green-800"
+                                            : "bg-amber-100 text-amber-800"
                                             }`}>
                                             {inv.status === "PAID" ? "Lunas" : "Belum Bayar"}
                                         </span>
