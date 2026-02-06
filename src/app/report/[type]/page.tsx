@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Printer, Download, ArrowLeft, Loader2, FileSpreadsheet } from "lucide-react"
 import Image from "next/image"
 import { jsPDF } from "jspdf"
-import autoTable from "jspdf-autotable"
+import html2canvas from "html2canvas"
 import * as XLSX from "xlsx"
 
 interface InvoiceDetail {
@@ -43,6 +43,8 @@ export default function ReportPreviewPage() {
     const [loading, setLoading] = useState(true)
     const [data, setData] = useState<ReportData | null>(null)
     const [error, setError] = useState("")
+    const [pdfLoading, setPdfLoading] = useState(false)
+    const reportRef = useRef<HTMLDivElement>(null)
 
     const filter = searchParams.get("filter") || "all"
     const sortOrder = searchParams.get("sort") || "desc"
@@ -99,80 +101,63 @@ export default function ReportPreviewPage() {
     }
 
     const handleDownloadPDF = async () => {
-        if (!data) return
+        if (!reportRef.current) return
 
-        const doc = new jsPDF()
-        const pageWidth = doc.internal.pageSize.getWidth()
-        const invoices = getInvoices()
+        setPdfLoading(true)
+        try {
+            // Capture the preview element with html2canvas
+            const canvas = await html2canvas(reportRef.current, {
+                scale: 2, // Higher quality
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff'
+            })
 
-        // Header with branding
-        doc.setFontSize(22)
-        doc.setFont("helvetica", "bold")
-        doc.text("D'Fresto", 14, 20)
+            const imgData = canvas.toDataURL('image/png')
+            const pdf = new jsPDF('p', 'mm', 'a4')
 
-        doc.setFontSize(10)
-        doc.setFont("helvetica", "normal")
-        doc.text("Franchise Ayam Goreng Premium", 14, 26)
+            const pdfWidth = pdf.internal.pageSize.getWidth()
+            const pdfHeight = pdf.internal.pageSize.getHeight()
+            const imgWidth = canvas.width
+            const imgHeight = canvas.height
+            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight)
+            const imgX = (pdfWidth - imgWidth * ratio) / 2
+            const imgY = 0
 
-        // Report Title (right side)
-        doc.setFontSize(16)
-        doc.setFont("helvetica", "bold")
-        doc.text("LAPORAN UMUR PIUTANG", pageWidth - 14, 20, { align: "right" })
+            // Calculate if we need multiple pages
+            const scaledHeight = imgHeight * ratio
 
-        doc.setFontSize(10)
-        doc.setFont("helvetica", "normal")
-        doc.text(`Generated: ${new Date().toLocaleDateString("id-ID")}`, pageWidth - 14, 26, { align: "right" })
+            if (scaledHeight <= pdfHeight) {
+                // Single page
+                pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, scaledHeight)
+            } else {
+                // Multiple pages needed
+                let remainingHeight = scaledHeight
+                let currentY = 0
+                let pageNumber = 0
 
-        // Separator Line
-        doc.setLineWidth(0.5)
-        doc.line(14, 32, pageWidth - 14, 32)
+                while (remainingHeight > 0) {
+                    if (pageNumber > 0) {
+                        pdf.addPage()
+                    }
 
-        // Summary Section (matching preview - before table)
-        doc.setFont("helvetica", "bold")
-        doc.setFontSize(10)
-        doc.text("Ringkasan:", 14, 40)
+                    // For multi-page, we need to slice the image
+                    const pageImgHeight = Math.min(pdfHeight, remainingHeight)
+                    pdf.addImage(imgData, 'PNG', imgX, -currentY, imgWidth * ratio, scaledHeight)
 
-        autoTable(doc, {
-            startY: 45,
-            head: [["Kategori", "Total PO", "Nominal"]],
-            body: [
-                ["Total", data.summary.totalPoCount.toString(), formatCurrency(data.summary.totalPoAmount)],
-                ["Belum Dibayar", data.summary.unpaidCount.toString(), formatCurrency(data.summary.unpaidAmount)],
-                ["Lunas", data.summary.paidCount.toString(), formatCurrency(data.summary.paidAmount)]
-            ],
-            theme: "grid",
-            headStyles: { fillColor: [50, 50, 50] },
-            styles: { fontSize: 9 }
-        })
+                    remainingHeight -= pdfHeight
+                    currentY += pdfHeight
+                    pageNumber++
+                }
+            }
 
-        // Invoice table (after summary)
-        const summaryEndY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || 80
-
-        doc.setFont("helvetica", "bold")
-        doc.text("Daftar Invoice Umur Piutang:", 14, summaryEndY + 10)
-
-        autoTable(doc, {
-            startY: summaryEndY + 15,
-            head: [["Tanggal PO", "No. Invoice", "Konsumen", "Jumlah", "Status"]],
-            body: invoices.map(inv => [
-                inv.orderCreatedAt ? formatDate(inv.orderCreatedAt) : "-",
-                inv.invoiceNumber,
-                inv.stokisName,
-                formatCurrency(inv.amount),
-                inv.status === "PAID" ? "Lunas" : "Belum Bayar"
-            ]),
-            styles: { fontSize: 9 },
-            headStyles: { fillColor: [50, 50, 50] }
-        })
-
-        // Footer
-        const tableEndY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || 150
-        doc.setFontSize(8)
-        doc.setFont("helvetica", "normal")
-        doc.setTextColor(128, 128, 128)
-        doc.text(`Dokumen ini dicetak dari sistem D'Fresto pada ${new Date().toLocaleString("id-ID")}`, pageWidth / 2, tableEndY + 10, { align: "center" })
-
-        doc.save(`Laporan_Umur_Piutang_${new Date().toISOString().split("T")[0]}.pdf`)
+            pdf.save(`Laporan_Umur_Piutang_${new Date().toISOString().split("T")[0]}.pdf`)
+        } catch (err) {
+            console.error('Error generating PDF:', err)
+            alert('Gagal membuat PDF. Silakan gunakan tombol Print > Save as PDF.')
+        } finally {
+            setPdfLoading(false)
+        }
     }
 
     const handleDownloadExcel = () => {
@@ -276,9 +261,11 @@ export default function ReportPreviewPage() {
                 </button>
                 <button
                     onClick={handleDownloadPDF}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                    disabled={pdfLoading}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
                 >
-                    <Download size={18} /> PDF
+                    {pdfLoading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+                    {pdfLoading ? 'Loading...' : 'PDF'}
                 </button>
                 <button
                     onClick={handleDownloadExcel}
@@ -290,7 +277,7 @@ export default function ReportPreviewPage() {
 
             {/* Report Document */}
             <div className="max-w-4xl mx-auto py-8 px-4 print:py-0 print:px-0 print:max-w-none">
-                <div className="bg-white shadow-lg print:shadow-none p-8 print:p-6">
+                <div ref={reportRef} className="bg-white shadow-lg print:shadow-none p-8 print:p-6">
                     {/* Header */}
                     <div className="border-b-2 border-gray-800 pb-4 mb-6">
                         <div className="flex justify-between items-start">
