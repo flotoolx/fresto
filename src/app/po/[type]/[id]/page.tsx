@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Printer, Download, ArrowLeft, Loader2 } from "lucide-react"
-import Image from "next/image"
+import { Printer, Download, ArrowLeft, Loader2, FileSpreadsheet } from "lucide-react"
+import { jsPDF } from "jspdf"
+import * as XLSX from "xlsx"
 
 interface OrderItem {
     id: string
@@ -71,22 +72,183 @@ export default function PrintPOPage() {
     }
 
     const handleDownloadPDF = async () => {
-        try {
-            const res = await fetch(`/api/po/${type}/${id}/pdf`)
-            if (!res.ok) throw new Error("Gagal generate PDF")
+        if (!po) return
 
-            const blob = await res.blob()
-            const url = window.URL.createObjectURL(blob)
-            const a = document.createElement("a")
-            a.href = url
-            a.download = `PO-${po?.orderNumber || id}.pdf`
-            document.body.appendChild(a)
-            a.click()
-            window.URL.revokeObjectURL(url)
-            document.body.removeChild(a)
+        try {
+            const pdf = new jsPDF('p', 'mm', 'a4')
+            const pageWidth = pdf.internal.pageSize.getWidth()
+
+            // Try to load logo
+            try {
+                const logoImg = new window.Image()
+                logoImg.crossOrigin = "anonymous"
+                logoImg.src = "/logo_dfresto.png"
+                await new Promise((resolve, reject) => {
+                    logoImg.onload = resolve
+                    logoImg.onerror = reject
+                    setTimeout(reject, 3000)
+                })
+                pdf.addImage(logoImg, 'PNG', 14, 10, 15, 15)
+            } catch (e) {
+                // Logo failed, continue
+            }
+
+            // Header
+            pdf.setFontSize(18)
+            pdf.setFont("helvetica", "bold")
+            pdf.text("D'Fresto", 32, 17)
+
+            pdf.setFontSize(9)
+            pdf.setFont("helvetica", "normal")
+            pdf.text("Franchise Ayam Goreng Premium", 32, 22)
+
+            // PO Title
+            pdf.setFontSize(14)
+            pdf.setFont("helvetica", "bold")
+            pdf.text("PURCHASE ORDER", pageWidth - 14, 15, { align: "right" })
+
+            pdf.setFontSize(10)
+            pdf.setFont("helvetica", "normal")
+            pdf.text(`No: ${po.orderNumber}`, pageWidth - 14, 21, { align: "right" })
+
+            // Separator
+            pdf.setDrawColor(50, 50, 50)
+            pdf.setLineWidth(0.5)
+            pdf.line(14, 28, pageWidth - 14, 28)
+
+            // From/To Info
+            let yPos = 35
+
+            pdf.setFontSize(10)
+            pdf.setFont("helvetica", "bold")
+            pdf.text("Dari:", 14, yPos)
+            pdf.setFont("helvetica", "normal")
+            pdf.text(po.from.name, 14, yPos + 5)
+            if (po.from.address) pdf.text(po.from.address, 14, yPos + 10)
+            if (po.from.phone) pdf.text(po.from.phone, 14, yPos + 15)
+
+            pdf.setFont("helvetica", "bold")
+            pdf.text("Kepada:", pageWidth / 2, yPos)
+            pdf.setFont("helvetica", "normal")
+            pdf.text(po.to.name, pageWidth / 2, yPos + 5)
+            if (po.to.address) pdf.text(po.to.address, pageWidth / 2, yPos + 10)
+            if (po.to.phone) pdf.text(po.to.phone, pageWidth / 2, yPos + 15)
+
+            yPos = 58
+            pdf.setFont("helvetica", "normal")
+            pdf.text(`Tanggal PO: ${formatDate(po.createdAt)}`, 14, yPos)
+            pdf.text(`Status: ${po.status}`, pageWidth / 2, yPos)
+
+            // Items Table
+            const { default: autoTable } = await import('jspdf-autotable')
+
+            autoTable(pdf, {
+                startY: yPos + 8,
+                head: [["No", "SKU", "Nama Produk", "Qty", "Satuan", "Harga", "Subtotal"]],
+                body: po.items.map((item, idx) => [
+                    (idx + 1).toString(),
+                    item.product.sku,
+                    item.product.name,
+                    item.quantity.toString(),
+                    item.product.unit,
+                    formatCurrency(item.price),
+                    formatCurrency(item.price * item.quantity)
+                ]),
+                foot: [["", "", "", "", "", "TOTAL:", formatCurrency(po.totalAmount)]],
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [50, 50, 50], textColor: [255, 255, 255] },
+                footStyles: { fillColor: [50, 50, 50], textColor: [255, 255, 255], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                columnStyles: {
+                    0: { cellWidth: 10, halign: 'center' },
+                    3: { halign: 'center' },
+                    4: { halign: 'center' },
+                    5: { halign: 'right' },
+                    6: { halign: 'right' }
+                }
+            })
+
+            // Notes
+            const finalY = (pdf as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || 150
+            if (po.notes) {
+                pdf.setFontSize(9)
+                pdf.setFont("helvetica", "bold")
+                pdf.text("Catatan:", 14, finalY + 10)
+                pdf.setFont("helvetica", "normal")
+                pdf.text(po.notes, 14, finalY + 15)
+            }
+
+            // Footer
+            pdf.setFontSize(7)
+            pdf.setTextColor(128, 128, 128)
+            pdf.text(
+                `Dokumen ini dicetak dari sistem D'Fresto pada ${new Date().toLocaleString("id-ID")}`,
+                pageWidth / 2,
+                finalY + 25,
+                { align: "center" }
+            )
+
+            pdf.save(`PO-${po.orderNumber}.pdf`)
         } catch (err) {
+            console.error('Error generating PDF:', err)
             alert("Gagal download PDF: " + (err instanceof Error ? err.message : "Unknown error"))
         }
+    }
+
+    const handleDownloadExcel = () => {
+        if (!po) return
+
+        const wb = XLSX.utils.book_new()
+        const excelData: (string | number)[][] = []
+
+        // Header
+        excelData.push(["D'Fresto - Purchase Order"])
+        excelData.push([`No: ${po.orderNumber}`])
+        excelData.push([`Tanggal: ${formatDate(po.createdAt)}`])
+        excelData.push([`Status: ${po.status}`])
+        excelData.push([])
+
+        // From/To
+        excelData.push(["Dari:", po.from.name, "", "Kepada:", po.to.name])
+        excelData.push(["", po.from.address || "", "", "", po.to.address || ""])
+        excelData.push([])
+
+        // Items
+        excelData.push(["No", "SKU", "Nama Produk", "Qty", "Satuan", "Harga", "Subtotal"])
+        po.items.forEach((item, idx) => {
+            excelData.push([
+                idx + 1,
+                item.product.sku,
+                item.product.name,
+                item.quantity,
+                item.product.unit,
+                item.price,
+                item.price * item.quantity
+            ])
+        })
+
+        // Total
+        excelData.push([])
+        excelData.push(["", "", "", "", "", "TOTAL:", po.totalAmount])
+
+        if (po.notes) {
+            excelData.push([])
+            excelData.push(["Catatan:", po.notes])
+        }
+
+        const ws = XLSX.utils.aoa_to_sheet(excelData)
+        ws["!cols"] = [
+            { wch: 5 },
+            { wch: 15 },
+            { wch: 30 },
+            { wch: 8 },
+            { wch: 10 },
+            { wch: 15 },
+            { wch: 18 }
+        ]
+
+        XLSX.utils.book_append_sheet(wb, ws, "Purchase Order")
+        XLSX.writeFile(wb, `PO-${po.orderNumber}.xlsx`)
     }
 
     const formatCurrency = (amount: number) => {
@@ -152,9 +314,15 @@ export default function PrintPOPage() {
                 </button>
                 <button
                     onClick={handleDownloadPDF}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                    <Download size={18} /> PDF
+                </button>
+                <button
+                    onClick={handleDownloadExcel}
                     className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                 >
-                    <Download size={18} /> Download PDF
+                    <FileSpreadsheet size={18} /> Excel
                 </button>
             </div>
 
@@ -169,7 +337,7 @@ export default function PrintPOPage() {
                         <div className="flex justify-between items-start">
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <Image
+                                    <img
                                         src="/logo_dfresto.png"
                                         alt="D'Fresto Logo"
                                         width={40}
