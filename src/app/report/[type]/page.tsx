@@ -1,0 +1,340 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { Printer, Download, ArrowLeft, Loader2, FileSpreadsheet } from "lucide-react"
+import Image from "next/image"
+import { jsPDF } from "jspdf"
+import autoTable from "jspdf-autotable"
+import * as XLSX from "xlsx"
+
+interface InvoiceDetail {
+    invoiceNumber: string
+    orderNumber: string
+    stokisName: string
+    amount: number
+    dueDate: string
+    agingCategory: string
+    status: string
+    orderCreatedAt?: string
+}
+
+interface ReportData {
+    summary: {
+        totalPoCount: number
+        totalPoAmount: number
+        unpaidCount: number
+        unpaidAmount: number
+        paidCount: number
+        paidAmount: number
+    }
+    details: {
+        dc: InvoiceDetail[]
+        stokis: InvoiceDetail[]
+    }
+}
+
+export default function ReportPreviewPage() {
+    const params = useParams()
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    const reportType = params.type as string
+
+    const [loading, setLoading] = useState(true)
+    const [data, setData] = useState<ReportData | null>(null)
+    const [error, setError] = useState("")
+
+    const filter = searchParams.get("filter") || "all"
+    const sortOrder = searchParams.get("sort") || "desc"
+
+    useEffect(() => {
+        fetchReportData()
+    }, [reportType, filter])
+
+    const fetchReportData = async () => {
+        try {
+            const res = await fetch(`/api/reports?type=invoice-aging`)
+            if (!res.ok) throw new Error("Gagal memuat data laporan")
+            const result = await res.json()
+            setData(result)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Gagal memuat laporan")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0,
+        }).format(amount)
+    }
+
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString("id-ID")
+    }
+
+    const getInvoices = (): InvoiceDetail[] => {
+        if (!data) return []
+        let invoices = filter === "dc"
+            ? data.details.dc
+            : filter === "stokis"
+                ? data.details.stokis
+                : [...data.details.dc, ...data.details.stokis]
+
+        // Sort
+        invoices = [...invoices].sort((a, b) => {
+            const dateA = new Date(a.orderCreatedAt || a.dueDate).getTime()
+            const dateB = new Date(b.orderCreatedAt || b.dueDate).getTime()
+            return sortOrder === "asc" ? dateA - dateB : dateB - dateA
+        })
+
+        return invoices
+    }
+
+    const handlePrint = () => {
+        window.print()
+    }
+
+    const handleDownloadPDF = async () => {
+        if (!data) return
+
+        const doc = new jsPDF()
+        const pageWidth = doc.internal.pageSize.getWidth()
+        const invoices = getInvoices()
+
+        // Header with branding
+        doc.setFontSize(22)
+        doc.setFont("helvetica", "bold")
+        doc.text("D'Fresto", 14, 20)
+
+        doc.setFontSize(10)
+        doc.setFont("helvetica", "normal")
+        doc.text("Franchise Ayam Goreng Premium", 14, 26)
+
+        // Report Title
+        doc.setFontSize(16)
+        doc.setFont("helvetica", "bold")
+        doc.text("Laporan Umur Piutang", 14, 40)
+
+        doc.setFontSize(10)
+        doc.setFont("helvetica", "normal")
+        doc.text(`Generated: ${new Date().toLocaleDateString("id-ID")}`, 14, 46)
+
+        // Separator Line
+        doc.setLineWidth(0.5)
+        doc.line(14, 50, pageWidth - 14, 50)
+
+        // Invoice table
+        autoTable(doc, {
+            startY: 55,
+            head: [["Tanggal PO", "No. Invoice", "Konsumen", "Jumlah", "Status"]],
+            body: invoices.map(inv => [
+                inv.orderCreatedAt ? formatDate(inv.orderCreatedAt) : "-",
+                inv.invoiceNumber,
+                inv.stokisName,
+                formatCurrency(inv.amount),
+                inv.status === "PAID" ? "Lunas" : "Belum Bayar"
+            ]),
+            styles: { fontSize: 9 },
+            headStyles: { fillColor: [50, 50, 50] }
+        })
+
+        // Summary
+        const lastY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || 100
+
+        doc.setFont("helvetica", "bold")
+        doc.text("Ringkasan:", 14, lastY + 10)
+
+        autoTable(doc, {
+            startY: lastY + 15,
+            head: [["Kategori", "Total PO", "Nominal"]],
+            body: [
+                ["Total", data.summary.totalPoCount.toString(), formatCurrency(data.summary.totalPoAmount)],
+                ["Belum Dibayar", data.summary.unpaidCount.toString(), formatCurrency(data.summary.unpaidAmount)],
+                ["Lunas", data.summary.paidCount.toString(), formatCurrency(data.summary.paidAmount)]
+            ],
+            theme: "striped",
+            headStyles: { fillColor: [50, 50, 50] }
+        })
+
+        doc.save(`Laporan_Umur_Piutang_${new Date().toISOString().split("T")[0]}.pdf`)
+    }
+
+    const handleDownloadExcel = () => {
+        if (!data) return
+
+        const invoices = getInvoices()
+
+        const wsData = invoices.map(inv => ({
+            "Tanggal PO": inv.orderCreatedAt ? formatDate(inv.orderCreatedAt) : "-",
+            "No. Invoice": inv.invoiceNumber,
+            "Konsumen": inv.stokisName,
+            "Jumlah": inv.amount,
+            "Status": inv.status === "PAID" ? "Lunas" : "Belum Bayar"
+        }))
+
+        const ws = XLSX.utils.json_to_sheet(wsData)
+        const wb = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(wb, ws, "Laporan Umur Piutang")
+        XLSX.writeFile(wb, `Laporan_Umur_Piutang_${new Date().toISOString().split("T")[0]}.xlsx`)
+    }
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="animate-spin" size={32} />
+            </div>
+        )
+    }
+
+    if (error || !data) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+                <p className="text-red-600">{error || "Laporan tidak ditemukan"}</p>
+                <button
+                    onClick={() => router.back()}
+                    className="flex items-center gap-2 text-blue-600 hover:underline"
+                >
+                    <ArrowLeft size={18} /> Kembali
+                </button>
+            </div>
+        )
+    }
+
+    const invoices = getInvoices()
+
+    return (
+        <div className="min-h-screen bg-gray-100">
+            {/* Action Buttons - Hidden when printing */}
+            <div className="print:hidden fixed top-4 right-4 flex gap-2 z-50">
+                <button
+                    onClick={() => router.back()}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                >
+                    <ArrowLeft size={18} /> Kembali
+                </button>
+                <button
+                    onClick={handlePrint}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                    <Printer size={18} /> Print
+                </button>
+                <button
+                    onClick={handleDownloadPDF}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                    <Download size={18} /> PDF
+                </button>
+                <button
+                    onClick={handleDownloadExcel}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                    <FileSpreadsheet size={18} /> Excel
+                </button>
+            </div>
+
+            {/* Report Document */}
+            <div className="max-w-4xl mx-auto py-8 px-4 print:py-0 print:px-0 print:max-w-none">
+                <div className="bg-white shadow-lg print:shadow-none p-8 print:p-6">
+                    {/* Header */}
+                    <div className="border-b-2 border-gray-800 pb-4 mb-6">
+                        <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-3">
+                                <Image
+                                    src="/logo_dfresto.png"
+                                    alt="D'Fresto Logo"
+                                    width={50}
+                                    height={50}
+                                    className="object-contain"
+                                />
+                                <div>
+                                    <h1 className="text-2xl font-bold text-gray-800">D'Fresto</h1>
+                                    <p className="text-gray-600 text-sm">Franchise Ayam Goreng Premium</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <h2 className="text-xl font-bold text-gray-800">LAPORAN UMUR PIUTANG</h2>
+                                <p className="text-sm text-gray-600">Generated: {new Date().toLocaleDateString("id-ID")}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-3 gap-4 mb-6">
+                        <div className="bg-slate-700 text-white p-4 rounded-lg">
+                            <p className="text-sm opacity-80">Total</p>
+                            <p className="text-xl font-bold">{formatCurrency(data.summary.totalPoAmount)}</p>
+                            <p className="text-xs opacity-60">Total PO: <span className="font-bold">{data.summary.totalPoCount}</span></p>
+                        </div>
+                        <div className="bg-amber-500 text-white p-4 rounded-lg">
+                            <p className="text-sm opacity-80">Belum Dibayar</p>
+                            <p className="text-xl font-bold">{formatCurrency(data.summary.unpaidAmount)}</p>
+                            <p className="text-xs opacity-60">Total PO: <span className="font-bold">{data.summary.unpaidCount}</span></p>
+                        </div>
+                        <div className="bg-emerald-500 text-white p-4 rounded-lg">
+                            <p className="text-sm opacity-80">Lunas</p>
+                            <p className="text-xl font-bold">{formatCurrency(data.summary.paidAmount)}</p>
+                            <p className="text-xs opacity-60">Total PO: <span className="font-bold">{data.summary.paidCount}</span></p>
+                        </div>
+                    </div>
+
+                    {/* Invoice Table */}
+                    <h3 className="font-bold text-gray-800 mb-3">Daftar Invoice Umur Piutang</h3>
+                    <table className="w-full border-collapse mb-6">
+                        <thead>
+                            <tr className="bg-gray-800">
+                                <th style={{ color: 'white', borderColor: 'white' }} className="border p-2 text-left">Tanggal PO</th>
+                                <th style={{ color: 'white', borderColor: 'white' }} className="border p-2 text-left">No. Invoice</th>
+                                <th style={{ color: 'white', borderColor: 'white' }} className="border p-2 text-left">Konsumen</th>
+                                <th style={{ color: 'white', borderColor: 'white' }} className="border p-2 text-right">Jumlah</th>
+                                <th style={{ color: 'white', borderColor: 'white' }} className="border p-2 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-gray-900">
+                            {invoices.map((inv, idx) => (
+                                <tr key={inv.invoiceNumber} className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                                    <td className="border border-gray-300 p-2">
+                                        {inv.orderCreatedAt ? formatDate(inv.orderCreatedAt) : "-"}
+                                    </td>
+                                    <td className="border border-gray-300 p-2 font-mono text-sm">{inv.invoiceNumber}</td>
+                                    <td className="border border-gray-300 p-2">{inv.stokisName}</td>
+                                    <td className="border border-gray-300 p-2 text-right">{formatCurrency(inv.amount)}</td>
+                                    <td className="border border-gray-300 p-2 text-center">
+                                        <span className={`px-2 py-1 rounded text-xs font-bold ${inv.status === "PAID"
+                                                ? "bg-green-100 text-green-800"
+                                                : "bg-amber-100 text-amber-800"
+                                            }`}>
+                                            {inv.status === "PAID" ? "Lunas" : "Belum Bayar"}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+
+                    {/* Footer */}
+                    <div className="mt-8 pt-4 border-t text-center text-xs text-gray-500">
+                        <p>Dokumen ini dicetak dari sistem D'Fresto pada {new Date().toLocaleString("id-ID")}</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Print Styles */}
+            <style jsx global>{`
+                @media print {
+                    body {
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                    @page {
+                        size: A4;
+                        margin: 10mm;
+                    }
+                }
+            `}</style>
+        </div>
+    )
+}

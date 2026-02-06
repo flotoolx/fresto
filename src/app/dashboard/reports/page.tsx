@@ -543,20 +543,40 @@ export default function ReportsPage() {
                     </button>
                     {activeTab !== "overview" && (
                         <div className="flex gap-2 ml-auto">
-                            <button
-                                onClick={exportToPDF}
-                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 rounded-xl text-sm font-medium shadow-sm transition-all"
-                            >
-                                <Download size={16} />
-                                PDF
-                            </button>
-                            <button
-                                onClick={exportToExcel}
-                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 rounded-xl text-sm font-medium shadow-sm transition-all"
-                            >
-                                <Download size={16} />
-                                Excel
-                            </button>
+                            {activeTab === "invoice" ? (
+                                <button
+                                    onClick={() => window.open(`/report/invoice-aging?filter=${invoiceFilter}&sort=${invoiceSortOrder}`, '_blank')}
+                                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 rounded-xl text-sm font-medium shadow-sm transition-all"
+                                >
+                                    <Download size={16} />
+                                    PDF
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={exportToPDF}
+                                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 rounded-xl text-sm font-medium shadow-sm transition-all"
+                                >
+                                    <Download size={16} />
+                                    PDF
+                                </button>
+                            )}
+                            {activeTab === "invoice" ? (
+                                <button
+                                    onClick={() => window.open(`/report/invoice-aging?filter=${invoiceFilter}&sort=${invoiceSortOrder}`, '_blank')}
+                                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 rounded-xl text-sm font-medium shadow-sm transition-all"
+                                >
+                                    <Download size={16} />
+                                    Excel
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={exportToExcel}
+                                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 rounded-xl text-sm font-medium shadow-sm transition-all"
+                                >
+                                    <Download size={16} />
+                                    Excel
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
