@@ -180,16 +180,56 @@ export default function ReportPreviewPage() {
 
         const invoices = getInvoices()
 
-        const wsData = invoices.map(inv => ({
-            "Tanggal PO": inv.orderCreatedAt ? formatDate(inv.orderCreatedAt) : "-",
-            "No. Invoice": inv.invoiceNumber,
-            "Konsumen": inv.stokisName,
-            "Jumlah": inv.amount,
-            "Status": inv.status === "PAID" ? "Lunas" : "Belum Bayar"
-        }))
-
-        const ws = XLSX.utils.json_to_sheet(wsData)
+        // Create workbook
         const wb = XLSX.utils.book_new()
+
+        // Build data array with header and summary
+        const excelData: (string | number)[][] = []
+
+        // Header
+        excelData.push(["D'Fresto - Laporan Umur Piutang"])
+        excelData.push([`Franchise Ayam Goreng Premium`])
+        excelData.push([`Generated: ${new Date().toLocaleDateString("id-ID")}`])
+        excelData.push([]) // Empty row
+
+        // Summary Section
+        excelData.push(["RINGKASAN"])
+        excelData.push(["Kategori", "Total PO", "Nominal"])
+        excelData.push(["Total", data.summary.totalPoCount, formatCurrency(data.summary.totalPoAmount)])
+        excelData.push(["Belum Dibayar", data.summary.unpaidCount, formatCurrency(data.summary.unpaidAmount)])
+        excelData.push(["Lunas", data.summary.paidCount, formatCurrency(data.summary.paidAmount)])
+        excelData.push([]) // Empty row
+
+        // Invoice Table Header
+        excelData.push(["DAFTAR INVOICE UMUR PIUTANG"])
+        excelData.push(["Tanggal PO", "No. Invoice", "Konsumen", "Jumlah", "Status"])
+
+        // Invoice Data
+        invoices.forEach(inv => {
+            excelData.push([
+                inv.orderCreatedAt ? formatDate(inv.orderCreatedAt) : "-",
+                inv.invoiceNumber,
+                inv.stokisName,
+                formatCurrency(inv.amount),
+                inv.status === "PAID" ? "Lunas" : "Belum Bayar"
+            ])
+        })
+
+        // Footer
+        excelData.push([])
+        excelData.push([`Dokumen ini dicetak dari sistem D'Fresto pada ${new Date().toLocaleString("id-ID")}`])
+
+        const ws = XLSX.utils.aoa_to_sheet(excelData)
+
+        // Set column widths
+        ws["!cols"] = [
+            { wch: 15 },  // Tanggal PO
+            { wch: 20 },  // No. Invoice
+            { wch: 25 },  // Konsumen
+            { wch: 18 },  // Jumlah
+            { wch: 15 }   // Status
+        ]
+
         XLSX.utils.book_append_sheet(wb, ws, "Laporan Umur Piutang")
         XLSX.writeFile(wb, `Laporan_Umur_Piutang_${new Date().toISOString().split("T")[0]}.xlsx`)
     }
