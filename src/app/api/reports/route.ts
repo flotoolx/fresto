@@ -412,12 +412,22 @@ async function getInvoiceAgingReport() {
         "30_plus": { count: agingBuckets["30_plus"].count, amount: agingBuckets["30_plus"].amount }
     }
 
+    // Format paid invoices with 'lunas' category
+    const paidInvoicesWithStatus = paidInvoices.map(inv => ({
+        ...inv,
+        daysDiff: 0,
+        agingCategory: "lunas"
+    }))
+
+    // Combine all invoices for table display
+    const allStokisInvoices = [...stokisInvoices, ...paidInvoicesWithStatus]
+
     return NextResponse.json({
         summary,
         agingSummary,
         details: {
             dc: dcInvoices.map(formatInvoiceWithAging),
-            stokis: stokisInvoices.map(formatInvoiceWithAging)
+            stokis: allStokisInvoices.map(formatInvoiceWithAging)
         }
     })
 }

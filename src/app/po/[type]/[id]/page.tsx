@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Printer, Download, ArrowLeft, Loader2 } from "lucide-react"
+import Image from "next/image"
 
 interface OrderItem {
     id: string
@@ -167,8 +168,19 @@ export default function PrintPOPage() {
                     <div className="border-b-2 border-gray-800 pb-4 mb-6">
                         <div className="flex justify-between items-start">
                             <div>
-                                <h1 className="text-3xl font-bold text-gray-800">🍗 D'Fresto</h1>
-                                <p className="text-gray-600">Franchise Ayam Goreng Premium</p>
+                                <div className="flex items-center gap-2">
+                                    <Image
+                                        src="/logo_dfresto.png"
+                                        alt="D'Fresto Logo"
+                                        width={40}
+                                        height={40}
+                                        className="object-contain"
+                                    />
+                                    <div>
+                                        <h1 className="text-2xl font-bold text-gray-800">D'Fresto</h1>
+                                        <p className="text-gray-600 text-sm">Franchise Ayam Goreng Premium</p>
+                                    </div>
+                                </div>
                             </div>
                             <div className="text-right">
                                 <h2 className="text-2xl font-bold text-gray-800">PURCHASE ORDER</h2>
