@@ -582,7 +582,7 @@ export default function ReportsPage() {
                                                 <span className="text-xs text-white/80">Total Revenue</span>
                                             </div>
                                             <p className="text-xl font-bold">{formatCurrency(summary.summary.totalRevenue)}</p>
-                                            <p className="text-xs text-white/60 mt-1">Total PO: {summary.summary.stokisOrders + summary.summary.mitraOrders}</p>
+                                            <p className="text-xs text-white/60 mt-1">Total PO: <span className="font-bold">{summary.summary.stokisOrders + summary.summary.mitraOrders}</span></p>
                                         </div>
                                         {/* Total DC */}
                                         <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white relative overflow-hidden">
@@ -592,7 +592,7 @@ export default function ReportsPage() {
                                                 <span className="text-xs text-white/80">Total DC</span>
                                             </div>
                                             <p className="text-xl font-bold">{formatCurrency(summary.summary.totalDcRevenue)}</p>
-                                            <p className="text-xs text-white/60 mt-1">Total PO DC: {summary.summary.stokisOrders}</p>
+                                            <p className="text-xs text-white/60 mt-1">Total PO DC: <span className="font-bold">{summary.summary.stokisOrders}</span></p>
                                         </div>
                                         {/* Total Stokis */}
                                         <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl p-4 text-white relative overflow-hidden">
@@ -602,7 +602,7 @@ export default function ReportsPage() {
                                                 <span className="text-xs text-white/80">Total Stokis</span>
                                             </div>
                                             <p className="text-xl font-bold">{formatCurrency(summary.summary.totalStokisRevenue)}</p>
-                                            <p className="text-xs text-white/60 mt-1">Total PO Stokis: {summary.summary.stokisOrders}</p>
+                                            <p className="text-xs text-white/60 mt-1">Total PO Stokis: <span className="font-bold">{summary.summary.stokisOrders}</span></p>
                                         </div>
                                         {/* Total Mitra */}
                                         <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white relative overflow-hidden">
@@ -612,7 +612,7 @@ export default function ReportsPage() {
                                                 <span className="text-xs text-white/80">Total Mitra</span>
                                             </div>
                                             <p className="text-xl font-bold">{formatCurrency(summary.summary.totalMitraRevenue)}</p>
-                                            <p className="text-xs text-white/60 mt-1">Total PO Mitra: {summary.summary.mitraOrders}</p>
+                                            <p className="text-xs text-white/60 mt-1">Total PO Mitra: <span className="font-bold">{summary.summary.mitraOrders}</span></p>
                                         </div>
                                     </div>
 
@@ -875,7 +875,7 @@ export default function ReportsPage() {
                                                 <span className="text-xs text-white/80">Total</span>
                                             </div>
                                             <p className="text-xl font-bold">{formatCurrency(invoiceAging.totalPoAmount || 0)}</p>
-                                            <p className="text-xs text-white/60 mt-1">Total PO: {invoiceAging.totalPoCount || 0}</p>
+                                            <p className="text-xs text-white/60 mt-1">Total PO: <span className="font-bold">{invoiceAging.totalPoCount || 0}</span></p>
                                         </div>
 
                                         {/* Belum Dibayar */}
@@ -886,7 +886,7 @@ export default function ReportsPage() {
                                                 <span className="text-xs text-white/80">Belum Dibayar</span>
                                             </div>
                                             <p className="text-xl font-bold">{formatCurrency(invoiceAging.unpaidAmount || 0)}</p>
-                                            <p className="text-xs text-white/60 mt-1">Total PO: {invoiceAging.unpaidCount || 0}</p>
+                                            <p className="text-xs text-white/60 mt-1">Total PO: <span className="font-bold">{invoiceAging.unpaidCount || 0}</span></p>
                                         </div>
 
                                         {/* Lunas */}
@@ -897,7 +897,7 @@ export default function ReportsPage() {
                                                 <span className="text-xs text-white/80">Lunas</span>
                                             </div>
                                             <p className="text-xl font-bold">{formatCurrency(invoiceAging.paidAmount || 0)}</p>
-                                            <p className="text-xs text-white/60 mt-1">Total PO: {invoiceAging.paidCount || 0}</p>
+                                            <p className="text-xs text-white/60 mt-1">Total PO: <span className="font-bold">{invoiceAging.paidCount || 0}</span></p>
                                         </div>
                                     </div>
 
