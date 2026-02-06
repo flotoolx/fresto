@@ -41,7 +41,7 @@ interface OutstandingData {
     }[]
 }
 
-export default function FinanceApprovePOPage() {
+export default function ApprovePOPage() {
     const [orders, setOrders] = useState<StokisOrder[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedOrder, setSelectedOrder] = useState<StokisOrder | null>(null)

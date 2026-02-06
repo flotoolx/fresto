@@ -28,8 +28,8 @@ export async function PATCH(
 
         // Handle adjust action
         if (body.action === "adjust") {
-            // Only FINANCE and STOKIS can adjust
-            if (!["FINANCE", "STOKIS"].includes(role)) {
+            // FINANCE, PUSAT, and STOKIS can adjust
+            if (!["FINANCE", "PUSAT", "STOKIS"].includes(role)) {
                 return NextResponse.json({ error: "Forbidden" }, { status: 403 })
             }
 
@@ -60,8 +60,8 @@ export async function PATCH(
                 }
             }
 
-            // Finance can only adjust PENDING_FINANCE orders
-            if (role === "FINANCE" && order.status !== "PENDING_FINANCE") {
+            // Finance/PUSAT can only adjust PENDING_FINANCE orders
+            if (["FINANCE", "PUSAT"].includes(role) && order.status !== "PENDING_FINANCE") {
                 return NextResponse.json({ error: "Cannot adjust order in this status" }, { status: 400 })
             }
 
@@ -99,8 +99,8 @@ export async function PATCH(
                     : `[ADJUSTED] ${notes}`
             }
 
-            // If Finance adjusts, also approve the PO
-            if (role === "FINANCE") {
+            // If Finance or PUSAT adjusts, also approve the PO
+            if (["FINANCE", "PUSAT"].includes(role)) {
                 updateData.status = "PO_ISSUED" as StokisOrderStatus
                 updateData.financeApproveAt = new Date()
                 updateData.poIssuedAt = new Date()
@@ -144,14 +144,14 @@ export async function PATCH(
             return NextResponse.json({ error: "Order not found" }, { status: 404 })
         }
 
-        // Permission check
+        // Permission check - PUSAT can also approve PO (PO_ISSUED) and cancel
         const allowedTransitions: Record<string, { roles: string[]; from: string[] }> = {
             PENDING_FINANCE: { roles: ["PUSAT"], from: ["PENDING_PUSAT"] },
-            PO_ISSUED: { roles: ["FINANCE"], from: ["PENDING_FINANCE"] },
+            PO_ISSUED: { roles: ["FINANCE", "PUSAT"], from: ["PENDING_FINANCE"] },
             PROCESSING: { roles: ["GUDANG"], from: ["PO_ISSUED"] },
             SHIPPED: { roles: ["GUDANG"], from: ["PROCESSING"] },
             RECEIVED: { roles: ["STOKIS"], from: ["SHIPPED"] },
-            CANCELLED: { roles: ["PUSAT", "STOKIS"], from: ["PENDING_PUSAT", "PENDING_FINANCE"] },
+            CANCELLED: { roles: ["PUSAT", "FINANCE", "STOKIS"], from: ["PENDING_PUSAT", "PENDING_FINANCE"] },
         }
 
         const transition = allowedTransitions[status]

@@ -27,6 +27,7 @@ import Image from "next/image"
 const roleMenus: Record<string, { label: string; href: string; icon: React.ReactNode }[]> = {
     PUSAT: [
         { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
+        { label: "Approve PO", href: "/dashboard/approve-po", icon: <ShoppingCart size={20} /> },
         { label: "Users", href: "/dashboard/users", icon: <Users size={20} /> },
         { label: "Produk", href: "/dashboard/products", icon: <Package size={20} /> },
         { label: "Gudang", href: "/dashboard/gudang", icon: <Warehouse size={20} /> },
