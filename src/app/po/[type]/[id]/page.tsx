@@ -239,13 +239,13 @@ export default function PrintPOPage() {
                     <table className="w-full border-collapse mb-6">
                         <thead>
                             <tr className="bg-gray-800">
-                                <th className="border border-white p-2 text-left text-white">No</th>
-                                <th className="border border-white p-2 text-left text-white">SKU</th>
-                                <th className="border border-white p-2 text-left text-white">Nama Produk</th>
-                                <th className="border border-white p-2 text-center text-white">Qty</th>
-                                <th className="border border-white p-2 text-center text-white">Satuan</th>
-                                <th className="border border-white p-2 text-right text-white">Harga</th>
-                                <th className="border border-white p-2 text-right text-white">Subtotal</th>
+                                <th style={{ color: 'white', borderColor: 'white' }} className="border p-2 text-left">No</th>
+                                <th style={{ color: 'white', borderColor: 'white' }} className="border p-2 text-left">SKU</th>
+                                <th style={{ color: 'white', borderColor: 'white' }} className="border p-2 text-left">Nama Produk</th>
+                                <th style={{ color: 'white', borderColor: 'white' }} className="border p-2 text-center">Qty</th>
+                                <th style={{ color: 'white', borderColor: 'white' }} className="border p-2 text-center">Satuan</th>
+                                <th style={{ color: 'white', borderColor: 'white' }} className="border p-2 text-right">Harga</th>
+                                <th style={{ color: 'white', borderColor: 'white' }} className="border p-2 text-right">Subtotal</th>
                             </tr>
                         </thead>
                         <tbody className="text-gray-900">
@@ -264,9 +264,9 @@ export default function PrintPOPage() {
                             ))}
                         </tbody>
                         <tfoot>
-                            <tr className="bg-gray-800 text-white">
-                                <td colSpan={6} className="border border-white p-2 text-right font-bold">TOTAL:</td>
-                                <td className="border border-white p-2 text-right font-bold text-lg">
+                            <tr className="bg-gray-800">
+                                <td colSpan={6} style={{ color: 'white', borderColor: 'white' }} className="border p-2 text-right font-bold">TOTAL:</td>
+                                <td style={{ color: 'white', borderColor: 'white' }} className="border p-2 text-right font-bold text-lg">
                                     {formatCurrency(po.totalAmount)}
                                 </td>
                             </tr>
