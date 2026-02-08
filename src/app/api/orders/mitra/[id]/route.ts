@@ -19,7 +19,6 @@ export async function PATCH(
         const { id } = await params
         const { role, id: userId } = session.user
         const body = await request.json()
-        const { status } = body as { status: MitraOrderStatus }
 
         // Validate permission
         const order = await prisma.mitraOrder.findUnique({
@@ -36,9 +35,68 @@ export async function PATCH(
         }
 
         // Mitra can only mark as received
-        if (role === "MITRA" && (order.mitraId !== userId || status !== "RECEIVED")) {
+        if (role === "MITRA" && (order.mitraId !== userId || body.status !== "RECEIVED")) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
+
+        // Handle adjust action
+        if (body.action === "adjust") {
+            const { adjustedItems, notes } = body as {
+                action: string
+                adjustedItems: { id: string; quantity: number }[]
+                notes?: string
+            }
+
+            // Only Stokis can adjust, and only for PENDING orders
+            if (role !== "STOKIS" || order.stokisId !== userId) {
+                return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+            }
+
+            if (order.status !== "PENDING") {
+                return NextResponse.json({ error: "Hanya order PENDING yang bisa direvisi" }, { status: 400 })
+            }
+
+            // Update each item quantity
+            let newTotal = 0
+            for (const item of adjustedItems) {
+                const orderItem = await prisma.mitraOrderItem.findUnique({
+                    where: { id: item.id }
+                })
+                if (orderItem) {
+                    await prisma.mitraOrderItem.update({
+                        where: { id: item.id },
+                        data: { quantity: item.quantity }
+                    })
+                    newTotal += item.quantity * Number(orderItem.price)
+                }
+            }
+
+            // Delete items with 0 quantity
+            await prisma.mitraOrderItem.deleteMany({
+                where: {
+                    orderId: id,
+                    quantity: 0
+                }
+            })
+
+            // Update order total and notes
+            const updated = await prisma.mitraOrder.update({
+                where: { id },
+                data: {
+                    totalAmount: newTotal,
+                    notes: notes ? `${order.notes || ""}\n[Revisi] ${notes}`.trim() : order.notes
+                },
+                include: {
+                    items: { include: { product: true } },
+                    mitra: { select: { name: true } },
+                },
+            })
+
+            return NextResponse.json(updated)
+        }
+
+        // Handle status update
+        const { status } = body as { status: MitraOrderStatus }
 
         const updateData: Record<string, unknown> = { status }
         if (status === "APPROVED") updateData.approvedAt = new Date()
