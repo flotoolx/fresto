@@ -73,7 +73,6 @@ const mitraStatusConfig: Record<string, { label: string; color: string }> = {
     PROCESSING: { label: "Selesai", color: "bg-green-100 text-green-700" },
     SHIPPED: { label: "Selesai", color: "bg-green-100 text-green-700" },
     RECEIVED: { label: "Selesai", color: "bg-green-100 text-green-700" },
-    CANCELLED: { label: "Dibatalkan", color: "bg-red-100 text-red-700" },
 }
 
 interface StatCard {
@@ -183,7 +182,7 @@ export default function DashboardPage() {
                     ])
                 } else if (role === "STOKIS") {
                     const [mitraRes, ordersRes] = await Promise.all([
-                        fetch(`/api/users?role=MITRA&stokisId=${userId}`),
+                        fetch(`/api/mitra`),
                         fetch(`/api/orders/stokis/my-orders`),
                     ])
                     const mitras = mitraRes.ok ? await mitraRes.json() : []
@@ -227,11 +226,13 @@ export default function DashboardPage() {
 
     // MITRA filtered orders and stats
     const mitraFilteredOrders = useMemo(() => {
-        if (!mitraStartDate || !mitraEndDate) return mitraOrders
+        // Filter out CANCELLED orders and apply date filter
+        const activeOrders = mitraOrders.filter(order => order.status !== "CANCELLED")
+        if (!mitraStartDate || !mitraEndDate) return activeOrders
         const start = new Date(mitraStartDate)
         const end = new Date(mitraEndDate)
         end.setHours(23, 59, 59, 999)
-        return mitraOrders.filter(order => {
+        return activeOrders.filter(order => {
             const orderDate = new Date(order.createdAt)
             return orderDate >= start && orderDate <= end
         })
