@@ -127,8 +127,8 @@
 - [x] Mitra Order Card (Total Mitra from API, Unique Order Count) ✅
 - [x] Dashboard Layout (4 Cards, Headers, Responsive) ✅
 - [x] Print PO Button (Order Mitra page only) ✅
-- [x] Finance Dashboard 4-Cards Layout (DC/Pusat & Stokis sections) ✅
-- [x] Git commit ✅ `1a33a3c`
+- [x] Finance Dashboard 4-Cards Layout (DC & Stokis sections) ✅
+- [x] Git commit ✅ `d98a99c`
 
 ---
 
