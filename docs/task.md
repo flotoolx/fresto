@@ -128,7 +128,8 @@
 - [x] Dashboard Layout (4 Cards, Headers, Responsive) ✅
 - [x] Print PO Button (Order Mitra page only) ✅
 - [x] Finance Dashboard 4-Cards Layout (DC & Stokis sections) ✅
-- [x] Git commit ✅ `d98a99c`
+- [x] Reports Page Cards Responsive (Overview & Umur Piutang) ✅
+- [x] Git commit ✅ `26e1e2c`
 
 ---
 
