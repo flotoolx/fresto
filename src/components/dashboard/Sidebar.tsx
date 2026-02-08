@@ -58,7 +58,6 @@ const roleMenus: Record<string, { label: string; href: string; icon: React.React
     MITRA: [
         { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
         { label: "Order Barang", href: "/dashboard/order", icon: <ShoppingCart size={20} /> },
-        { label: "Riwayat Order", href: "/dashboard/history", icon: <Receipt size={20} /> },
     ],
     DC: [
         { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
