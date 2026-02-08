@@ -168,7 +168,7 @@ export default function DashboardPage() {
                     const stokisOrders = stokisRes.ok ? await stokisRes.json() : []
                     const mitraOrders = mitraRes.ok ? await mitraRes.json() : []
 
-                    // DC/Pusat Orders (stokis orders to pusat)
+                    // DC Orders (stokis orders to pusat)
                     const allDCOrders = Array.isArray(stokisOrders) ? stokisOrders : []
                     const dcTotal = allDCOrders.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
                     const dcPending = allDCOrders.filter((o: { status: string }) => o.status === "PENDING_PUSAT")
@@ -572,7 +572,7 @@ export default function DashboardPage() {
                     <div className="flex-1">
                         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                             {role !== "FINANCE" && <Package size={16} className="text-gray-500" />}
-                            {role === "FINANCE" ? "📦 DC / Pusat" : "Order ke Pusat"}
+                            {role === "FINANCE" ? "📦 DC" : "Order ke Pusat"}
                         </h2>
                         <div className="grid grid-cols-2 gap-4">
                             {stats.slice(0, 2).map((stat, index) => (
