@@ -228,7 +228,7 @@ export default function StokisOrderHistoryPage() {
                                 <span className="text-white/80 text-xs font-medium">{card.label}</span>
                             </div>
                             <p className="text-xl font-bold">{formatCurrency(card.data.nominal)}</p>
-                            <p className="text-xs text-white/70 mt-0.5">{card.data.count} Invoice</p>
+                            <p className="text-xs text-white/70 mt-0.5">{card.data.count} PO</p>
                         </div>
                     </button>
                 ))}

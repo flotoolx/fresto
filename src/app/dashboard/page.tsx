@@ -1,7 +1,7 @@
 "use client"
 
 import { useSession } from "next-auth/react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
     Users,
     Store,
@@ -47,6 +47,16 @@ interface RecentOrder {
     createdAt: string
 }
 
+interface MitraOrder {
+    id: string
+    orderNumber: string
+    status: string
+    totalAmount: number
+    createdAt: string
+}
+
+type PeriodFilter = "7" | "30" | "90" | "custom"
+
 interface StatCard {
     label: string
     value: number | string
@@ -73,6 +83,27 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true)
     const [summaryData, setSummaryData] = useState<DashboardStats | null>(null)
     const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
+
+    // MITRA-specific state
+    const [mitraOrders, setMitraOrders] = useState<MitraOrder[]>([])
+    const [mitraPeriod, setMitraPeriod] = useState<PeriodFilter>("30")
+    const [mitraStartDate, setMitraStartDate] = useState(() => {
+        const d = new Date()
+        d.setDate(d.getDate() - 30)
+        return d.toISOString().split("T")[0]
+    })
+    const [mitraEndDate, setMitraEndDate] = useState(() => new Date().toISOString().split("T")[0])
+
+    // Update MITRA date range when period changes
+    useEffect(() => {
+        if (role === "MITRA" && mitraPeriod !== "custom") {
+            const end = new Date()
+            const start = new Date()
+            start.setDate(start.getDate() - parseInt(mitraPeriod))
+            setMitraEndDate(end.toISOString().split("T")[0])
+            setMitraStartDate(start.toISOString().split("T")[0])
+        }
+    }, [role, mitraPeriod])
 
     useEffect(() => {
         async function fetchStats() {
@@ -157,16 +188,9 @@ export default function DashboardPage() {
                         { label: "Order Selesai", value: formatRp(orderSelesaiTotal), subtitle: `${orderSelesai.length} PO`, icon: Package, gradient: "from-[#22C55E] to-[#16A34A]", href: "/dashboard/history-pusat" },
                     ])
                 } else if (role === "MITRA") {
-                    const [pendingRes, totalRes] = await Promise.all([
-                        fetch("/api/orders/mitra?status=PENDING,APPROVED,PROCESSING,SHIPPED"),
-                        fetch("/api/orders/mitra"),
-                    ])
-                    const pending = pendingRes.ok ? await pendingRes.json() : []
-                    const total = totalRes.ok ? await totalRes.json() : []
-                    setStats([
-                        { label: "Order Aktif", value: Array.isArray(pending) ? pending.length : 0, icon: ShoppingCart, gradient: "from-[#E31E24] to-[#B91C22]" },
-                        { label: "Total Order", value: Array.isArray(total) ? total.length : 0, icon: TrendingUp, gradient: "from-[#5B2B4E] to-[#3D1C34]" },
-                    ])
+                    const res = await fetch("/api/orders/mitra/my-orders")
+                    const orders = res.ok ? await res.json() : []
+                    setMitraOrders(Array.isArray(orders) ? orders : [])
                 }
             } catch (error) {
                 console.error("Error fetching stats:", error)
@@ -179,6 +203,40 @@ export default function DashboardPage() {
             fetchStats()
         }
     }, [role, userId, startDate, endDate, session])
+
+    // MITRA filtered orders and stats
+    const mitraFilteredOrders = useMemo(() => {
+        if (!mitraStartDate || !mitraEndDate) return mitraOrders
+        const start = new Date(mitraStartDate)
+        const end = new Date(mitraEndDate)
+        end.setHours(23, 59, 59, 999)
+        return mitraOrders.filter(order => {
+            const orderDate = new Date(order.createdAt)
+            return orderDate >= start && orderDate <= end
+        })
+    }, [mitraOrders, mitraStartDate, mitraEndDate])
+
+    const mitraStats = useMemo(() => {
+        const totalNominal = mitraFilteredOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0)
+        const totalPO = mitraFilteredOrders.length
+        return { totalNominal, totalPO }
+    }, [mitraFilteredOrders])
+
+    const formatMitraCurrency = (amount: number) => {
+        return new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0,
+        }).format(amount)
+    }
+
+    const formatMitraDate = (date: string) => {
+        return new Intl.DateTimeFormat("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+        }).format(new Date(date))
+    }
 
     return (
         <div className="space-y-5">
@@ -211,14 +269,148 @@ export default function DashboardPage() {
                 </div>
             )}
 
-            {/* Stats Grid */}
-            {loading ? (
+            {/* MITRA Dashboard Section */}
+            {role === "MITRA" && (
+                <>
+                    {/* Date Filter */}
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex items-center gap-2 text-gray-700">
+                                <Calendar size={18} className="text-gray-500" />
+                                <span className="text-sm font-medium">Periode:</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {[
+                                    { value: "7", label: "7 Hari" },
+                                    { value: "30", label: "30 Hari" },
+                                    { value: "90", label: "90 Hari" },
+                                    { value: "custom", label: "Custom" },
+                                ].map((opt) => (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => setMitraPeriod(opt.value as PeriodFilter)}
+                                        className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${mitraPeriod === opt.value
+                                            ? "bg-green-500 text-white"
+                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                            }`}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                            {mitraPeriod === "custom" && (
+                                <div className="flex items-center gap-2 ml-2">
+                                    <input
+                                        type="date"
+                                        value={mitraStartDate}
+                                        onChange={(e) => setMitraStartDate(e.target.value)}
+                                        className="px-3 py-1.5 border rounded-lg text-sm text-gray-700"
+                                    />
+                                    <span className="text-gray-500">-</span>
+                                    <input
+                                        type="date"
+                                        value={mitraEndDate}
+                                        onChange={(e) => setMitraEndDate(e.target.value)}
+                                        className="px-3 py-1.5 border rounded-lg text-sm text-gray-700"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Summary Cards */}
+                    {loading ? (
+                        <div className="grid grid-cols-2 gap-4">
+                            {[1, 2].map((i) => (
+                                <div key={i} className="bg-gray-100 rounded-xl p-4 h-24 animate-pulse" />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-gradient-to-br from-[#E31E24] to-[#B91C22] rounded-xl p-4 text-white relative overflow-hidden shadow-md">
+                                <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                <div className="relative">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <TrendingUp size={16} className="opacity-80" />
+                                        <span className="text-white/80 text-xs font-medium">Total Order</span>
+                                    </div>
+                                    <p className="text-xl font-bold">{formatMitraCurrency(mitraStats.totalNominal)}</p>
+                                </div>
+                            </div>
+                            <div className="bg-gradient-to-br from-[#5B2B4E] to-[#3D1C34] rounded-xl p-4 text-white relative overflow-hidden shadow-md">
+                                <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                <div className="relative">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <ShoppingCart size={16} className="opacity-80" />
+                                        <span className="text-white/80 text-xs font-medium">Total PO</span>
+                                    </div>
+                                    <p className="text-xl font-bold">{mitraStats.totalPO}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Orders Table */}
+                    {!loading && (
+                        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50 border-b">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tanggal</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">No PO</th>
+                                            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Nominal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {mitraFilteredOrders.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
+                                                    <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                                                    <p>Belum ada order pada periode ini</p>
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            mitraFilteredOrders.map((order) => (
+                                                <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-4 py-3 text-sm text-gray-700">{formatMitraDate(order.createdAt)}</td>
+                                                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{order.orderNumber}</td>
+                                                    <td className="px-4 py-3 text-sm font-semibold text-emerald-600 text-right">
+                                                        {formatMitraCurrency(Number(order.totalAmount))}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Quick Action */}
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <h2 className="text-sm font-semibold text-gray-900 mb-3">Aksi Cepat</h2>
+                        <Link
+                            href="/dashboard/order"
+                            className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                            style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
+                        >
+                            <ShoppingCart size={16} />
+                            Buat Order
+                            <ArrowUpRight size={14} />
+                        </Link>
+                    </div>
+                </>
+            )}
+
+            {/* Stats Grid (for non-MITRA roles) */}
+            {role !== "MITRA" && loading ? (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {[1, 2, 3, 4].map((i) => (
                         <div key={i} className="bg-gray-100 rounded-xl p-4 h-24 animate-pulse" />
                     ))}
                 </div>
-            ) : (
+            ) : role !== "MITRA" && (
                 <div className={`grid grid-cols-2 lg:grid-cols-${Math.min(stats.length, 5)} gap-4`}>
                     {stats.map((stat, index) => {
                         const CardContent = (
@@ -257,118 +449,109 @@ export default function DashboardPage() {
                 </div>
             )}
 
-            {/* Quick Actions */}
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <h2 className="text-sm font-semibold text-gray-900 mb-3">Aksi Cepat</h2>
-                <div className="flex flex-wrap gap-2">
-                    {role === "MITRA" && (
-                        <Link
-                            href="/dashboard/order"
-                            className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
-                            style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
-                        >
-                            <ShoppingCart size={16} />
-                            Buat Order
-                            <ArrowUpRight size={14} />
-                        </Link>
-                    )}
-                    {role === "STOKIS" && (
-                        <>
+            {/* Quick Actions (for non-MITRA roles) */}
+            {role !== "MITRA" && (
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <h2 className="text-sm font-semibold text-gray-900 mb-3">Aksi Cepat</h2>
+                    <div className="flex flex-wrap gap-2">
+                        {role === "STOKIS" && (
+                            <>
+                                <Link
+                                    href="/dashboard/order-pusat"
+                                    className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                                    style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
+                                >
+                                    <ShoppingCart size={16} />
+                                    Order ke Pusat
+                                    <ArrowUpRight size={14} />
+                                </Link>
+                                <Link
+                                    href="/dashboard/order-mitra"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all text-sm font-medium"
+                                >
+                                    <Store size={16} />
+                                    Order Mitra
+                                </Link>
+                            </>
+                        )}
+                        {role === "PUSAT" && (
+                            <>
+                                <Link
+                                    href="/dashboard/orders-stokis"
+                                    className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                                    style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
+                                >
+                                    <ShoppingCart size={16} />
+                                    Approve Order
+                                    <ArrowUpRight size={14} />
+                                </Link>
+                                <Link
+                                    href="/dashboard/reports"
+                                    className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                                    style={{ background: 'linear-gradient(135deg, #5B2B4E 0%, #3D1C34 100%)' }}
+                                >
+                                    <TrendingUp size={16} />
+                                    Laporan
+                                    <ArrowUpRight size={14} />
+                                </Link>
+                            </>
+                        )}
+                        {role === "FINANCE" && (
+                            <>
+                                <Link
+                                    href="/dashboard/approve-po"
+                                    className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                                    style={{ background: 'linear-gradient(135deg, #5B2B4E 0%, #3D1C34 100%)' }}
+                                >
+                                    <ShoppingCart size={16} />
+                                    Approve PO
+                                    <ArrowUpRight size={14} />
+                                </Link>
+                                <Link
+                                    href="/dashboard/invoices"
+                                    className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                                    style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
+                                >
+                                    <Activity size={16} />
+                                    Invoice
+                                    <ArrowUpRight size={14} />
+                                </Link>
+                            </>
+                        )}
+                        {role === "GUDANG" && (
                             <Link
-                                href="/dashboard/order-pusat"
+                                href="/dashboard/po-masuk"
                                 className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
                                 style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
                             >
-                                <ShoppingCart size={16} />
-                                Order ke Pusat
+                                <Package size={16} />
+                                Proses PO
                                 <ArrowUpRight size={14} />
                             </Link>
-                            <Link
-                                href="/dashboard/order-mitra"
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all text-sm font-medium"
-                            >
-                                <Store size={16} />
-                                Order Mitra
-                            </Link>
-                        </>
-                    )}
-                    {role === "PUSAT" && (
-                        <>
-                            <Link
-                                href="/dashboard/orders-stokis"
-                                className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
-                                style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
-                            >
-                                <ShoppingCart size={16} />
-                                Approve Order
-                                <ArrowUpRight size={14} />
-                            </Link>
-                            <Link
-                                href="/dashboard/reports"
-                                className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
-                                style={{ background: 'linear-gradient(135deg, #5B2B4E 0%, #3D1C34 100%)' }}
-                            >
-                                <TrendingUp size={16} />
-                                Laporan
-                                <ArrowUpRight size={14} />
-                            </Link>
-                        </>
-                    )}
-                    {role === "FINANCE" && (
-                        <>
-                            <Link
-                                href="/dashboard/approve-po"
-                                className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
-                                style={{ background: 'linear-gradient(135deg, #5B2B4E 0%, #3D1C34 100%)' }}
-                            >
-                                <ShoppingCart size={16} />
-                                Approve PO
-                                <ArrowUpRight size={14} />
-                            </Link>
-                            <Link
-                                href="/dashboard/invoices"
-                                className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
-                                style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
-                            >
-                                <Activity size={16} />
-                                Invoice
-                                <ArrowUpRight size={14} />
-                            </Link>
-                        </>
-                    )}
-                    {role === "GUDANG" && (
-                        <Link
-                            href="/dashboard/po-masuk"
-                            className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
-                            style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
-                        >
-                            <Package size={16} />
-                            Proses PO
-                            <ArrowUpRight size={14} />
-                        </Link>
-                    )}
-                    {role === "DC" && (
-                        <>
-                            <Link
-                                href="/dashboard/dc-stokis"
-                                className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
-                                style={{ background: 'linear-gradient(135deg, #5B2B4E 0%, #E31E24 100%)' }}
-                            >
-                                <Store size={16} />
-                                Kelola Stokis
-                                <ArrowUpRight size={14} />
-                            </Link>
-                            <Link
-                                href="/dashboard/dc-orders"
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all text-sm font-medium"
-                            >
-                                <ShoppingCart size={16} />
-                                Monitoring Order
-                            </Link>
-                        </>
-                    )}
+                        )}
+                        {role === "DC" && (
+                            <>
+                                <Link
+                                    href="/dashboard/dc-stokis"
+                                    className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                                    style={{ background: 'linear-gradient(135deg, #5B2B4E 0%, #E31E24 100%)' }}
+                                >
+                                    <Store size={16} />
+                                    Kelola Stokis
+                                    <ArrowUpRight size={14} />
+                                </Link>
+                                <Link
+                                    href="/dashboard/dc-orders"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all text-sm font-medium"
+                                >
+                                    <ShoppingCart size={16} />
+                                    Monitoring Order
+                                </Link>
+                            </>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Info Cards - Only for PUSAT role */}
             {role === "PUSAT" && (
