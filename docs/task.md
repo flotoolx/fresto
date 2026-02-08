@@ -126,7 +126,8 @@
 - [x] Action Buttons (Selesai, Revisi PO/Adjust, Tolak Order) ✅
 - [x] Mitra Order Card (Total Mitra from API, Unique Order Count) ✅
 - [x] Dashboard Layout (4 Cards, Headers, Responsive) ✅
-- [x] Git commit ✅ `988ac1b`
+- [x] Print PO Button (History Pusat & Order Mitra pages) ✅
+- [x] Git commit ✅ `53c0db1`
 
 ---
 
