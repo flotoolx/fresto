@@ -181,31 +181,46 @@ export default function DashboardPage() {
                         { label: "PO Masuk", value: Array.isArray(orders) ? orders.length : 0, icon: Package, gradient: "from-[#E31E24] to-[#B91C22]" },
                     ])
                 } else if (role === "STOKIS") {
-                    const [mitraRes, ordersRes] = await Promise.all([
-                        fetch(`/api/mitra`),
+                    const [ordersRes, mitraOrdersRes] = await Promise.all([
                         fetch(`/api/orders/stokis/my-orders`),
+                        fetch(`/api/orders/mitra`),
                     ])
-                    const mitras = mitraRes.ok ? await mitraRes.json() : []
-                    const allOrders = ordersRes.ok ? await ordersRes.json() : []
+                    const stokisOrders = ordersRes.ok ? await ordersRes.json() : []
+                    const mitraOrders = mitraOrdersRes.ok ? await mitraOrdersRes.json() : []
 
-                    // Calculate Order Masuk (PO_ISSUED, PROCESSING, SHIPPED)
-                    const orderMasuk = Array.isArray(allOrders)
-                        ? allOrders.filter((o: { status: string }) => ["PO_ISSUED", "PROCESSING", "SHIPPED"].includes(o.status))
+                    // --- Order ke Pusat ---
+                    // Menunggu Konfirmasi (PENDING_PUSAT)
+                    const pendingPusat = Array.isArray(stokisOrders)
+                        ? stokisOrders.filter((o: { status: string }) => o.status === "PENDING_PUSAT")
                         : []
-                    const orderMasukTotal = orderMasuk.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+                    const pendingPusatTotal = pendingPusat.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
 
-                    // Calculate Order Selesai (RECEIVED)
-                    const orderSelesai = Array.isArray(allOrders)
-                        ? allOrders.filter((o: { status: string }) => o.status === "RECEIVED")
+                    // Approved Order (PO_ISSUED, PROCESSING, SHIPPED, RECEIVED)
+                    const approvedPusat = Array.isArray(stokisOrders)
+                        ? stokisOrders.filter((o: { status: string }) => ["PO_ISSUED", "PROCESSING", "SHIPPED", "RECEIVED"].includes(o.status))
                         : []
-                    const orderSelesaiTotal = orderSelesai.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+                    const approvedPusatTotal = approvedPusat.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+
+                    // --- Order Mitra ---
+                    // Belum Selesai (PENDING, APPROVED, PROCESSING)
+                    const belumSelesai = Array.isArray(mitraOrders)
+                        ? mitraOrders.filter((o: { status: string }) => ["PENDING", "APPROVED", "PROCESSING"].includes(o.status))
+                        : []
+                    const belumSelesaiTotal = belumSelesai.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+
+                    // Selesai (SHIPPED, RECEIVED)
+                    const selesaiMitra = Array.isArray(mitraOrders)
+                        ? mitraOrders.filter((o: { status: string }) => ["SHIPPED", "RECEIVED"].includes(o.status))
+                        : []
+                    const selesaiMitraTotal = selesaiMitra.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
 
                     const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`
 
                     setStats([
-                        { label: "Mitra Saya", value: Array.isArray(mitras) ? mitras.length : 0, icon: Users, gradient: "from-[#E31E24] to-[#B91C22]", href: "/dashboard/mitra" },
-                        { label: "Order Masuk", value: formatRp(orderMasukTotal), subtitle: `${orderMasuk.length} PO`, icon: ShoppingCart, gradient: "from-[#5B2B4E] to-[#3D1C34]", href: "/dashboard/history-pusat" },
-                        { label: "Order Selesai", value: formatRp(orderSelesaiTotal), subtitle: `${orderSelesai.length} PO`, icon: Package, gradient: "from-[#22C55E] to-[#16A34A]", href: "/dashboard/history-pusat" },
+                        { label: "Menunggu Konfirmasi", value: formatRp(pendingPusatTotal), subtitle: `${pendingPusat.length} PO`, icon: ShoppingCart, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/history-pusat" },
+                        { label: "Approved Order", value: formatRp(approvedPusatTotal), subtitle: `${approvedPusat.length} PO`, icon: Package, gradient: "from-[#3B82F6] to-[#1D4ED8]", href: "/dashboard/history-pusat" },
+                        { label: "Belum Selesai", value: formatRp(belumSelesaiTotal), subtitle: `${belumSelesai.length} PO`, icon: Store, gradient: "from-[#EF4444] to-[#B91C1C]", href: "/dashboard/order-mitra" },
+                        { label: "Selesai", value: formatRp(selesaiMitraTotal), subtitle: `${selesaiMitra.length} PO`, icon: TrendingUp, gradient: "from-[#22C55E] to-[#16A34A]", href: "/dashboard/order-mitra" },
                     ])
                 } else if (role === "MITRA") {
                     const res = await fetch("/api/orders/mitra")
