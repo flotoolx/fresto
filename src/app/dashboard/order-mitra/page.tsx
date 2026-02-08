@@ -37,6 +37,7 @@ export default function StokisOrderMitraPage() {
     const [loading, setLoading] = useState(true)
     const [selectedOrder, setSelectedOrder] = useState<MitraOrder | null>(null)
     const [updating, setUpdating] = useState(false)
+    const [totalMitra, setTotalMitra] = useState(0)
 
     // Adjust PO modal state
     const [showAdjustModal, setShowAdjustModal] = useState(false)
@@ -65,9 +66,14 @@ export default function StokisOrderMitraPage() {
 
     const fetchOrders = async () => {
         try {
-            const res = await fetch("/api/orders/mitra")
-            const data = await res.json()
-            setOrders(data)
+            const [ordersRes, mitraRes] = await Promise.all([
+                fetch("/api/orders/mitra"),
+                fetch("/api/mitra")
+            ])
+            const ordersData = await ordersRes.json()
+            const mitraData = await mitraRes.json()
+            setOrders(ordersData)
+            setTotalMitra(Array.isArray(mitraData) ? mitraData.length : 0)
         } catch (err) {
             console.error("Error fetching orders:", err)
         } finally {
@@ -240,30 +246,30 @@ export default function StokisOrderMitraPage() {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-3">
-                <div className="bg-gradient-to-br from-[#E31E24] to-[#B91C22] rounded-xl p-4 text-white">
-                    <div className="flex items-center gap-2 mb-1">
-                        <TrendingUp size={18} className="opacity-80" />
-                        <span className="text-white/80 text-xs font-medium">Total Revenue</span>
+            <div className="grid grid-cols-3 gap-2 md:gap-3">
+                <div className="bg-gradient-to-br from-[#E31E24] to-[#B91C22] rounded-xl p-3 md:p-4 text-white">
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <TrendingUp size={14} className="opacity-80 md:w-[18px] md:h-[18px]" />
+                        <span className="text-white/80 text-[10px] md:text-xs font-medium truncate">Total Revenue</span>
                     </div>
-                    <p className="text-xl font-bold">{formatCurrency(summaryStats.totalRevenue)}</p>
-                    <p className="text-xs text-white/70 mt-0.5">{summaryStats.totalOrders} PO</p>
+                    <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(summaryStats.totalRevenue)}</p>
+                    <p className="text-[10px] md:text-xs text-white/70 mt-0.5">{summaryStats.totalOrders} PO</p>
                 </div>
-                <div className="bg-gradient-to-br from-[#F59E0B] to-[#D97706] rounded-xl p-4 text-white">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Clock size={18} className="opacity-80" />
-                        <span className="text-white/80 text-xs font-medium">Belum Selesai</span>
+                <div className="bg-gradient-to-br from-[#F59E0B] to-[#D97706] rounded-xl p-3 md:p-4 text-white">
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <Clock size={14} className="opacity-80 md:w-[18px] md:h-[18px]" />
+                        <span className="text-white/80 text-[10px] md:text-xs font-medium truncate">Belum Selesai</span>
                     </div>
-                    <p className="text-xl font-bold">{formatCurrency(summaryStats.belumSelesaiNominal)}</p>
-                    <p className="text-xs text-white/70 mt-0.5">{summaryStats.belumSelesaiCount} PO</p>
+                    <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(summaryStats.belumSelesaiNominal)}</p>
+                    <p className="text-[10px] md:text-xs text-white/70 mt-0.5">{summaryStats.belumSelesaiCount} PO</p>
                 </div>
-                <div className="bg-gradient-to-br from-[#5B2B4E] to-[#3D1C34] rounded-xl p-4 text-white">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Users size={18} className="opacity-80" />
-                        <span className="text-white/80 text-xs font-medium">Mitra Order</span>
+                <div className="bg-gradient-to-br from-[#5B2B4E] to-[#3D1C34] rounded-xl p-3 md:p-4 text-white">
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <Users size={14} className="opacity-80 md:w-[18px] md:h-[18px]" />
+                        <span className="text-white/80 text-[10px] md:text-xs font-medium truncate">Mitra Order</span>
                     </div>
-                    <p className="text-xl font-bold">{summaryStats.totalOrders}</p>
-                    <p className="text-xs text-white/70 mt-0.5">{summaryStats.uniqueMitra} total mitra</p>
+                    <p className="text-sm md:text-xl font-bold">{summaryStats.totalOrders}</p>
+                    <p className="text-[10px] md:text-xs text-white/70 mt-0.5">{totalMitra} total mitra</p>
                 </div>
             </div>
 
