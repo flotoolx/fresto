@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { Receipt, Clock, CheckCircle, Truck, Package, XCircle, ArrowLeft, FileText, Printer, Edit3 } from "lucide-react"
+import { Receipt, Clock, CheckCircle, Truck, XCircle, ArrowLeft, Printer, Edit3 } from "lucide-react"
 import ExportButton from "@/components/ExportButton"
 import Link from "next/link"
 
@@ -24,17 +24,22 @@ interface StokisOrder {
     items: OrderItem[]
 }
 
+// Simplified to 4 statuses only
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-    PENDING_PUSAT: { label: "Menunggu Pusat", color: "bg-yellow-100 text-yellow-700", icon: <Clock size={16} /> },
-    PENDING_FINANCE: { label: "Menunggu Finance", color: "bg-orange-100 text-orange-700", icon: <Clock size={16} /> },
-    PENDING: { label: "Menunggu Approval", color: "bg-yellow-100 text-yellow-700", icon: <Clock size={16} /> },
-    APPROVED: { label: "Disetujui", color: "bg-blue-100 text-blue-700", icon: <CheckCircle size={16} /> },
-    PO_ISSUED: { label: "PO Diterbitkan", color: "bg-purple-100 text-purple-700", icon: <FileText size={16} /> },
-    PROCESSING: { label: "Diproses Gudang", color: "bg-indigo-100 text-indigo-700", icon: <Package size={16} /> },
-    SHIPPED: { label: "Dikirim", color: "bg-cyan-100 text-cyan-700", icon: <Truck size={16} /> },
-    RECEIVED: { label: "Diterima", color: "bg-green-100 text-green-700", icon: <CheckCircle size={16} /> },
-    REJECTED: { label: "Ditolak", color: "bg-red-100 text-red-700", icon: <XCircle size={16} /> },
-    CANCELLED: { label: "Dibatalkan", color: "bg-red-100 text-red-700", icon: <XCircle size={16} /> },
+    PENDING_PUSAT: { label: "Menunggu Konfirmasi", color: "bg-yellow-100 text-yellow-700", icon: <Clock size={16} /> },
+    PO_ISSUED: { label: "Approved", color: "bg-blue-100 text-blue-700", icon: <CheckCircle size={16} /> },
+    PROCESSING: { label: "Approved", color: "bg-blue-100 text-blue-700", icon: <CheckCircle size={16} /> },
+    SHIPPED: { label: "Dikirim", color: "bg-indigo-100 text-indigo-700", icon: <Truck size={16} /> },
+    RECEIVED: { label: "Selesai", color: "bg-green-100 text-green-700", icon: <CheckCircle size={16} /> },
+    CANCELLED: { label: "Selesai", color: "bg-red-100 text-red-700", icon: <XCircle size={16} /> },
+}
+
+// Map status to summary card category
+const getStatusCategory = (status: string): "pending" | "approved" | "shipped" | "completed" => {
+    if (status === "PENDING_PUSAT") return "pending"
+    if (["PO_ISSUED", "PROCESSING"].includes(status)) return "approved"
+    if (status === "SHIPPED") return "shipped"
+    return "completed" // RECEIVED, CANCELLED
 }
 
 export default function StokisOrderHistoryPage() {
@@ -46,6 +51,7 @@ export default function StokisOrderHistoryPage() {
     const [adjustedItems, setAdjustedItems] = useState<{ id: string; quantity: number }[]>([])
     const [adjustNotes, setAdjustNotes] = useState("")
     const [updating, setUpdating] = useState(false)
+    const [activeFilter, setActiveFilter] = useState<"all" | "pending" | "approved" | "shipped" | "completed">("all")
 
     useEffect(() => {
         fetchOrders()
@@ -62,6 +68,22 @@ export default function StokisOrderHistoryPage() {
             setLoading(false)
         }
     }
+
+    // Calculate summary counts
+    const summaryStats = useMemo(() => {
+        const stats = { pending: 0, approved: 0, shipped: 0, completed: 0 }
+        orders.forEach(order => {
+            const category = getStatusCategory(order.status)
+            stats[category]++
+        })
+        return stats
+    }, [orders])
+
+    // Filter orders based on active filter
+    const filteredOrders = useMemo(() => {
+        if (activeFilter === "all") return orders
+        return orders.filter(order => getStatusCategory(order.status) === activeFilter)
+    }, [orders, activeFilter])
 
     const handleReceive = async (orderId: string) => {
         try {
@@ -142,13 +164,14 @@ export default function StokisOrderHistoryPage() {
 
     const formatDate = (date: string) => {
         return new Intl.DateTimeFormat("id-ID", {
-            dateStyle: "medium",
-            timeStyle: "short",
+            day: "numeric",
+            month: "short",
+            year: "numeric",
         }).format(new Date(date))
     }
 
-    const canAdjust = (status: string) => ["PENDING_PUSAT", "PENDING_FINANCE"].includes(status)
-    const canCancel = (status: string) => ["PENDING_PUSAT", "PENDING_FINANCE"].includes(status)
+    const canAdjust = (status: string) => status === "PENDING_PUSAT"
+    const canCancel = (status: string) => status === "PENDING_PUSAT"
     const hasPO = (status: string) => ["PO_ISSUED", "PROCESSING", "SHIPPED", "RECEIVED"].includes(status)
 
     if (loading) {
@@ -161,6 +184,7 @@ export default function StokisOrderHistoryPage() {
 
     return (
         <div className="space-y-4 md:space-y-6">
+            {/* Header */}
             <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-2">
                     <Receipt className="text-green-600" size={20} />
@@ -178,7 +202,30 @@ export default function StokisOrderHistoryPage() {
                 </div>
             </div>
 
-            {orders.length === 0 ? (
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {[
+                    { key: "approved", label: "Approved", count: summaryStats.approved, color: "bg-blue-500", icon: <CheckCircle size={18} /> },
+                    { key: "pending", label: "Menunggu Konfirmasi", count: summaryStats.pending, color: "bg-yellow-500", icon: <Clock size={18} /> },
+                    { key: "shipped", label: "Dikirim", count: summaryStats.shipped, color: "bg-indigo-500", icon: <Truck size={18} /> },
+                    { key: "completed", label: "Selesai", count: summaryStats.completed, color: "bg-green-500", icon: <CheckCircle size={18} /> },
+                ].map((card) => (
+                    <button
+                        key={card.key}
+                        onClick={() => setActiveFilter(activeFilter === card.key ? "all" : card.key as typeof activeFilter)}
+                        className={`p-4 rounded-xl text-white transition-all ${card.color} ${activeFilter === card.key ? "ring-4 ring-offset-2 ring-gray-300" : "hover:opacity-90"}`}
+                    >
+                        <div className="flex items-center gap-2 mb-1">
+                            {card.icon}
+                            <span className="text-sm font-medium opacity-90">{card.label}</span>
+                        </div>
+                        <p className="text-2xl font-bold">{card.count}</p>
+                    </button>
+                ))}
+            </div>
+
+            {/* Orders Table */}
+            {filteredOrders.length === 0 ? (
                 <div className="bg-white rounded-xl p-12 shadow-sm text-center">
                     <Receipt className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500">Belum ada order ke Pusat</p>
@@ -190,39 +237,43 @@ export default function StokisOrderHistoryPage() {
                     </button>
                 </div>
             ) : (
-                <div className="space-y-3">
-                    {orders.map((order) => {
-                        const status = statusConfig[order.status] || statusConfig.PENDING
-                        const isCompleted = order.status === "RECEIVED"
-                        const isShipped = order.status === "SHIPPED"
-                        const isPending = canAdjust(order.status)
-                        return (
-                            <div
-                                key={order.id}
-                                className={`bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all border-l-4 ${isCompleted ? "border-l-emerald-500" : isShipped ? "border-l-indigo-500" : isPending ? "border-l-amber-500" : "border-l-blue-500"}`}
-                                onClick={() => setSelectedOrder(order)}
-                            >
-                                <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                        <h3 className="font-semibold text-gray-800 text-sm">{order.orderNumber}</h3>
-                                        <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
-                                    </div>
-                                    <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${status.color.replace('bg-', 'border-').replace('100', '200')} ${status.color}`}>
-                                        {status.icon}
-                                        {status.label}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-600">
-                                        {order.items.length} produk
-                                    </span>
-                                    <span className="font-bold text-emerald-600 text-sm">
-                                        {formatCurrency(Number(order.totalAmount))}
-                                    </span>
-                                </div>
-                            </div>
-                        )
-                    })}
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-gray-50 border-b">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tanggal</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">No Invoice</th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Nominal</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {filteredOrders.map((order) => {
+                                    const status = statusConfig[order.status] || statusConfig.PENDING_PUSAT
+                                    return (
+                                        <tr
+                                            key={order.id}
+                                            onClick={() => setSelectedOrder(order)}
+                                            className="hover:bg-gray-50 cursor-pointer transition-colors"
+                                        >
+                                            <td className="px-4 py-3 text-sm text-gray-700">{formatDate(order.createdAt)}</td>
+                                            <td className="px-4 py-3 text-sm font-medium text-gray-900">{order.orderNumber}</td>
+                                            <td className="px-4 py-3 text-sm font-semibold text-emerald-600 text-right">
+                                                {formatCurrency(Number(order.totalAmount))}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                                                    {status.icon}
+                                                    {status.label}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
@@ -234,9 +285,7 @@ export default function StokisOrderHistoryPage() {
                             <div className="flex justify-between items-start mb-4">
                                 <div>
                                     <h2 className="text-lg font-bold text-gray-900">{selectedOrder.orderNumber}</h2>
-                                    <p className="text-sm text-gray-600">
-                                        {formatDate(selectedOrder.createdAt)}
-                                    </p>
+                                    <p className="text-sm text-gray-600">{formatDate(selectedOrder.createdAt)}</p>
                                     <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm mt-2 ${statusConfig[selectedOrder.status]?.color || "bg-gray-100 text-gray-700"}`}>
                                         {statusConfig[selectedOrder.status]?.icon}
                                         {statusConfig[selectedOrder.status]?.label || selectedOrder.status}
