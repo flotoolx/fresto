@@ -69,12 +69,18 @@ export default function StokisOrderHistoryPage() {
         }
     }
 
-    // Calculate summary counts
+    // Calculate summary stats with nominal and count
     const summaryStats = useMemo(() => {
-        const stats = { pending: 0, approved: 0, shipped: 0, completed: 0 }
+        const stats = {
+            pending: { count: 0, nominal: 0 },
+            approved: { count: 0, nominal: 0 },
+            shipped: { count: 0, nominal: 0 },
+            completed: { count: 0, nominal: 0 }
+        }
         orders.forEach(order => {
             const category = getStatusCategory(order.status)
-            stats[category]++
+            stats[category].count++
+            stats[category].nominal += Number(order.totalAmount)
         })
         return stats
     }, [orders])
@@ -203,23 +209,27 @@ export default function StokisOrderHistoryPage() {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                    { key: "approved", label: "Approved", count: summaryStats.approved, color: "bg-blue-500", icon: <CheckCircle size={18} /> },
-                    { key: "pending", label: "Menunggu Konfirmasi", count: summaryStats.pending, color: "bg-yellow-500", icon: <Clock size={18} /> },
-                    { key: "shipped", label: "Dikirim", count: summaryStats.shipped, color: "bg-indigo-500", icon: <Truck size={18} /> },
-                    { key: "completed", label: "Selesai", count: summaryStats.completed, color: "bg-green-500", icon: <CheckCircle size={18} /> },
+                    { key: "approved", label: "Approved", data: summaryStats.approved, gradient: "from-[#3B82F6] to-[#1D4ED8]", icon: <CheckCircle size={16} /> },
+                    { key: "pending", label: "Menunggu Konfirmasi", data: summaryStats.pending, gradient: "from-[#F59E0B] to-[#D97706]", icon: <Clock size={16} /> },
+                    { key: "shipped", label: "Dikirim", data: summaryStats.shipped, gradient: "from-[#6366F1] to-[#4338CA]", icon: <Truck size={16} /> },
+                    { key: "completed", label: "Selesai", data: summaryStats.completed, gradient: "from-[#22C55E] to-[#16A34A]", icon: <CheckCircle size={16} /> },
                 ].map((card) => (
                     <button
                         key={card.key}
                         onClick={() => setActiveFilter(activeFilter === card.key ? "all" : card.key as typeof activeFilter)}
-                        className={`p-4 rounded-xl text-white transition-all ${card.color} ${activeFilter === card.key ? "ring-4 ring-offset-2 ring-gray-300" : "hover:opacity-90"}`}
+                        className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 text-white relative overflow-hidden shadow-md hover:shadow-lg transition-all text-left ${activeFilter === card.key ? "ring-4 ring-offset-2 ring-gray-300 scale-105" : "hover:scale-105"}`}
                     >
-                        <div className="flex items-center gap-2 mb-1">
-                            {card.icon}
-                            <span className="text-sm font-medium opacity-90">{card.label}</span>
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                        <div className="relative">
+                            <div className="flex items-center gap-2 mb-2">
+                                {card.icon}
+                                <span className="text-white/80 text-xs font-medium">{card.label}</span>
+                            </div>
+                            <p className="text-xl font-bold">{formatCurrency(card.data.nominal)}</p>
+                            <p className="text-xs text-white/70 mt-0.5">{card.data.count} Invoice</p>
                         </div>
-                        <p className="text-2xl font-bold">{card.count}</p>
                     </button>
                 ))}
             </div>
