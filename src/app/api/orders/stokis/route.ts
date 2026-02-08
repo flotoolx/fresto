@@ -96,12 +96,17 @@ export async function POST(request: Request) {
             },
         })
 
-        // Send push notification to Pusat for approval
+        // Send push notification to Pusat AND Finance for approval
         try {
             await sendPushToRole("PUSAT" as Role, {
                 title: "🔔 PO Baru dari Stokis",
                 body: `${stokisName} membuat PO ${order.orderNumber} - ${formatCurrency(totalAmount)}`,
-                url: "/dashboard/order-stokis"
+                url: "/dashboard/approve-po"
+            })
+            await sendPushToRole("FINANCE" as Role, {
+                title: "🔔 PO Baru dari Stokis",
+                body: `${stokisName} membuat PO ${order.orderNumber} - ${formatCurrency(totalAmount)}`,
+                url: "/dashboard/approve-po"
             })
         } catch (pushError) {
             console.error("Push notification error:", pushError)

@@ -60,8 +60,8 @@ export async function PATCH(
                 }
             }
 
-            // Finance/PUSAT can only adjust PENDING_FINANCE orders
-            if (["FINANCE", "PUSAT"].includes(role) && order.status !== "PENDING_FINANCE") {
+            // Finance/PUSAT can adjust PENDING_PUSAT or PENDING_FINANCE orders
+            if (["FINANCE", "PUSAT"].includes(role) && !["PENDING_PUSAT", "PENDING_FINANCE"].includes(order.status)) {
                 return NextResponse.json({ error: "Cannot adjust order in this status" }, { status: 400 })
             }
 
@@ -144,10 +144,10 @@ export async function PATCH(
             return NextResponse.json({ error: "Order not found" }, { status: 404 })
         }
 
-        // Permission check - PUSAT can also approve PO (PO_ISSUED) and cancel
+        // Permission check - PUSAT and FINANCE can approve PO directly from PENDING_PUSAT
         const allowedTransitions: Record<string, { roles: string[]; from: string[] }> = {
             PENDING_FINANCE: { roles: ["PUSAT"], from: ["PENDING_PUSAT"] },
-            PO_ISSUED: { roles: ["FINANCE", "PUSAT"], from: ["PENDING_FINANCE"] },
+            PO_ISSUED: { roles: ["FINANCE", "PUSAT"], from: ["PENDING_PUSAT", "PENDING_FINANCE"] },
             PROCESSING: { roles: ["GUDANG"], from: ["PO_ISSUED"] },
             SHIPPED: { roles: ["GUDANG"], from: ["PROCESSING"] },
             RECEIVED: { roles: ["STOKIS"], from: ["SHIPPED"] },
@@ -173,7 +173,7 @@ export async function PATCH(
         }
 
         const updateData: Record<string, unknown> = { status }
-        if (status === "PENDING_FINANCE") updateData.pusatApproveAt = new Date()
+        if (["PENDING_FINANCE"].includes(status)) updateData.pusatApproveAt = new Date()
         if (status === "PO_ISSUED") {
             updateData.financeApproveAt = new Date()
             updateData.poIssuedAt = new Date()
@@ -192,7 +192,7 @@ export async function PATCH(
 
         // Send push notifications based on status change
         try {
-            if (status === "PENDING_FINANCE") {
+            if (["PENDING_FINANCE"].includes(status)) {
                 // Notify Finance that PO needs approval
                 await sendPushToRole("FINANCE" as Role,
                     PushTemplates.poNeedsApproval(order.orderNumber, order.stokis.name)

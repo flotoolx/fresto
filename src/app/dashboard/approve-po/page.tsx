@@ -60,8 +60,8 @@ export default function ApprovePOPage() {
         try {
             const res = await fetch("/api/orders/stokis")
             const data = await res.json()
-            // Filter only PENDING_FINANCE orders
-            setOrders(data.filter((o: StokisOrder) => o.status === "PENDING_FINANCE"))
+            // Filter PENDING_PUSAT and PENDING_FINANCE orders for approval
+            setOrders(data.filter((o: StokisOrder) => ["PENDING_PUSAT", "PENDING_FINANCE"].includes(o.status)))
         } catch (err) {
             console.error("Error fetching orders:", err)
         } finally {
