@@ -68,11 +68,11 @@ interface MitraOrder {
 type PeriodFilter = "7" | "30" | "90" | "custom"
 
 const mitraStatusConfig: Record<string, { label: string; color: string }> = {
-    PENDING: { label: "Menunggu", color: "bg-yellow-100 text-yellow-700" },
-    APPROVED: { label: "Disetujui", color: "bg-blue-100 text-blue-700" },
-    PROCESSING: { label: "Diproses", color: "bg-purple-100 text-purple-700" },
-    SHIPPED: { label: "Dikirim", color: "bg-indigo-100 text-indigo-700" },
-    RECEIVED: { label: "Diterima", color: "bg-green-100 text-green-700" },
+    PENDING: { label: "Buat PO", color: "bg-yellow-100 text-yellow-700" },
+    APPROVED: { label: "Selesai", color: "bg-green-100 text-green-700" },
+    PROCESSING: { label: "Selesai", color: "bg-green-100 text-green-700" },
+    SHIPPED: { label: "Selesai", color: "bg-green-100 text-green-700" },
+    RECEIVED: { label: "Selesai", color: "bg-green-100 text-green-700" },
     CANCELLED: { label: "Dibatalkan", color: "bg-red-100 text-red-700" },
 }
 
