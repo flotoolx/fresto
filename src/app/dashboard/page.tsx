@@ -49,7 +49,8 @@ interface RecentOrder {
 
 interface StatCard {
     label: string
-    value: number
+    value: number | string
+    subtitle?: string
     icon: React.ComponentType<{ size?: number; className?: string }>
     gradient: string
     href?: string
@@ -129,18 +130,31 @@ export default function DashboardPage() {
                         { label: "PO Masuk", value: Array.isArray(orders) ? orders.length : 0, icon: Package, gradient: "from-[#E31E24] to-[#B91C22]" },
                     ])
                 } else if (role === "STOKIS") {
-                    const [mitraRes, orderRes, invRes] = await Promise.all([
+                    const [mitraRes, ordersRes] = await Promise.all([
                         fetch(`/api/users?role=MITRA&stokisId=${userId}`),
-                        fetch(`/api/orders/mitra?status=PENDING`),
-                        fetch(`/api/inventory`),
+                        fetch(`/api/orders/stokis/my-orders`),
                     ])
                     const mitras = mitraRes.ok ? await mitraRes.json() : []
-                    const orders = orderRes.ok ? await orderRes.json() : []
-                    const inventory = invRes.ok ? await invRes.json() : []
+                    const allOrders = ordersRes.ok ? await ordersRes.json() : []
+
+                    // Calculate Order Masuk (PO_ISSUED, PROCESSING, SHIPPED)
+                    const orderMasuk = Array.isArray(allOrders)
+                        ? allOrders.filter((o: { status: string }) => ["PO_ISSUED", "PROCESSING", "SHIPPED"].includes(o.status))
+                        : []
+                    const orderMasukTotal = orderMasuk.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+
+                    // Calculate Order Selesai (RECEIVED)
+                    const orderSelesai = Array.isArray(allOrders)
+                        ? allOrders.filter((o: { status: string }) => o.status === "RECEIVED")
+                        : []
+                    const orderSelesaiTotal = orderSelesai.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+
+                    const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`
+
                     setStats([
-                        { label: "Mitra Saya", value: Array.isArray(mitras) ? mitras.length : 0, icon: Users, gradient: "from-[#E31E24] to-[#B91C22]" },
-                        { label: "Order Masuk", value: Array.isArray(orders) ? orders.length : 0, icon: ShoppingCart, gradient: "from-[#5B2B4E] to-[#3D1C34]" },
-                        { label: "Item Inventory", value: Array.isArray(inventory) ? inventory.length : 0, icon: Package, gradient: "from-[#FFD700] to-[#E6C200]" },
+                        { label: "Mitra Saya", value: Array.isArray(mitras) ? mitras.length : 0, icon: Users, gradient: "from-[#E31E24] to-[#B91C22]", href: "/dashboard/mitra" },
+                        { label: "Order Masuk", value: formatRp(orderMasukTotal), subtitle: `${orderMasuk.length} PO`, icon: ShoppingCart, gradient: "from-[#5B2B4E] to-[#3D1C34]", href: "/dashboard/history-pusat" },
+                        { label: "Order Selesai", value: formatRp(orderSelesaiTotal), subtitle: `${orderSelesai.length} PO`, icon: Package, gradient: "from-[#22C55E] to-[#16A34A]", href: "/dashboard/history-pusat" },
                     ])
                 } else if (role === "MITRA") {
                     const [pendingRes, totalRes] = await Promise.all([
@@ -216,6 +230,9 @@ export default function DashboardPage() {
                                         <span className="text-white/80 text-xs font-medium">{stat.label}</span>
                                     </div>
                                     <p className="text-2xl font-bold">{stat.value}</p>
+                                    {stat.subtitle && (
+                                        <p className="text-xs text-white/70 mt-0.5">{stat.subtitle}</p>
+                                    )}
                                 </div>
                             </>
                         )
