@@ -547,9 +547,9 @@ export default function DashboardPage() {
                     ))}
                 </div>
             ) : role === "STOKIS" ? (
-                <div className="space-y-6">
+                <div className="flex flex-col lg:flex-row gap-6">
                     {/* Order ke Pusat Section */}
-                    <div>
+                    <div className="flex-1">
                         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                             <Package size={16} className="text-gray-500" />
                             Order ke Pusat
@@ -577,11 +577,11 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* Divider */}
-                    <div className="border-t border-gray-200" />
+                    {/* Divider - horizontal on mobile, vertical on desktop */}
+                    <div className="border-t lg:border-t-0 lg:border-l border-gray-200 lg:self-stretch" />
 
                     {/* Order dari Mitra Section */}
-                    <div>
+                    <div className="flex-1">
                         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                             <Store size={16} className="text-gray-500" />
                             Order dari Mitra
