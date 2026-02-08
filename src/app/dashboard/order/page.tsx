@@ -116,7 +116,7 @@ export default function MitraOrderPage() {
                 throw new Error(data.error || "Gagal membuat order")
             }
 
-            router.push("/dashboard/history")
+            router.push("/dashboard")
         } catch (err) {
             setError(err instanceof Error ? err.message : "Gagal membuat order")
         } finally {
@@ -185,8 +185,8 @@ export default function MitraOrderPage() {
                                         <button
                                             onClick={() => addToCart(product)}
                                             className={`p-2 rounded-lg transition-all duration-300 ${recentlyAdded.has(product.id)
-                                                    ? "bg-green-500 text-white scale-110"
-                                                    : "bg-orange-500 text-white hover:bg-orange-600"
+                                                ? "bg-green-500 text-white scale-110"
+                                                : "bg-orange-500 text-white hover:bg-orange-600"
                                                 }`}
                                         >
                                             {recentlyAdded.has(product.id) ? <Check size={18} /> : <Plus size={18} />}
