@@ -47,15 +47,34 @@ interface RecentOrder {
     createdAt: string
 }
 
+interface MitraOrderItem {
+    id: string
+    quantity: number
+    price: number
+    product: { name: string; unit: string }
+}
+
 interface MitraOrder {
     id: string
     orderNumber: string
     status: string
     totalAmount: number
+    notes: string | null
     createdAt: string
+    stokis: { name: string }
+    items: MitraOrderItem[]
 }
 
 type PeriodFilter = "7" | "30" | "90" | "custom"
+
+const mitraStatusConfig: Record<string, { label: string; color: string }> = {
+    PENDING: { label: "Menunggu", color: "bg-yellow-100 text-yellow-700" },
+    APPROVED: { label: "Disetujui", color: "bg-blue-100 text-blue-700" },
+    PROCESSING: { label: "Diproses", color: "bg-purple-100 text-purple-700" },
+    SHIPPED: { label: "Dikirim", color: "bg-indigo-100 text-indigo-700" },
+    RECEIVED: { label: "Diterima", color: "bg-green-100 text-green-700" },
+    CANCELLED: { label: "Dibatalkan", color: "bg-red-100 text-red-700" },
+}
 
 interface StatCard {
     label: string
@@ -93,6 +112,8 @@ export default function DashboardPage() {
         return d.toISOString().split("T")[0]
     })
     const [mitraEndDate, setMitraEndDate] = useState(() => new Date().toISOString().split("T")[0])
+    const [selectedMitraOrder, setSelectedMitraOrder] = useState<MitraOrder | null>(null)
+    const [mitraUpdating, setMitraUpdating] = useState(false)
 
     // Update MITRA date range when period changes
     useEffect(() => {
@@ -238,6 +259,31 @@ export default function DashboardPage() {
         }).format(new Date(date))
     }
 
+    const fetchMitraOrders = async () => {
+        const res = await fetch("/api/orders/mitra")
+        const orders = res.ok ? await res.json() : []
+        setMitraOrders(Array.isArray(orders) ? orders : [])
+    }
+
+    const handleMitraReceive = async (orderId: string) => {
+        setMitraUpdating(true)
+        try {
+            const res = await fetch(`/api/orders/mitra/${orderId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: "RECEIVED" }),
+            })
+            if (res.ok) {
+                fetchMitraOrders()
+                setSelectedMitraOrder(null)
+            }
+        } catch (err) {
+            console.error("Error updating order:", err)
+        } finally {
+            setMitraUpdating(false)
+        }
+    }
+
     return (
         <div className="space-y-5">
             {/* Page Title */}
@@ -359,30 +405,118 @@ export default function DashboardPage() {
                                         <tr>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tanggal</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">No PO</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
                                             <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Nominal</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
                                         {mitraFilteredOrders.length === 0 ? (
                                             <tr>
-                                                <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
+                                                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
                                                     <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-2" />
                                                     <p>Belum ada order pada periode ini</p>
                                                 </td>
                                             </tr>
                                         ) : (
-                                            mitraFilteredOrders.map((order) => (
-                                                <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                                                    <td className="px-4 py-3 text-sm text-gray-700">{formatMitraDate(order.createdAt)}</td>
-                                                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{order.orderNumber}</td>
-                                                    <td className="px-4 py-3 text-sm font-semibold text-emerald-600 text-right">
-                                                        {formatMitraCurrency(Number(order.totalAmount))}
-                                                    </td>
-                                                </tr>
-                                            ))
+                                            mitraFilteredOrders.map((order) => {
+                                                const status = mitraStatusConfig[order.status] || mitraStatusConfig.PENDING
+                                                return (
+                                                    <tr
+                                                        key={order.id}
+                                                        onClick={() => setSelectedMitraOrder(order)}
+                                                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                                                    >
+                                                        <td className="px-4 py-3 text-sm text-gray-700">{formatMitraDate(order.createdAt)}</td>
+                                                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{order.orderNumber}</td>
+                                                        <td className="px-4 py-3">
+                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                                                                {status.label}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm font-semibold text-emerald-600 text-right">
+                                                            {formatMitraCurrency(Number(order.totalAmount))}
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })
                                         )}
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Order Detail Modal */}
+                    {selectedMitraOrder && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-xl max-w-lg w-full max-h-[85vh] overflow-y-auto">
+                                <div className="p-6">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h2 className="text-lg font-bold text-gray-900">{selectedMitraOrder.orderNumber}</h2>
+                                            <p className="text-sm text-gray-500">{formatMitraDate(selectedMitraOrder.createdAt)}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => setSelectedMitraOrder(null)}
+                                            className="text-gray-500 hover:text-gray-700 text-xl"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${(mitraStatusConfig[selectedMitraOrder.status] || mitraStatusConfig.PENDING).color}`}>
+                                            {(mitraStatusConfig[selectedMitraOrder.status] || mitraStatusConfig.PENDING).label}
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <h3 className="font-semibold mb-2 text-gray-800">Items</h3>
+                                            {selectedMitraOrder.items?.map((item) => (
+                                                <div key={item.id} className="flex justify-between py-2 border-b text-gray-700">
+                                                    <span>
+                                                        {item.product.name} x {item.quantity} {item.product.unit}
+                                                    </span>
+                                                    <span className="font-medium text-gray-800">{formatMitraCurrency(Number(item.price) * item.quantity)}</span>
+                                                </div>
+                                            ))}
+                                            <div className="flex justify-between py-3 font-bold text-gray-900">
+                                                <span>Total</span>
+                                                <span className="text-emerald-600">
+                                                    {formatMitraCurrency(Number(selectedMitraOrder.totalAmount))}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {selectedMitraOrder.notes && (
+                                            <div>
+                                                <h3 className="font-semibold mb-1 text-gray-800">Catatan</h3>
+                                                <p className="text-gray-600 text-sm">{selectedMitraOrder.notes}</p>
+                                            </div>
+                                        )}
+
+                                        <div className="space-y-2 pt-4">
+                                            {selectedMitraOrder.status === "SHIPPED" && (
+                                                <button
+                                                    onClick={() => handleMitraReceive(selectedMitraOrder.id)}
+                                                    disabled={mitraUpdating}
+                                                    className="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 disabled:opacity-50"
+                                                >
+                                                    {mitraUpdating ? "Memproses..." : "Konfirmasi Terima"}
+                                                </button>
+                                            )}
+
+                                            <Link
+                                                href={`/po/mitra/${selectedMitraOrder.id}`}
+                                                target="_blank"
+                                                className="w-full py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 flex items-center justify-center gap-2"
+                                            >
+                                                Print PO
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
