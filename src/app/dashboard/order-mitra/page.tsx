@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Store, Clock, CheckCircle, Truck, Package, XCircle, ChevronRight, Calendar, TrendingUp, Users, Edit3 } from "lucide-react"
+import { Store, Clock, CheckCircle, Truck, Package, XCircle, ChevronRight, Calendar, TrendingUp, Users, Edit3, Printer } from "lucide-react"
+import Link from "next/link"
 
 interface OrderItem {
     id: string
@@ -429,6 +430,16 @@ export default function StokisOrderMitraPage() {
                                             {updating ? "Memproses..." : "Selesai"}
                                         </button>
                                     )}
+
+                                    {/* Print PO Button - for all orders */}
+                                    <Link
+                                        href={`/po/mitra/${selectedOrder.id}`}
+                                        target="_blank"
+                                        className="w-full py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 flex items-center justify-center gap-2"
+                                    >
+                                        <Printer size={18} />
+                                        Print PO
+                                    </Link>
                                 </div>
                             </div>
                         </div>

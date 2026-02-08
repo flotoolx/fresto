@@ -118,6 +118,18 @@
 
 ---
 
+
+## Phase 4: Stokis Dashboard & Order Enhancements (Completed Feb 8, 2026) ✅ COMPLETE
+
+### Stokis Dashboard Features
+- [x] Adjust PO Logic & API Handler (Qty=0 fix) ✅
+- [x] Action Buttons (Selesai, Revisi PO/Adjust, Tolak Order) ✅
+- [x] Mitra Order Card (Total Mitra from API, Unique Order Count) ✅
+- [x] Dashboard Layout (4 Cards, Headers, Responsive) ✅
+- [x] Git commit ✅ `988ac1b`
+
+---
+
 ## Phase 5: Stokis & Lokasi Management ⏳ PLANNED
 
 ### Database Schema
@@ -169,7 +181,11 @@
 - [x] /api/stokis/[id]/outstanding - API cek sisa tagihan stokis
 - [x] Update /api/orders/stokis/[id] - Tambah action adjust PO
 - [x] Tampilkan warning jika stokis punya tunggakan di Approve PO
-- [x] Tombol Adjust PO untuk kurangi quantity di PO
+- [x] Git commit & push ✅
+
+
+
+
 
 ### Pembayaran (Payment) - Finance
 - [x] /api/payments - API input pembayaran (list, create)
