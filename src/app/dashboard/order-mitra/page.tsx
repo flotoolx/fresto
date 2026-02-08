@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Store, Clock, CheckCircle, Truck, Package, XCircle, ChevronRight } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { Store, Clock, CheckCircle, Truck, Package, XCircle, ChevronRight, Calendar, TrendingUp, Users } from "lucide-react"
 
 interface OrderItem {
     id: string
@@ -17,7 +17,7 @@ interface MitraOrder {
     totalAmount: number
     notes: string | null
     createdAt: string
-    mitra: { name: string; address: string | null }
+    mitra: { id: string; name: string; address: string | null }
     items: OrderItem[]
 }
 
@@ -30,15 +30,33 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
     CANCELLED: { label: "Dibatalkan", color: "bg-red-100 text-red-700", icon: <XCircle size={16} /> },
 }
 
+type PeriodFilter = "7" | "30" | "90" | "custom"
+
 export default function StokisOrderMitraPage() {
     const [orders, setOrders] = useState<MitraOrder[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedOrder, setSelectedOrder] = useState<MitraOrder | null>(null)
     const [updating, setUpdating] = useState(false)
 
+    // Date filter state
+    const [period, setPeriod] = useState<PeriodFilter>("30")
+    const [startDate, setStartDate] = useState("")
+    const [endDate, setEndDate] = useState("")
+
     useEffect(() => {
         fetchOrders()
     }, [])
+
+    // Initialize date range based on period
+    useEffect(() => {
+        if (period !== "custom") {
+            const end = new Date()
+            const start = new Date()
+            start.setDate(start.getDate() - parseInt(period))
+            setEndDate(end.toISOString().split("T")[0])
+            setStartDate(start.toISOString().split("T")[0])
+        }
+    }, [period])
 
     const fetchOrders = async () => {
         try {
@@ -51,6 +69,27 @@ export default function StokisOrderMitraPage() {
             setLoading(false)
         }
     }
+
+    // Filtered orders based on date range
+    const filteredOrders = useMemo(() => {
+        if (!startDate || !endDate) return orders
+        const start = new Date(startDate)
+        const end = new Date(endDate)
+        end.setHours(23, 59, 59, 999)
+
+        return orders.filter(order => {
+            const orderDate = new Date(order.createdAt)
+            return orderDate >= start && orderDate <= end
+        })
+    }, [orders, startDate, endDate])
+
+    // Summary stats
+    const summaryStats = useMemo(() => {
+        const totalRevenue = filteredOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0)
+        const uniqueMitra = new Set(filteredOrders.map(o => o.mitra.id)).size
+        const totalOrders = filteredOrders.length
+        return { totalRevenue, uniqueMitra, totalOrders }
+    }, [filteredOrders])
 
     const updateStatus = async (orderId: string, status: string) => {
         setUpdating(true)
@@ -81,8 +120,9 @@ export default function StokisOrderMitraPage() {
 
     const formatDate = (date: string) => {
         return new Intl.DateTimeFormat("id-ID", {
-            dateStyle: "medium",
-            timeStyle: "short",
+            day: "numeric",
+            month: "short",
+            year: "numeric",
         }).format(new Date(date))
     }
 
@@ -95,58 +135,126 @@ export default function StokisOrderMitraPage() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-                <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+        <div className="space-y-4 md:space-y-6">
+            {/* Header */}
+            <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm">
+                <h1 className="text-lg md:text-xl font-bold text-gray-800 flex items-center gap-2">
                     <Store className="text-green-600" />
                     Order dari Mitra
                 </h1>
                 <p className="text-gray-500 text-sm mt-1">Kelola order dari mitra Anda</p>
             </div>
 
-            {orders.length === 0 ? (
+            {/* Date Filter */}
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2 text-gray-700">
+                        <Calendar size={18} className="text-gray-500" />
+                        <span className="text-sm font-medium">Periode:</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {[
+                            { value: "7", label: "7 Hari" },
+                            { value: "30", label: "30 Hari" },
+                            { value: "90", label: "90 Hari" },
+                            { value: "custom", label: "Custom" },
+                        ].map((opt) => (
+                            <button
+                                key={opt.value}
+                                onClick={() => setPeriod(opt.value as PeriodFilter)}
+                                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${period === opt.value
+                                        ? "bg-green-500 text-white"
+                                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                    {period === "custom" && (
+                        <div className="flex items-center gap-2 ml-2">
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="px-3 py-1.5 border rounded-lg text-sm text-gray-700"
+                            />
+                            <span className="text-gray-500">-</span>
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="px-3 py-1.5 border rounded-lg text-sm text-gray-700"
+                            />
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gradient-to-br from-[#E31E24] to-[#B91C22] rounded-xl p-4 text-white">
+                    <div className="flex items-center gap-2 mb-1">
+                        <TrendingUp size={18} className="opacity-80" />
+                        <span className="text-white/80 text-xs font-medium">Total Revenue</span>
+                    </div>
+                    <p className="text-xl font-bold">{formatCurrency(summaryStats.totalRevenue)}</p>
+                    <p className="text-xs text-white/70 mt-0.5">{summaryStats.totalOrders} PO</p>
+                </div>
+                <div className="bg-gradient-to-br from-[#5B2B4E] to-[#3D1C34] rounded-xl p-4 text-white">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Users size={18} className="opacity-80" />
+                        <span className="text-white/80 text-xs font-medium">Mitra Order</span>
+                    </div>
+                    <p className="text-xl font-bold">{summaryStats.uniqueMitra}</p>
+                    <p className="text-xs text-white/70 mt-0.5">mitra aktif</p>
+                </div>
+            </div>
+
+            {/* Orders Table */}
+            {filteredOrders.length === 0 ? (
                 <div className="bg-white rounded-xl p-12 shadow-sm text-center">
                     <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">Belum ada order dari mitra</p>
+                    <p className="text-gray-500">Belum ada order dari mitra pada periode ini</p>
                 </div>
             ) : (
-                <div className="space-y-3">
-                    {orders.map((order) => {
-                        const status = statusConfig[order.status] || statusConfig.PENDING
-                        const isPending = order.status === "PENDING"
-                        return (
-                            <div
-                                key={order.id}
-                                className={`bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all border-l-4 ${isPending ? "border-l-amber-500" : "border-l-emerald-500"}`}
-                                onClick={() => setSelectedOrder(order)}
-                            >
-                                <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                        <h3 className="font-semibold text-gray-800 text-sm">{order.orderNumber}</h3>
-                                        <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
-                                    </div>
-                                    <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${status.color.replace('bg-', 'border-').replace('100', '200')} ${status.color}`}>
-                                        {status.icon}
-                                        {status.label}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        <span className="text-sm font-medium text-gray-700">{order.mitra.name}</span>
-                                        {order.mitra.address && (
-                                            <p className="text-xs text-gray-500 truncate max-w-[150px]">{order.mitra.address}</p>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-bold text-emerald-600 text-sm">
-                                            {formatCurrency(Number(order.totalAmount))}
-                                        </span>
-                                        <ChevronRight size={16} className="text-gray-400" />
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    })}
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-gray-50 border-b">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tanggal</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">No Invoice</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Mitra</th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Nominal</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {filteredOrders.map((order) => {
+                                    const status = statusConfig[order.status] || statusConfig.PENDING
+                                    return (
+                                        <tr
+                                            key={order.id}
+                                            onClick={() => setSelectedOrder(order)}
+                                            className="hover:bg-gray-50 cursor-pointer transition-colors"
+                                        >
+                                            <td className="px-4 py-3 text-sm text-gray-700">{formatDate(order.createdAt)}</td>
+                                            <td className="px-4 py-3">
+                                                <span className="text-sm font-medium text-gray-900">{order.orderNumber}</span>
+                                                <span className={`ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
+                                                    {status.label}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-gray-700">{order.mitra.name}</td>
+                                            <td className="px-4 py-3 text-sm font-semibold text-emerald-600 text-right">
+                                                {formatCurrency(Number(order.totalAmount))}
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
