@@ -268,7 +268,7 @@ export default function StokisOrderMitraPage() {
                         <Users size={14} className="opacity-80 md:w-[18px] md:h-[18px]" />
                         <span className="text-white/80 text-[10px] md:text-xs font-medium truncate">Mitra Order</span>
                     </div>
-                    <p className="text-sm md:text-xl font-bold">{summaryStats.totalOrders}</p>
+                    <p className="text-sm md:text-xl font-bold">{summaryStats.uniqueMitra}</p>
                     <p className="text-[10px] md:text-xs text-white/70 mt-0.5">{totalMitra} total mitra</p>
                 </div>
             </div>
