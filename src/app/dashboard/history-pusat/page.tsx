@@ -211,8 +211,8 @@ export default function StokisOrderHistoryPage() {
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                    { key: "approved", label: "Approved", data: summaryStats.approved, gradient: "from-[#3B82F6] to-[#1D4ED8]", icon: <CheckCircle size={16} /> },
                     { key: "pending", label: "Menunggu Konfirmasi", data: summaryStats.pending, gradient: "from-[#F59E0B] to-[#D97706]", icon: <Clock size={16} /> },
+                    { key: "approved", label: "Approved", data: summaryStats.approved, gradient: "from-[#3B82F6] to-[#1D4ED8]", icon: <CheckCircle size={16} /> },
                     { key: "shipped", label: "Dikirim", data: summaryStats.shipped, gradient: "from-[#6366F1] to-[#4338CA]", icon: <Truck size={16} /> },
                     { key: "completed", label: "Selesai", data: summaryStats.completed, gradient: "from-[#22C55E] to-[#16A34A]", icon: <CheckCircle size={16} /> },
                 ].map((card) => (
