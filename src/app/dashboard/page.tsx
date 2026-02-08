@@ -546,6 +546,69 @@ export default function DashboardPage() {
                         <div key={i} className="bg-gray-100 rounded-xl p-4 h-24 animate-pulse" />
                     ))}
                 </div>
+            ) : role === "STOKIS" ? (
+                <div className="space-y-6">
+                    {/* Order ke Pusat Section */}
+                    <div>
+                        <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                            <Package size={16} className="text-gray-500" />
+                            Order ke Pusat
+                        </h2>
+                        <div className="grid grid-cols-2 gap-4">
+                            {stats.slice(0, 2).map((stat, index) => (
+                                <Link
+                                    key={index}
+                                    href={stat.href || "#"}
+                                    className={`bg-gradient-to-br ${stat.gradient} rounded-xl p-4 text-white relative overflow-hidden shadow-md hover:shadow-lg hover:scale-105 transition-all cursor-pointer`}
+                                >
+                                    <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                    <div className="relative">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <stat.icon size={16} className="opacity-80" />
+                                            <span className="text-white/80 text-xs font-medium">{stat.label}</span>
+                                        </div>
+                                        <p className="text-2xl font-bold">{stat.value}</p>
+                                        {stat.subtitle && (
+                                            <p className="text-xs text-white/70 mt-0.5">{stat.subtitle}</p>
+                                        )}
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-200" />
+
+                    {/* Order dari Mitra Section */}
+                    <div>
+                        <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                            <Store size={16} className="text-gray-500" />
+                            Order dari Mitra
+                        </h2>
+                        <div className="grid grid-cols-2 gap-4">
+                            {stats.slice(2, 4).map((stat, index) => (
+                                <Link
+                                    key={index + 2}
+                                    href={stat.href || "#"}
+                                    className={`bg-gradient-to-br ${stat.gradient} rounded-xl p-4 text-white relative overflow-hidden shadow-md hover:shadow-lg hover:scale-105 transition-all cursor-pointer`}
+                                >
+                                    <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                    <div className="relative">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <stat.icon size={16} className="opacity-80" />
+                                            <span className="text-white/80 text-xs font-medium">{stat.label}</span>
+                                        </div>
+                                        <p className="text-2xl font-bold">{stat.value}</p>
+                                        {stat.subtitle && (
+                                            <p className="text-xs text-white/70 mt-0.5">{stat.subtitle}</p>
+                                        )}
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             ) : role !== "MITRA" && (
                 <div className={`grid grid-cols-2 lg:grid-cols-${Math.min(stats.length, 5)} gap-4`}>
                     {stats.map((stat, index) => {
