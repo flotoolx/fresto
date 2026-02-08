@@ -138,7 +138,7 @@ export default function StokisOrderMitraPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     action: "adjust",
-                    adjustedItems: adjustedItems.filter(item => item.quantity > 0),
+                    adjustedItems: adjustedItems,
                     notes: adjustNotes
                 }),
             })
