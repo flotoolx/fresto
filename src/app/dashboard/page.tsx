@@ -160,14 +160,28 @@ export default function DashboardPage() {
                         }
                     }
                 } else if (role === "FINANCE") {
-                    const res = await fetch(`/api/analytics/dashboard?start=${startDate}&end=${endDate}`)
-                    if (res.ok) {
-                        const data = await res.json()
-                        setStats([
-                            { label: "Menunggu Approval", value: data.pendingOrders || 0, icon: ShoppingCart, gradient: "from-[#5B2B4E] to-[#3D1C34]" },
-                            { label: "Total Invoice", value: data.invoiceCount?.stokis || 0, icon: Activity, gradient: "from-[#E31E24] to-[#B91C22]" },
-                        ])
-                    }
+                    // Fetch all stokis orders for Finance dashboard
+                    const ordersRes = await fetch(`/api/orders/stokis`)
+                    const stokisOrders = ordersRes.ok ? await ordersRes.json() : []
+
+                    // DC/Pusat Orders (all stokis orders are effectively DC/Pusat orders)
+                    const allDCOrders = Array.isArray(stokisOrders) ? stokisOrders : []
+                    const dcTotal = allDCOrders.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+                    const dcPending = allDCOrders.filter((o: { status: string }) => o.status === "PENDING_PUSAT")
+                    const dcPendingTotal = dcPending.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+
+                    // Stokis Orders (approved and processed)
+                    const stokisApproved = allDCOrders.filter((o: { status: string }) => ["PO_ISSUED", "PROCESSING", "SHIPPED", "RECEIVED"].includes(o.status))
+                    const stokisApprovedTotal = stokisApproved.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+
+                    const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`
+
+                    setStats([
+                        { label: "Total", value: formatRp(dcTotal), subtitle: `${allDCOrders.length} PO`, icon: Package, gradient: "from-[#E31E24] to-[#B91C22]", href: "/dashboard/orders-stokis" },
+                        { label: "Menunggu Approval", value: formatRp(dcPendingTotal), subtitle: `${dcPending.length} PO`, icon: ShoppingCart, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/approve-po" },
+                        { label: "Total Approved", value: formatRp(stokisApprovedTotal), subtitle: `${stokisApproved.length} PO`, icon: Store, gradient: "from-[#3B82F6] to-[#1D4ED8]", href: "/dashboard/orders-stokis" },
+                        { label: "Selesai", value: formatRp(stokisApproved.filter((o: { status: string }) => o.status === "RECEIVED").reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)), subtitle: `${stokisApproved.filter((o: { status: string }) => o.status === "RECEIVED").length} PO`, icon: TrendingUp, gradient: "from-[#22C55E] to-[#16A34A]", href: "/dashboard/orders-stokis" },
+                    ])
                 } else if (role === "DC") {
                     // DC-specific stats
                     setStats([
@@ -546,13 +560,13 @@ export default function DashboardPage() {
                         <div key={i} className="bg-gray-100 rounded-xl p-4 h-24 animate-pulse" />
                     ))}
                 </div>
-            ) : role === "STOKIS" ? (
+            ) : (role === "STOKIS" || role === "FINANCE") ? (
                 <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Order ke Pusat Section */}
+                    {/* Left Section */}
                     <div className="flex-1">
                         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                             <Package size={16} className="text-gray-500" />
-                            Order ke Pusat
+                            {role === "FINANCE" ? "📦 DC / Pusat" : "Order ke Pusat"}
                         </h2>
                         <div className="grid grid-cols-2 gap-4">
                             {stats.slice(0, 2).map((stat, index) => (
@@ -580,11 +594,11 @@ export default function DashboardPage() {
                     {/* Divider - horizontal on mobile, vertical on desktop */}
                     <div className="border-t lg:border-t-0 lg:border-l border-gray-200 lg:self-stretch" />
 
-                    {/* Order dari Mitra Section */}
+                    {/* Right Section */}
                     <div className="flex-1">
                         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                             <Store size={16} className="text-gray-500" />
-                            Order dari Mitra
+                            {role === "FINANCE" ? "🏪 Stokis" : "Order dari Mitra"}
                         </h2>
                         <div className="grid grid-cols-2 gap-4">
                             {stats.slice(2, 4).map((stat, index) => (
