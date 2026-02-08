@@ -886,7 +886,7 @@ export default function ReportsPage() {
                                     </div>
 
                                     {/* Simplified 3-Card Summary: Total, Belum Dibayar, Lunas */}
-                                    <div className="grid grid-cols-3 gap-2 md:gap-3">
+                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
                                         {/* Total */}
                                         <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -910,7 +910,7 @@ export default function ReportsPage() {
                                         </div>
 
                                         {/* Lunas */}
-                                        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
+                                        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden col-span-2 lg:col-span-1">
                                             <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                             <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
                                                 <Receipt size={12} className="opacity-80 md:w-[14px] md:h-[14px]" />
