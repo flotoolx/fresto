@@ -370,18 +370,6 @@ export default function StokisOrderHistoryPage() {
                                             Batalkan Order
                                         </button>
                                     )}
-
-                                    {/* Print PO Button - for PO_ISSUED+ */}
-                                    {hasPO(selectedOrder.status) && (
-                                        <Link
-                                            href={`/po/stokis/${selectedOrder.id}`}
-                                            target="_blank"
-                                            className="w-full py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 flex items-center justify-center gap-2"
-                                        >
-                                            <Printer size={18} />
-                                            Print PO
-                                        </Link>
-                                    )}
                                 </div>
                             </div>
                         </div>
