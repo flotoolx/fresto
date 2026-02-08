@@ -160,27 +160,33 @@ export default function DashboardPage() {
                         }
                     }
                 } else if (role === "FINANCE") {
-                    // Fetch all stokis orders for Finance dashboard
-                    const ordersRes = await fetch(`/api/orders/stokis`)
-                    const stokisOrders = ordersRes.ok ? await ordersRes.json() : []
+                    // Fetch stokis orders and mitra orders for Finance dashboard
+                    const [stokisRes, mitraRes] = await Promise.all([
+                        fetch(`/api/orders/stokis`),
+                        fetch(`/api/orders/mitra`)
+                    ])
+                    const stokisOrders = stokisRes.ok ? await stokisRes.json() : []
+                    const mitraOrders = mitraRes.ok ? await mitraRes.json() : []
 
-                    // DC/Pusat Orders (all stokis orders are effectively DC/Pusat orders)
+                    // DC/Pusat Orders (stokis orders to pusat)
                     const allDCOrders = Array.isArray(stokisOrders) ? stokisOrders : []
                     const dcTotal = allDCOrders.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
                     const dcPending = allDCOrders.filter((o: { status: string }) => o.status === "PENDING_PUSAT")
                     const dcPendingTotal = dcPending.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
 
-                    // Stokis Orders (approved and processed)
-                    const stokisApproved = allDCOrders.filter((o: { status: string }) => ["PO_ISSUED", "PROCESSING", "SHIPPED", "RECEIVED"].includes(o.status))
-                    const stokisApprovedTotal = stokisApproved.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+                    // Stokis Orders (mitra orders to stokis)
+                    const allStokisOrders = Array.isArray(mitraOrders) ? mitraOrders : []
+                    const stokisTotal = allStokisOrders.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+                    const stokisPending = allStokisOrders.filter((o: { status: string }) => o.status === "PENDING")
+                    const stokisPendingTotal = stokisPending.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
 
                     const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`
 
                     setStats([
                         { label: "Total", value: formatRp(dcTotal), subtitle: `${allDCOrders.length} PO`, icon: Package, gradient: "from-[#E31E24] to-[#B91C22]", href: "/dashboard/orders-stokis" },
                         { label: "Menunggu Approval", value: formatRp(dcPendingTotal), subtitle: `${dcPending.length} PO`, icon: ShoppingCart, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/approve-po" },
-                        { label: "Total Approved", value: formatRp(stokisApprovedTotal), subtitle: `${stokisApproved.length} PO`, icon: Store, gradient: "from-[#3B82F6] to-[#1D4ED8]", href: "/dashboard/orders-stokis" },
-                        { label: "Selesai", value: formatRp(stokisApproved.filter((o: { status: string }) => o.status === "RECEIVED").reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)), subtitle: `${stokisApproved.filter((o: { status: string }) => o.status === "RECEIVED").length} PO`, icon: TrendingUp, gradient: "from-[#22C55E] to-[#16A34A]", href: "/dashboard/orders-stokis" },
+                        { label: "Total", value: formatRp(stokisTotal), subtitle: `${allStokisOrders.length} PO`, icon: Store, gradient: "from-[#3B82F6] to-[#1D4ED8]", href: "/dashboard/orders-stokis" },
+                        { label: "Menunggu Approval", value: formatRp(stokisPendingTotal), subtitle: `${stokisPending.length} PO`, icon: ShoppingCart, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/orders-stokis" },
                     ])
                 } else if (role === "DC") {
                     // DC-specific stats
@@ -565,7 +571,7 @@ export default function DashboardPage() {
                     {/* Left Section */}
                     <div className="flex-1">
                         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                            <Package size={16} className="text-gray-500" />
+                            {role !== "FINANCE" && <Package size={16} className="text-gray-500" />}
                             {role === "FINANCE" ? "📦 DC / Pusat" : "Order ke Pusat"}
                         </h2>
                         <div className="grid grid-cols-2 gap-4">
@@ -597,7 +603,7 @@ export default function DashboardPage() {
                     {/* Right Section */}
                     <div className="flex-1">
                         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                            <Store size={16} className="text-gray-500" />
+                            {role !== "FINANCE" && <Store size={16} className="text-gray-500" />}
                             {role === "FINANCE" ? "🏪 Stokis" : "Order dari Mitra"}
                         </h2>
                         <div className="grid grid-cols-2 gap-4">
