@@ -593,46 +593,46 @@ export default function ReportsPage() {
                             {activeTab === "overview" && summary && (
                                 <div className="space-y-4">
                                     {/* Stats Grid - Compact */}
-                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
                                         {/* Total Revenue */}
-                                        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <TrendingUp size={16} className="opacity-80" />
-                                                <span className="text-xs text-white/80">Total Revenue</span>
+                                        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                                                <TrendingUp size={12} className="opacity-80 md:w-[16px] md:h-[16px]" />
+                                                <span className="text-[10px] md:text-xs text-white/80 truncate">Total Revenue</span>
                                             </div>
-                                            <p className="text-xl font-bold">{formatCurrency(summary.summary.totalRevenue)}</p>
-                                            <p className="text-xs text-white/60 mt-1">Total PO: <span className="font-bold">{summary.summary.stokisOrders + summary.summary.mitraOrders}</span></p>
+                                            <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(summary.summary.totalRevenue)}</p>
+                                            <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO: <span className="font-bold">{summary.summary.stokisOrders + summary.summary.mitraOrders}</span></p>
                                         </div>
                                         {/* Total DC */}
-                                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Store size={16} className="opacity-80" />
-                                                <span className="text-xs text-white/80">Total DC</span>
+                                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                                                <Store size={12} className="opacity-80 md:w-[16px] md:h-[16px]" />
+                                                <span className="text-[10px] md:text-xs text-white/80 truncate">Total DC</span>
                                             </div>
-                                            <p className="text-xl font-bold">{formatCurrency(summary.summary.totalDcRevenue)}</p>
-                                            <p className="text-xs text-white/60 mt-1">Total PO DC: <span className="font-bold">{summary.summary.stokisOrders}</span></p>
+                                            <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(summary.summary.totalDcRevenue)}</p>
+                                            <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO DC: <span className="font-bold">{summary.summary.stokisOrders}</span></p>
                                         </div>
                                         {/* Total Stokis */}
-                                        <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl p-4 text-white relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Store size={16} className="opacity-80" />
-                                                <span className="text-xs text-white/80">Total Stokis</span>
+                                        <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                                                <Store size={12} className="opacity-80 md:w-[16px] md:h-[16px]" />
+                                                <span className="text-[10px] md:text-xs text-white/80 truncate">Total Stokis</span>
                                             </div>
-                                            <p className="text-xl font-bold">{formatCurrency(summary.summary.totalStokisRevenue)}</p>
-                                            <p className="text-xs text-white/60 mt-1">Total PO Stokis: <span className="font-bold">{summary.summary.stokisOrders}</span></p>
+                                            <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(summary.summary.totalStokisRevenue)}</p>
+                                            <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO Stokis: <span className="font-bold">{summary.summary.stokisOrders}</span></p>
                                         </div>
                                         {/* Total Mitra */}
-                                        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Users size={16} className="opacity-80" />
-                                                <span className="text-xs text-white/80">Total Mitra</span>
+                                        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                                                <Users size={12} className="opacity-80 md:w-[16px] md:h-[16px]" />
+                                                <span className="text-[10px] md:text-xs text-white/80 truncate">Total Mitra</span>
                                             </div>
-                                            <p className="text-xl font-bold">{formatCurrency(summary.summary.totalMitraRevenue)}</p>
-                                            <p className="text-xs text-white/60 mt-1">Total PO Mitra: <span className="font-bold">{summary.summary.mitraOrders}</span></p>
+                                            <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(summary.summary.totalMitraRevenue)}</p>
+                                            <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO Mitra: <span className="font-bold">{summary.summary.mitraOrders}</span></p>
                                         </div>
                                     </div>
 
@@ -886,38 +886,38 @@ export default function ReportsPage() {
                                     </div>
 
                                     {/* Simplified 3-Card Summary: Total, Belum Dibayar, Lunas */}
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-3 gap-2 md:gap-3">
                                         {/* Total */}
-                                        <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-4 text-white relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Receipt size={14} className="opacity-80" />
-                                                <span className="text-xs text-white/80">Total</span>
+                                        <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                                                <Receipt size={12} className="opacity-80 md:w-[14px] md:h-[14px]" />
+                                                <span className="text-[10px] md:text-xs text-white/80 truncate">Total</span>
                                             </div>
-                                            <p className="text-xl font-bold">{formatCurrency(invoiceAging.totalPoAmount || 0)}</p>
-                                            <p className="text-xs text-white/60 mt-1">Total PO: <span className="font-bold">{invoiceAging.totalPoCount || 0}</span></p>
+                                            <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(invoiceAging.totalPoAmount || 0)}</p>
+                                            <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO: <span className="font-bold">{invoiceAging.totalPoCount || 0}</span></p>
                                         </div>
 
                                         {/* Belum Dibayar */}
-                                        <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-white relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Receipt size={14} className="opacity-80" />
-                                                <span className="text-xs text-white/80">Belum Dibayar</span>
+                                        <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                                                <Receipt size={12} className="opacity-80 md:w-[14px] md:h-[14px]" />
+                                                <span className="text-[10px] md:text-xs text-white/80 truncate">Belum Dibayar</span>
                                             </div>
-                                            <p className="text-xl font-bold">{formatCurrency(invoiceAging.unpaidAmount || 0)}</p>
-                                            <p className="text-xs text-white/60 mt-1">Total PO: <span className="font-bold">{invoiceAging.unpaidCount || 0}</span></p>
+                                            <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(invoiceAging.unpaidAmount || 0)}</p>
+                                            <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO: <span className="font-bold">{invoiceAging.unpaidCount || 0}</span></p>
                                         </div>
 
                                         {/* Lunas */}
-                                        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Receipt size={14} className="opacity-80" />
-                                                <span className="text-xs text-white/80">Lunas</span>
+                                        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                                                <Receipt size={12} className="opacity-80 md:w-[14px] md:h-[14px]" />
+                                                <span className="text-[10px] md:text-xs text-white/80 truncate">Lunas</span>
                                             </div>
-                                            <p className="text-xl font-bold">{formatCurrency(invoiceAging.paidAmount || 0)}</p>
-                                            <p className="text-xs text-white/60 mt-1">Total PO: <span className="font-bold">{invoiceAging.paidCount || 0}</span></p>
+                                            <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(invoiceAging.paidAmount || 0)}</p>
+                                            <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO: <span className="font-bold">{invoiceAging.paidCount || 0}</span></p>
                                         </div>
                                     </div>
 
