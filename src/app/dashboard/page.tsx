@@ -188,7 +188,7 @@ export default function DashboardPage() {
                         { label: "Order Selesai", value: formatRp(orderSelesaiTotal), subtitle: `${orderSelesai.length} PO`, icon: Package, gradient: "from-[#22C55E] to-[#16A34A]", href: "/dashboard/history-pusat" },
                     ])
                 } else if (role === "MITRA") {
-                    const res = await fetch("/api/orders/mitra/my-orders")
+                    const res = await fetch("/api/orders/mitra")
                     const orders = res.ok ? await res.json() : []
                     setMitraOrders(Array.isArray(orders) ? orders : [])
                 }
@@ -386,20 +386,6 @@ export default function DashboardPage() {
                             </div>
                         </div>
                     )}
-
-                    {/* Quick Action */}
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                        <h2 className="text-sm font-semibold text-gray-900 mb-3">Aksi Cepat</h2>
-                        <Link
-                            href="/dashboard/order"
-                            className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
-                            style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
-                        >
-                            <ShoppingCart size={16} />
-                            Buat Order
-                            <ArrowUpRight size={14} />
-                        </Link>
-                    </div>
                 </>
             )}
 
