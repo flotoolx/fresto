@@ -630,7 +630,7 @@ export default function ReportsPage() {
                                             <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO: <span className="font-bold">{summary.summary.stokisOrders + summary.summary.mitraOrders}</span></p>
                                         </div>
                                         {/* Total DC */}
-                                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
+                                        <div className="bg-gradient-to-br from-slate-600 to-slate-700 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                             <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
                                                 <Store size={12} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
@@ -650,7 +650,7 @@ export default function ReportsPage() {
                                             <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO Stokis: <span className="font-bold">{summary.summary.stokisOrders}</span></p>
                                         </div>
                                         {/* Total Mitra */}
-                                        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
+                                        <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                             <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
                                                 <Users size={12} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
