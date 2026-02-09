@@ -259,7 +259,7 @@ export default function ApprovePOPage() {
                                             href="/dashboard/pembayaran"
                                             className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700"
                                         >
-                                            Lihat Pembayaran
+                                            Cek Pembayaran
                                         </Link>
                                     </div>
                                 ) : (

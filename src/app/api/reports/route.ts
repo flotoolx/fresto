@@ -228,7 +228,7 @@ async function getTopProductsReport(dateFrom: Date, dateTo?: Date) {
     })
 }
 
-// Stokis Performance Report
+// Stokis Performance Report - Now includes DC and Mitra data
 async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date) {
     const dateFilter = dateTo
         ? { gte: dateFrom, lte: dateTo }
@@ -244,11 +244,12 @@ async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date) {
     const mitraOrders = await prisma.mitraOrder.findMany({
         where: { createdAt: dateFilter },
         include: {
-            stokis: { select: { id: true, name: true } }
+            stokis: { select: { id: true, name: true } },
+            mitra: { select: { id: true, name: true, address: true, phone: true } }
         }
     })
 
-    // Aggregate by stokis
+    // Aggregate by stokis (existing logic)
     const stokisStats: Record<string, {
         stokisId: string
         stokisName: string
@@ -308,17 +309,60 @@ async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date) {
         stokisStats[key].mitraList.add(order.mitraId)
     }
 
-    // Calculate totals
-    const rankings = Object.values(stokisStats).map(s => ({
+    // Calculate totals for stokis
+    const stokisRankings = Object.values(stokisStats).map(s => ({
         ...s,
         totalRevenue: s.revenueToPusat + s.revenueFromMitra,
         mitraCount: s.mitraList.size,
         mitraList: undefined
     })).sort((a, b) => b.totalRevenue - a.totalRevenue)
 
+    // DC Performance: Revenue from Stokis orders (DC/Pusat sells to Stokis)
+    // Since we don't have separate DC entities, we show aggregate DC stats
+    const dcPerformance = [{
+        dcId: "pusat",
+        dcName: "PUSAT / DC",
+        address: null,
+        ordersToStokis: stokisOrders.length,
+        totalRevenue: stokisOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0),
+        stokisCount: new Set(stokisOrders.map(o => o.stokisId)).size
+    }]
+
+    // Mitra Performance: Aggregate orders by Mitra
+    const mitraStats: Record<string, {
+        mitraId: string
+        mitraName: string
+        address: string | null
+        ordersToStokis: number
+        totalRevenue: number
+        stokisName: string
+    }> = {}
+
+    for (const order of mitraOrders) {
+        const key = order.mitraId
+        if (!mitraStats[key]) {
+            mitraStats[key] = {
+                mitraId: order.mitraId,
+                mitraName: order.mitra.name,
+                address: order.mitra.address,
+                ordersToStokis: 0,
+                totalRevenue: 0,
+                stokisName: order.stokis.name
+            }
+        }
+        mitraStats[key].ordersToStokis++
+        mitraStats[key].totalRevenue += Number(order.totalAmount)
+    }
+
+    const mitraRankings = Object.values(mitraStats).sort((a, b) => b.totalRevenue - a.totalRevenue)
+
     return NextResponse.json({
-        stokisPerformance: rankings,
-        totalStokis: rankings.length
+        stokisPerformance: stokisRankings,
+        dcPerformance: dcPerformance,
+        mitraPerformance: mitraRankings,
+        totalStokis: stokisRankings.length,
+        totalDc: dcPerformance.length,
+        totalMitra: mitraRankings.length
     })
 }
 
