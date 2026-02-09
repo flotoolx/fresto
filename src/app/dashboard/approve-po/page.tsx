@@ -253,25 +253,14 @@ export default function ApprovePOPage() {
                                     </div>
                                 ) : outstanding?.hasOutstanding ? (
                                     <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-                                        <div className="flex items-start gap-2 mb-3">
-                                            <AlertTriangle className="text-red-500 flex-shrink-0" size={20} />
-                                            <div>
-                                                <p className="text-red-700 font-medium">⚠️ Stokis memiliki tagihan tertunggak</p>
-                                                <p className="text-red-600 text-sm">Total: {formatCurrency(outstanding.totalOutstanding)}</p>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-1 text-sm">
-                                            {outstanding.unpaidCount > 0 && (
-                                                <p className="text-red-600">
-                                                    • Unpaid ({outstanding.unpaidCount} invoice): {formatCurrency(outstanding.unpaidAmount)}
-                                                </p>
-                                            )}
-                                            {outstanding.overdueCount > 0 && (
-                                                <p className="text-red-700 font-medium">
-                                                    • Overdue ({outstanding.overdueCount} invoice): {formatCurrency(outstanding.overdueAmount)}
-                                                </p>
-                                            )}
-                                        </div>
+                                        <p className="text-red-700 font-medium mb-2">⚠️ Stokis memiliki tagihan tertunggak</p>
+                                        <p className="text-red-600 text-sm mb-3">Total: {formatCurrency(outstanding.totalOutstanding)}</p>
+                                        <Link
+                                            href="/dashboard/pembayaran"
+                                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700"
+                                        >
+                                            Lihat Pembayaran
+                                        </Link>
                                     </div>
                                 ) : (
                                     <div className="p-4 bg-green-50 rounded-lg border border-green-200">

@@ -418,7 +418,7 @@ export default function ReportsPage() {
             case "monthly": return `Penjualan Bulanan ${year}`
             case "products": return `Produk Terlaris ${period} Hari`
             case "stokis": return `Performa Stokis ${period} Hari`
-            case "invoice": return "Laporan Umur Piutang"
+            case "invoice": return "Laporan Tagihan"
             default: return "Laporan"
         }
     }
@@ -428,7 +428,7 @@ export default function ReportsPage() {
         // { id: "monthly", label: "Penjualan Bulanan", icon: Calendar }, // HIDDEN - Phase 7
         { id: "products", label: "Produk Terlaris", icon: Package },
         { id: "stokis", label: "Performa", icon: Users },
-        { id: "invoice", label: "Umur Piutang", icon: Receipt }
+        { id: "invoice", label: "Tagihan", icon: Receipt }
     ]
 
     return (
@@ -815,84 +815,94 @@ export default function ReportsPage() {
                                     )}
                                 </div>
                             )}
-
                             {/* Stokis Performance */}
-                            {activeTab === "stokis" && (
-                                <div className="space-y-3">
-                                    {/* Header with Filter */}
-                                    <div className="flex items-center justify-between flex-wrap gap-2">
-                                        <h3 className="font-semibold text-gray-900 text-sm">Performa ({period} Hari Terakhir)</h3>
-                                        <div className="flex gap-1">
-                                            {(["all", "dc", "stokis", "mitra"] as const).map((f) => (
-                                                <button
-                                                    key={f}
-                                                    onClick={() => setPerfFilter(f)}
-                                                    className={`px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-medium rounded-lg transition-colors ${perfFilter === f
+                            {activeTab === "stokis" && (() => {
+                                // Filter stokisPerf based on perfFilter
+                                const filteredStokisPerf = stokisPerf.filter(s => {
+                                    if (perfFilter === "all") return true
+                                    if (perfFilter === "dc") return s.ordersToPusat > 0
+                                    if (perfFilter === "stokis") return true // Show all stokis
+                                    if (perfFilter === "mitra") return s.ordersFromMitra > 0
+                                    return true
+                                })
+
+                                return (
+                                    <div className="space-y-3">
+                                        {/* Header with Filter */}
+                                        <div className="flex items-center justify-between flex-wrap gap-2">
+                                            <h3 className="font-semibold text-gray-900 text-sm">Performa ({period} Hari Terakhir)</h3>
+                                            <div className="flex gap-1">
+                                                {(["all", "dc", "stokis", "mitra"] as const).map((f) => (
+                                                    <button
+                                                        key={f}
+                                                        onClick={() => setPerfFilter(f)}
+                                                        className={`px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-medium rounded-lg transition-colors ${perfFilter === f
                                                             ? "bg-purple-600 text-white"
                                                             : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                                        }`}
-                                                >
-                                                    {f === "all" ? "Semua" : f.toUpperCase()}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Total Card */}
-                                    <div className="grid grid-cols-1 gap-2">
-                                        <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-10 md:w-12 h-10 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                                                <Receipt size={14} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
-                                                <span className="text-[10px] md:text-xs text-white/80">Total</span>
-                                            </div>
-                                            <p className="text-sm md:text-xl font-bold leading-tight">
-                                                {formatCurrency(stokisPerf.reduce((sum, s) => sum + s.totalRevenue, 0))}
-                                            </p>
-                                            <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">
-                                                {stokisPerf.reduce((sum, s) => sum + s.ordersToPusat + s.ordersFromMitra, 0)} PO
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {/* Table */}
-                                    <div className="bg-white rounded-xl border border-gray-100 overflow-x-auto">
-                                        <table className="w-full text-xs min-w-[600px]">
-                                            <thead className="bg-slate-50">
-                                                <tr>
-                                                    <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
-                                                    <th className="px-3 py-2 text-left font-semibold text-gray-600">Stokis</th>
-                                                    <th className="px-3 py-2 text-right font-semibold text-gray-600">Order ke Pusat</th>
-                                                    <th className="px-3 py-2 text-right font-semibold text-gray-600">Order dari Mitra</th>
-                                                    <th className="px-3 py-2 text-right font-semibold text-gray-600">Mitra</th>
-                                                    <th className="px-3 py-2 text-right font-semibold text-gray-600">Revenue</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-gray-100">
-                                                {stokisPerf.map((s, i) => (
-                                                    <tr key={s.stokisId} className="hover:bg-slate-50 transition-colors">
-                                                        <td className="px-3 py-2 font-bold text-gray-400">{i + 1}</td>
-                                                        <td className="px-3 py-2">
-                                                            <p className="font-medium text-gray-900">{s.stokisName}</p>
-                                                            {s.address && <p className="text-[10px] text-gray-500">{s.address}</p>}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-right text-gray-600">{s.ordersToPusat}</td>
-                                                        <td className="px-3 py-2 text-right text-gray-600">{s.ordersFromMitra}</td>
-                                                        <td className="px-3 py-2 text-right text-gray-600">{s.mitraCount}</td>
-                                                        <td className="px-3 py-2 text-right font-bold text-emerald-600 whitespace-nowrap">{formatCurrency(s.totalRevenue)}</td>
-                                                    </tr>
+                                                            }`}
+                                                    >
+                                                        {f === "all" ? "Semua" : f.toUpperCase()}
+                                                    </button>
                                                 ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    {stokisPerf.length === 0 && (
-                                        <div className="text-center py-8 text-gray-400">
-                                            <Users size={32} className="mx-auto mb-2 opacity-50" />
-                                            <p className="text-sm">Belum ada data stokis</p>
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
-                            )}
+
+                                        {/* Total Card */}
+                                        <div className="grid grid-cols-1 gap-2">
+                                            <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
+                                                <div className="absolute top-0 right-0 w-10 md:w-12 h-10 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                                <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                                                    <Receipt size={14} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
+                                                    <span className="text-[10px] md:text-xs text-white/80">Total</span>
+                                                </div>
+                                                <p className="text-sm md:text-xl font-bold leading-tight">
+                                                    {formatCurrency(filteredStokisPerf.reduce((sum, s) => sum + s.totalRevenue, 0))}
+                                                </p>
+                                                <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">
+                                                    {filteredStokisPerf.reduce((sum, s) => sum + s.ordersToPusat + s.ordersFromMitra, 0)} PO
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Table */}
+                                        <div className="bg-white rounded-xl border border-gray-100 overflow-x-auto">
+                                            <table className="w-full text-xs min-w-[600px]">
+                                                <thead className="bg-slate-50">
+                                                    <tr>
+                                                        <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
+                                                        <th className="px-3 py-2 text-left font-semibold text-gray-600">Stokis</th>
+                                                        <th className="px-3 py-2 text-right font-semibold text-gray-600">Order ke Pusat</th>
+                                                        <th className="px-3 py-2 text-right font-semibold text-gray-600">Order dari Mitra</th>
+                                                        <th className="px-3 py-2 text-right font-semibold text-gray-600">Mitra</th>
+                                                        <th className="px-3 py-2 text-right font-semibold text-gray-600">Revenue</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {filteredStokisPerf.map((s, i) => (
+                                                        <tr key={s.stokisId} className="hover:bg-slate-50 transition-colors">
+                                                            <td className="px-3 py-2 font-bold text-gray-400">{i + 1}</td>
+                                                            <td className="px-3 py-2">
+                                                                <p className="font-medium text-gray-900">{s.stokisName}</p>
+                                                                {s.address && <p className="text-[10px] text-gray-500">{s.address}</p>}
+                                                            </td>
+                                                            <td className="px-3 py-2 text-right text-gray-600">{s.ordersToPusat}</td>
+                                                            <td className="px-3 py-2 text-right text-gray-600">{s.ordersFromMitra}</td>
+                                                            <td className="px-3 py-2 text-right text-gray-600">{s.mitraCount}</td>
+                                                            <td className="px-3 py-2 text-right font-bold text-emerald-600 whitespace-nowrap">{formatCurrency(s.totalRevenue)}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        {filteredStokisPerf.length === 0 && (
+                                            <div className="text-center py-8 text-gray-400">
+                                                <Users size={32} className="mx-auto mb-2 opacity-50" />
+                                                <p className="text-sm">Belum ada data stokis</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            })()}
 
                             {/* Invoice Aging */}
                             {activeTab === "invoice" && invoiceAging && (
