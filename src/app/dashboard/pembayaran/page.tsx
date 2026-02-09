@@ -68,7 +68,8 @@ export default function PembayaranPage() {
 
     const fetchInvoices = async () => {
         try {
-            const res = await fetch("/api/invoices?status=unpaid,overdue")
+            // Fetch all invoices to calculate Lunas and Belum Lunas
+            const res = await fetch("/api/invoices")
             const data = await res.json()
             setInvoices(data)
         } catch (err) {
@@ -158,12 +159,14 @@ export default function PembayaranPage() {
     })
 
     // Calculate summary
-    const totalUnpaid = filteredInvoices
-        .filter(inv => inv.status === "UNPAID")
-        .reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
-    const totalOverdue = filteredInvoices
-        .filter(inv => inv.status === "OVERDUE")
-        .reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
+    const paidInvoices = filteredInvoices.filter(inv => inv.status === "PAID")
+    const unpaidInvoices = filteredInvoices.filter(inv => inv.status === "UNPAID" || inv.status === "OVERDUE")
+
+    const totalLunas = paidInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0)
+    const poLunas = paidInvoices.length
+
+    const totalBelumLunas = unpaidInvoices.reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
+    const poBelumLunas = unpaidInvoices.length
 
     if (loading) {
         return (
@@ -229,15 +232,28 @@ export default function PembayaranPage() {
                 </div>
             </div>
 
-            {/* Summary */}
-            <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white rounded-xl p-4 shadow-sm">
-                    <p className="text-sm text-gray-500">Total Belum Lunas</p>
-                    <p className="text-xl font-bold text-orange-600">{formatCurrency(totalUnpaid)}</p>
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 gap-3">
+                {/* Lunas Card */}
+                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-10 md:w-12 h-10 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                        <CheckCircle size={14} className="opacity-80 md:w-[16px] md:h-[16px]" />
+                        <span className="text-[11px] md:text-xs text-white/80">Lunas</span>
+                    </div>
+                    <p className="text-base md:text-xl font-bold truncate">{formatCurrency(totalLunas)}</p>
+                    <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">{poLunas} PO</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm">
-                    <p className="text-sm text-gray-500">Total Jatuh Tempo</p>
-                    <p className="text-xl font-bold text-red-600">{formatCurrency(totalOverdue)}</p>
+
+                {/* Belum Lunas Card */}
+                <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-10 md:w-12 h-10 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                        <AlertTriangle size={14} className="opacity-80 md:w-[16px] md:h-[16px]" />
+                        <span className="text-[11px] md:text-xs text-white/80">Belum Lunas</span>
+                    </div>
+                    <p className="text-base md:text-xl font-bold truncate">{formatCurrency(totalBelumLunas)}</p>
+                    <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">{poBelumLunas} PO</p>
                 </div>
             </div>
 
@@ -280,8 +296,8 @@ export default function PembayaranPage() {
                                             </td>
                                             <td className="px-4 py-3 text-center">
                                                 <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${isOverdue
-                                                        ? "bg-red-100 text-red-700"
-                                                        : "bg-gray-100 text-gray-600"
+                                                    ? "bg-red-100 text-red-700"
+                                                    : "bg-gray-100 text-gray-600"
                                                     }`}>
                                                     {isOverdue && <AlertTriangle size={12} />}
                                                     {formatDate(inv.dueDate)}

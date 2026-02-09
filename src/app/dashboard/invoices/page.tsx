@@ -110,14 +110,20 @@ export default function InvoicesPage() {
         inv.order.stokis.name.toLowerCase().includes(search.toLowerCase())
     )
 
+    // Calculate stats for 3-card layout: Total, Lunas, Belum Lunas
+    const paidInvoices = invoices.filter(i => i.status === "PAID")
+    const unpaidInvoices = invoices.filter(i => i.status === "UNPAID" || i.status === "OVERDUE")
+
     const stats = {
-        total: invoices.length,
-        unpaid: invoices.filter(i => i.status === "UNPAID").length,
-        paid: invoices.filter(i => i.status === "PAID").length,
-        overdue: invoices.filter(i => i.status === "OVERDUE").length,
-        totalUnpaid: invoices
-            .filter(i => i.status === "UNPAID" || i.status === "OVERDUE")
-            .reduce((sum, i) => sum + Number(i.amount), 0)
+        // Total
+        totalCount: invoices.length,
+        totalAmount: invoices.reduce((sum, i) => sum + Number(i.amount), 0),
+        // Lunas
+        lunasCount: paidInvoices.length,
+        lunasAmount: paidInvoices.reduce((sum, i) => sum + Number(i.amount), 0),
+        // Belum Lunas
+        belumLunasCount: unpaidInvoices.length,
+        belumLunasAmount: unpaidInvoices.reduce((sum, i) => sum + Number(i.amount), 0)
     }
 
     if (loading) {
@@ -141,39 +147,39 @@ export default function InvoicesPage() {
                 </Link>
             </div>
 
-            {/* Stats Cards - Modern Gradient Design */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl p-4 text-white relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                    <div className="flex items-center gap-2 mb-2">
-                        <Receipt size={16} className="opacity-80" />
-                        <span className="text-xs text-white/80">Total Invoice</span>
+            {/* Stats Cards - 3 Cards: Total, Lunas, Belum Lunas */}
+            <div className="grid grid-cols-3 gap-3">
+                {/* Total */}
+                <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-10 md:w-12 h-10 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                        <Receipt size={14} className="opacity-80 md:w-[16px] md:h-[16px]" />
+                        <span className="text-[10px] md:text-xs text-white/80">Total</span>
                     </div>
-                    <p className="text-xl font-bold">{stats.total}</p>
+                    <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(stats.totalAmount)}</p>
+                    <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">{stats.totalCount} PO</p>
                 </div>
-                <div className="bg-gradient-to-br from-amber-500 to-yellow-600 rounded-xl p-4 text-white relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                    <div className="flex items-center gap-2 mb-2">
-                        <Clock size={16} className="opacity-80" />
-                        <span className="text-xs text-white/80">Belum Bayar</span>
+
+                {/* Lunas */}
+                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-10 md:w-12 h-10 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                        <CheckCircle size={14} className="opacity-80 md:w-[16px] md:h-[16px]" />
+                        <span className="text-[10px] md:text-xs text-white/80">Lunas</span>
                     </div>
-                    <p className="text-xl font-bold">{stats.unpaid}</p>
+                    <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(stats.lunasAmount)}</p>
+                    <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">{stats.lunasCount} PO</p>
                 </div>
-                <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl p-4 text-white relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                    <div className="flex items-center gap-2 mb-2">
-                        <AlertTriangle size={16} className="opacity-80" />
-                        <span className="text-xs text-white/80">Overdue</span>
+
+                {/* Belum Lunas */}
+                <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-10 md:w-12 h-10 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                        <AlertTriangle size={14} className="opacity-80 md:w-[16px] md:h-[16px]" />
+                        <span className="text-[10px] md:text-xs text-white/80">Belum Lunas</span>
                     </div>
-                    <p className="text-xl font-bold">{stats.overdue}</p>
-                </div>
-                <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-4 text-white relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                    <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle size={16} className="opacity-80" />
-                        <span className="text-xs text-white/80">Outstanding</span>
-                    </div>
-                    <p className="text-xl font-bold">{formatCurrency(stats.totalUnpaid)}</p>
+                    <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(stats.belumLunasAmount)}</p>
+                    <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">{stats.belumLunasCount} PO</p>
                 </div>
             </div>
 
@@ -198,9 +204,8 @@ export default function InvoicesPage() {
                             className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
                         >
                             <option value="ALL">Semua Status</option>
-                            <option value="UNPAID">Belum Bayar</option>
-                            <option value="PAID">Sudah Bayar</option>
-                            <option value="OVERDUE">Overdue</option>
+                            <option value="PAID">Lunas</option>
+                            <option value="UNPAID">Belum Lunas</option>
                         </select>
                     </div>
                 </div>

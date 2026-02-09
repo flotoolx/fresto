@@ -132,6 +132,7 @@ export default function ReportsPage() {
     const [period, setPeriod] = useState(30)
     const [invoiceFilter, setInvoiceFilter] = useState<"all" | "dc" | "stokis">("all")
     const [invoiceSortOrder, setInvoiceSortOrder] = useState<"asc" | "desc">("desc")
+    const [perfFilter, setPerfFilter] = useState<"all" | "dc" | "stokis" | "mitra">("all")
 
     // Custom date range for Overview
     const [useCustomDate, setUseCustomDate] = useState(false)
@@ -426,7 +427,7 @@ export default function ReportsPage() {
         { id: "overview", label: "Overview", icon: TrendingUp },
         // { id: "monthly", label: "Penjualan Bulanan", icon: Calendar }, // HIDDEN - Phase 7
         { id: "products", label: "Produk Terlaris", icon: Package },
-        { id: "stokis", label: "Performa Stokis", icon: Users },
+        { id: "stokis", label: "Performa", icon: Users },
         { id: "invoice", label: "Umur Piutang", icon: Receipt }
     ]
 
@@ -598,40 +599,40 @@ export default function ReportsPage() {
                                         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                             <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                                                <TrendingUp size={12} className="opacity-80 md:w-[16px] md:h-[16px]" />
+                                                <TrendingUp size={12} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
                                                 <span className="text-[10px] md:text-xs text-white/80 truncate">Total Revenue</span>
                                             </div>
-                                            <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(summary.summary.totalRevenue)}</p>
+                                            <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(summary.summary.totalRevenue)}</p>
                                             <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO: <span className="font-bold">{summary.summary.stokisOrders + summary.summary.mitraOrders}</span></p>
                                         </div>
                                         {/* Total DC */}
                                         <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                             <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                                                <Store size={12} className="opacity-80 md:w-[16px] md:h-[16px]" />
+                                                <Store size={12} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
                                                 <span className="text-[10px] md:text-xs text-white/80 truncate">Total DC</span>
                                             </div>
-                                            <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(summary.summary.totalDcRevenue)}</p>
+                                            <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(summary.summary.totalDcRevenue)}</p>
                                             <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO DC: <span className="font-bold">{summary.summary.stokisOrders}</span></p>
                                         </div>
                                         {/* Total Stokis */}
                                         <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                             <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                                                <Store size={12} className="opacity-80 md:w-[16px] md:h-[16px]" />
+                                                <Store size={12} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
                                                 <span className="text-[10px] md:text-xs text-white/80 truncate">Total Stokis</span>
                                             </div>
-                                            <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(summary.summary.totalStokisRevenue)}</p>
+                                            <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(summary.summary.totalStokisRevenue)}</p>
                                             <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO Stokis: <span className="font-bold">{summary.summary.stokisOrders}</span></p>
                                         </div>
                                         {/* Total Mitra */}
                                         <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                             <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                                                <Users size={12} className="opacity-80 md:w-[16px] md:h-[16px]" />
+                                                <Users size={12} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
                                                 <span className="text-[10px] md:text-xs text-white/80 truncate">Total Mitra</span>
                                             </div>
-                                            <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(summary.summary.totalMitraRevenue)}</p>
+                                            <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(summary.summary.totalMitraRevenue)}</p>
                                             <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO Mitra: <span className="font-bold">{summary.summary.mitraOrders}</span></p>
                                         </div>
                                     </div>
@@ -780,8 +781,8 @@ export default function ReportsPage() {
                             {activeTab === "products" && (
                                 <div className="space-y-3">
                                     <h3 className="font-semibold text-gray-900 text-sm">20 Produk Terlaris ({period} Hari Terakhir)</h3>
-                                    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-                                        <table className="w-full text-xs">
+                                    <div className="bg-white rounded-xl border border-gray-100 overflow-x-auto">
+                                        <table className="w-full text-xs min-w-[600px]">
                                             <thead className="bg-slate-50">
                                                 <tr>
                                                     <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
@@ -800,7 +801,7 @@ export default function ReportsPage() {
                                                         <td className="px-3 py-2 text-gray-500 font-mono text-[10px]">{p.sku}</td>
                                                         <td className="px-3 py-2 text-right text-gray-600">{p.totalQty} {p.unit}</td>
                                                         <td className="px-3 py-2 text-right text-gray-600">{p.orderCount}x</td>
-                                                        <td className="px-3 py-2 text-right font-bold text-emerald-600">{formatCurrency(p.totalRevenue)}</td>
+                                                        <td className="px-3 py-2 text-right font-bold text-emerald-600 whitespace-nowrap">{formatCurrency(p.totalRevenue)}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -818,9 +819,45 @@ export default function ReportsPage() {
                             {/* Stokis Performance */}
                             {activeTab === "stokis" && (
                                 <div className="space-y-3">
-                                    <h3 className="font-semibold text-gray-900 text-sm">Performa Stokis ({period} Hari Terakhir)</h3>
-                                    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-                                        <table className="w-full text-xs">
+                                    {/* Header with Filter */}
+                                    <div className="flex items-center justify-between flex-wrap gap-2">
+                                        <h3 className="font-semibold text-gray-900 text-sm">Performa ({period} Hari Terakhir)</h3>
+                                        <div className="flex gap-1">
+                                            {(["all", "dc", "stokis", "mitra"] as const).map((f) => (
+                                                <button
+                                                    key={f}
+                                                    onClick={() => setPerfFilter(f)}
+                                                    className={`px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-medium rounded-lg transition-colors ${perfFilter === f
+                                                            ? "bg-purple-600 text-white"
+                                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                                        }`}
+                                                >
+                                                    {f === "all" ? "Semua" : f.toUpperCase()}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Total Card */}
+                                    <div className="grid grid-cols-1 gap-2">
+                                        <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-10 md:w-12 h-10 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                                                <Receipt size={14} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
+                                                <span className="text-[10px] md:text-xs text-white/80">Total</span>
+                                            </div>
+                                            <p className="text-sm md:text-xl font-bold leading-tight">
+                                                {formatCurrency(stokisPerf.reduce((sum, s) => sum + s.totalRevenue, 0))}
+                                            </p>
+                                            <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">
+                                                {stokisPerf.reduce((sum, s) => sum + s.ordersToPusat + s.ordersFromMitra, 0)} PO
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Table */}
+                                    <div className="bg-white rounded-xl border border-gray-100 overflow-x-auto">
+                                        <table className="w-full text-xs min-w-[600px]">
                                             <thead className="bg-slate-50">
                                                 <tr>
                                                     <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
@@ -842,7 +879,7 @@ export default function ReportsPage() {
                                                         <td className="px-3 py-2 text-right text-gray-600">{s.ordersToPusat}</td>
                                                         <td className="px-3 py-2 text-right text-gray-600">{s.ordersFromMitra}</td>
                                                         <td className="px-3 py-2 text-right text-gray-600">{s.mitraCount}</td>
-                                                        <td className="px-3 py-2 text-right font-bold text-emerald-600">{formatCurrency(s.totalRevenue)}</td>
+                                                        <td className="px-3 py-2 text-right font-bold text-emerald-600 whitespace-nowrap">{formatCurrency(s.totalRevenue)}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -891,10 +928,10 @@ export default function ReportsPage() {
                                         <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                             <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                                                <Receipt size={12} className="opacity-80 md:w-[14px] md:h-[14px]" />
+                                                <Receipt size={12} className="opacity-80 md:w-[14px] md:h-[14px] flex-shrink-0" />
                                                 <span className="text-[10px] md:text-xs text-white/80 truncate">Total</span>
                                             </div>
-                                            <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(invoiceAging.totalPoAmount || 0)}</p>
+                                            <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(invoiceAging.totalPoAmount || 0)}</p>
                                             <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO: <span className="font-bold">{invoiceAging.totalPoCount || 0}</span></p>
                                         </div>
 
@@ -902,10 +939,10 @@ export default function ReportsPage() {
                                         <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                             <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                                                <Receipt size={12} className="opacity-80 md:w-[14px] md:h-[14px]" />
+                                                <Receipt size={12} className="opacity-80 md:w-[14px] md:h-[14px] flex-shrink-0" />
                                                 <span className="text-[10px] md:text-xs text-white/80 truncate">Belum Dibayar</span>
                                             </div>
-                                            <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(invoiceAging.unpaidAmount || 0)}</p>
+                                            <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(invoiceAging.unpaidAmount || 0)}</p>
                                             <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO: <span className="font-bold">{invoiceAging.unpaidCount || 0}</span></p>
                                         </div>
 
@@ -913,10 +950,10 @@ export default function ReportsPage() {
                                         <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden col-span-2 lg:col-span-1">
                                             <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                             <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                                                <Receipt size={12} className="opacity-80 md:w-[14px] md:h-[14px]" />
+                                                <Receipt size={12} className="opacity-80 md:w-[14px] md:h-[14px] flex-shrink-0" />
                                                 <span className="text-[10px] md:text-xs text-white/80 truncate">Lunas</span>
                                             </div>
-                                            <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(invoiceAging.paidAmount || 0)}</p>
+                                            <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(invoiceAging.paidAmount || 0)}</p>
                                             <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO: <span className="font-bold">{invoiceAging.paidCount || 0}</span></p>
                                         </div>
                                     </div>

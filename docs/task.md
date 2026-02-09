@@ -243,3 +243,35 @@
 - [x] Update Sidebar UI with brand colors and logo
 - [x] Update Dashboard Layout and Stats with brand colors
 - [x] Update Quick Action Buttons with brand gradients
+
+---
+
+## UI Konsistensi Dashboard Cards (Feb 9, 2026) ✅ COMPLETE
+
+### Halaman Pembayaran (`/dashboard/pembayaran`)
+- [x] Cards redesign: 2 kolom (Lunas, Belum Lunas) dengan gradient styling
+- [x] Setiap card menampilkan nominal (Rp) dan jumlah PO
+- [x] Filter dropdown: Semua Status, Belum Bayar, Jatuh Tempo
+
+### Halaman Invoices (`/dashboard/invoices`)
+- [x] Cards redesign: 3 kolom (Total, Lunas, Belum Lunas)
+- [x] Setiap card menampilkan nominal dan jumlah PO
+- [x] Filter dropdown diubah ke: Semua Status, Lunas, Belum Lunas
+
+### Halaman Reports (`/dashboard/reports`)
+- [x] Perbaikan responsiveness mobile (nominal tidak terpotong)
+- [x] Font size lebih kecil pada mobile, line height compact
+
+---
+
+## Reports Page Tab Improvements (Feb 9, 2026) ✅ COMPLETE
+
+### Tab Produk Terlaris
+- [x] Table menjadi scrollable horizontal di mobile
+- [x] Revenue column tidak terpotong (whitespace-nowrap)
+
+### Tab Performa (sebelumnya "Performa Stokis")
+- [x] Ganti nama tab: "Performa Stokis" → "Performa"
+- [x] Tambah filter: Semua, DC, Stokis, Mitra
+- [x] Tambah Total card dengan nominal dan jumlah PO
+- [x] Table menjadi scrollable horizontal di mobile
