@@ -3,7 +3,7 @@
 # VPS Hard Reset Script - Fix tampilan UI yang tidak update
 
 echo "=============================================="
-echo "  D'Fresto VPS - Hard Reset & Rebuild"
+echo "  VPS - Hard Reset & Rebuild"
 echo "=============================================="
 echo ""
 
@@ -34,17 +34,3 @@ echo "[8/8] Restarting application..."
 pm2 restart dfresto
 pm2 save
 
-echo ""
-echo "=============================================="
-echo "  ✅ Selesai!"
-echo "=============================================="
-echo ""
-echo "Sekarang buka browser dalam mode Incognito:"
-echo "  https://tokomau.my.id"
-echo ""
-echo "Login sebagai: pusat@dfresto.com"
-echo "Password: password123"
-echo ""
-echo "Jika masih tidak muncul, jalankan:"
-echo "  pm2 logs dfresto --lines 50"
-echo ""
