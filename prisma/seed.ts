@@ -76,43 +76,82 @@ async function main() {
         create: { name: 'Staff Gudang Ayam', email: 'gudang.ayam@dfresto.com', password: hashedPassword, role: Role.GUDANG, gudangId: gudangAyam.id }
     })
 
-    // 4. Create DC (5 DCs)
-    console.log('🏭 Creating 5 DCs...')
-    const dcLocations = ['Jakarta', 'Bandung', 'Surabaya', 'Semarang', 'Medan']
-    for (let i = 0; i < 5; i++) {
-        const email = `dc${i + 1}@dfresto.com`
-        await prisma.user.upsert({
+    // 4. Create DC (7 DCs)
+    console.log('🏭 Creating 7 DCs and Finance DC...')
+    const dcLocations = ['Palembang', 'Makassar', 'Medan', 'Bengkulu', 'Pekanbaru', 'Jatim', 'Jateng']
+    const dcIds: string[] = []
+
+    for (let i = 0; i < dcLocations.length; i++) {
+        const location = dcLocations[i]
+        const citySlug = location.toLowerCase().replace(/\s+/g, '')
+        const email = `dc.${citySlug}@dfresto.com`
+
+        // Create DC User
+        const dc = await prisma.user.upsert({
             where: { email },
             update: {},
             create: {
-                name: `DC ${dcLocations[i]}`,
+                name: `DC ${location}`,
                 email,
                 password: hashedPassword,
                 role: Role.DC,
-                address: `Jl. Raya ${dcLocations[i]} No. ${i + 1}`,
+                address: `Jl. Raya ${location} No. ${i + 1}`,
                 phone: `083333333${i}`
+            }
+        })
+        dcIds.push(dc.id)
+
+        // Create Finance DC User
+        const financeEmail = `finance.${citySlug}@dfresto.com`
+        await prisma.user.upsert({
+            where: { email: financeEmail },
+            update: {},
+            create: {
+                name: `Finance ${location}`,
+                email: financeEmail,
+                password: hashedPassword,
+                role: Role.FINANCE_DC,
+                phone: `083333333${i}`,
+                dcId: dc.id // Link to DC
             }
         })
     }
 
-    // 5. Create Stokis (10 Stokis)
-    console.log('🏪 Creating 10 Stokis...')
-    const stokisIds: string[] = []
-    const stokisCities = ['Jakarta Selatan', 'Jakarta Barat', 'Jakarta Timur', 'Jakarta Utara', 'Bogor', 'Depok', 'Tangerang', 'Bekasi', 'Bandung Kota', 'Cimahi']
+    // Create Finance All Area
+    await prisma.user.upsert({
+        where: { email: 'finance.all@dfresto.com' },
+        update: {},
+        create: {
+            name: 'Finance All Area',
+            email: 'finance.all@dfresto.com',
+            password: hashedPassword,
+            role: Role.FINANCE_ALL,
+            phone: '0822222223'
+        }
+    })
 
-    for (let i = 0; i < 10; i++) {
+    // 5. Create Stokis (14 Stokis - 2 per DC)
+    console.log('🏪 Creating 14 Stokis (2 per DC)...')
+    const stokisIds: string[] = []
+
+    for (let i = 0; i < 14; i++) {
+        const dcIndex = i % 7 // Distribute evenly among 7 DCs
+        const dcId = dcIds[dcIndex]
+        const location = dcLocations[dcIndex]
+
         const email = `stokis${i + 1}@dfresto.com`
         const user = await prisma.user.upsert({
             where: { email },
             update: {},
             create: {
-                name: `Stokis ${stokisCities[i]}`,
+                name: `Stokis ${location} ${i < 7 ? 'A' : 'B'}`,
                 email,
                 password: hashedPassword,
                 role: Role.STOKIS,
-                address: `Jl. Stokis ${stokisCities[i]} No. ${i + 10}`,
+                address: `Jl. Stokis ${location} No. ${i + 10}`,
                 phone: `084444444${i}`,
-                province: i < 8 ? 'Jawa Barat' : 'Banten' // Dummy province
+                province: location,
+                dcId: dcId // Link to DC
             }
         })
         stokisIds.push(user.id)
@@ -159,6 +198,13 @@ async function main() {
 
     // 7. Generate Stokis Orders & Invoices
     console.log('📝 Generating Stokis Orders & Invoices...')
+
+    // Clean up old dummy data first to avoid unique constraint errors
+    await prisma.payment.deleteMany({ where: { notes: 'Dummy payment' } })
+    await prisma.invoice.deleteMany({ where: { invoiceNumber: { startsWith: 'INV-DUMMY-' } } })
+    await prisma.stokisOrderItem.deleteMany({ where: { order: { orderNumber: { startsWith: 'ORD-DUMMY-' } } } })
+    await prisma.stokisOrder.deleteMany({ where: { orderNumber: { startsWith: 'ORD-DUMMY-' } } })
+
     const orderStatuses = Object.values(StokisOrderStatus)
 
     // Generate ~30 Random Orders
