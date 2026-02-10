@@ -5,15 +5,45 @@ import { prisma } from "@/lib/prisma"
 import bcrypt from "bcrypt"
 import { generateUniqueCode } from "@/lib/unique-code"
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         const session = await getServerSession(authOptions)
 
-        if (!session?.user || session.user.role !== "PUSAT") {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+        if (!session?.user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        const { role: userRole, id: userId, dcId } = session.user
+        const allowedRoles = ["PUSAT", "DC", "FINANCE_DC", "FINANCE_ALL"]
+
+        if (!allowedRoles.includes(userRole)) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
+
+        // Parse query params
+        const { searchParams } = new URL(request.url)
+        const filterRole = searchParams.get("role")
+
+        // Build where clause based on user's role
+        let where: Record<string, unknown> = {}
+
+        if (userRole === "DC") {
+            // DC can only see Stokis in their area
+            where = { dcId: userId }
+            if (!filterRole) where.role = "STOKIS"
+        } else if (userRole === "FINANCE_DC") {
+            // Finance DC can only see users in their DC area
+            where = { dcId: dcId }
+        }
+        // PUSAT and FINANCE_ALL see all users (no where filter)
+
+        // Apply role filter from query param
+        if (filterRole) {
+            where.role = filterRole
         }
 
         const users = await prisma.user.findMany({
+            where,
             select: {
                 id: true,
                 name: true,
@@ -23,6 +53,8 @@ export async function GET() {
                 address: true,
                 province: true,
                 uniqueCode: true,
+                isActive: true,
+                dcId: true,
                 stokis: {
                     select: { name: true },
                 },

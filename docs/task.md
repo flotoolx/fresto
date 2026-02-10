@@ -312,3 +312,29 @@
 - [x] Separator ribuan (dot) pada input Jumlah Bayar di modal pembayaran
 - [x] Fix Finance role tidak bisa lihat order Stokis (API filter tambah `PENDING_PUSAT`)
 - [x] Fix filter Semua Stokis: API `/api/stokis` include role DC + STOKIS
+
+---
+
+## Phase 6: Finance DC & Order Flow (Feb 10, 2026) ✅ COMPLETE
+
+### Role Management
+- [x] Tambah Role `FINANCE_DC` (Finance per Area)
+- [x] Tambah Role `FINANCE_ALL` (Finance Pusat/National)
+- [x] Update User Model: `dcId` field untuk mapping area
+- [x] Update Auth: `dcId` masuk ke session & JWT
+
+### Order & Approval Flow
+- [x] Logic Approval DC: Stokis → Pending Pusat → DC Approve → PO Issued
+- [x] Logic Isolasi Data: DC hanya lihat order stokis area-nya
+- [x] Logic Isolasi Finance: Finance DC hanya lihat invoice area-nya
+- [x] API Updates: `/api/orders`, `/api/invoices`, `/api/reports` filter by `dcId`
+
+### Data & Seeding
+- [x] Seed 7 DC Area (Palembang, Makassar, Medan, Bengkulu, Pekanbaru, Jatim, Jateng)
+- [x] Seed 7 Finance DC & 1 Finance All
+- [x] Seed 42 Dummy Orders (Distribusi merata: 6 order per DC Area)
+- [x] Seed 20 Mitra & 14 Stokis linked to DC
+
+### Documentation
+- [x] Diagram Alur Lengkap (.html) - Mitra hingga Gudang
+- [x] Testing Checklist (.md) - Skenario pengujian lengkap
