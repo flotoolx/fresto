@@ -311,3 +311,4 @@
 ### Fix Pembayaran & Finance
 - [x] Separator ribuan (dot) pada input Jumlah Bayar di modal pembayaran
 - [x] Fix Finance role tidak bisa lihat order Stokis (API filter tambah `PENDING_PUSAT`)
+- [x] Fix filter Semua Stokis: API `/api/stokis` include role DC + STOKIS

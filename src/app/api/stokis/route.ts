@@ -11,9 +11,9 @@ export async function GET() {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        // Get users with role STOKIS
+        // Get users with role STOKIS or DC
         const stokis = await prisma.user.findMany({
-            where: { role: "STOKIS" },
+            where: { role: { in: ["STOKIS", "DC"] } },
             select: {
                 id: true,
                 name: true,
