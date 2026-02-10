@@ -14,13 +14,19 @@ export async function GET() {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        const { role, id: userId } = session.user
+        const { role, id: userId, dcId } = session.user
 
-        let where = {}
+        let where: Record<string, unknown> = {}
         if (role === "STOKIS") {
             where = { stokisId: userId }
-        } else if (role === "PUSAT" || role === "DC") {
-            // PUSAT and DC can see all orders
+        } else if (role === "PUSAT" || role === "FINANCE_ALL") {
+            // PUSAT and FINANCE_ALL can see all orders
+        } else if (role === "DC") {
+            // DC sees orders from Stokis in their area
+            where = { stokis: { dcId: userId } }
+        } else if (role === "FINANCE_DC") {
+            // FINANCE_DC sees orders from Stokis in their DC area
+            where = { stokis: { dcId: dcId } }
         } else if (role === "FINANCE") {
             where = { status: { in: ["PENDING_PUSAT", "PENDING_FINANCE"] } }
         } else if (role === "GUDANG") {
@@ -32,7 +38,7 @@ export async function GET() {
         const orders = await prisma.stokisOrder.findMany({
             where,
             include: {
-                stokis: { select: { id: true, name: true, email: true, address: true, role: true } },
+                stokis: { select: { id: true, name: true, email: true, address: true, role: true, dcId: true } },
                 items: { include: { product: { include: { gudang: true } } } },
             },
             orderBy: { createdAt: "desc" },

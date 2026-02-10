@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma"
 export async function GET(request: Request) {
     try {
         const session = await getServerSession(authOptions)
-        if (!session || !["PUSAT", "FINANCE"].includes(session.user.role)) {
+        if (!session || !["PUSAT", "FINANCE", "DC", "FINANCE_DC", "FINANCE_ALL"].includes(session.user.role)) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 

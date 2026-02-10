@@ -10,6 +10,8 @@ datasource db {
 enum Role {
   PUSAT
   FINANCE
+  FINANCE_DC
+  FINANCE_ALL
   GUDANG
   STOKIS
   MITRA
@@ -53,6 +55,11 @@ model User {
   stokisId    String?
   stokis      User?    @relation("MitraToStokis", fields: [stokisId], references: [id])
   mitras      User[]   @relation("MitraToStokis")
+
+  // DC Area assignment (for STOKIS, FINANCE_DC)
+  dcId        String?
+  dc          User?    @relation("UserToDC", fields: [dcId], references: [id])
+  dcMembers   User[]   @relation("UserToDC")
 
   // Gudang assignment
   gudangId    String?

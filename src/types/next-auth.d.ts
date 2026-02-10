@@ -7,6 +7,7 @@ declare module "next-auth" {
         role: Role
         stokisId: string | null
         gudangId: string | null
+        dcId: string | null
     }
 
     interface Session {
@@ -17,6 +18,7 @@ declare module "next-auth" {
             role: string
             stokisId: string | null
             gudangId: string | null
+            dcId: string | null
         }
     }
 }
@@ -27,5 +29,6 @@ declare module "next-auth/jwt" {
         role: string
         stokisId: string | null
         gudangId: string | null
+        dcId: string | null
     }
 }

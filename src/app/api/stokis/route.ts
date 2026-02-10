@@ -11,14 +11,29 @@ export async function GET() {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        // Get users with role STOKIS or DC
+        const { role, dcId } = session.user
+
+        let where: Record<string, unknown> = { role: { in: ["STOKIS", "DC"] } }
+
+        // FINANCE_DC only sees Stokis/DC in their area
+        if (role === "FINANCE_DC" && dcId) {
+            where = {
+                OR: [
+                    { role: "STOKIS", dcId: dcId },
+                    { role: "DC", id: dcId },
+                ]
+            }
+        }
+
         const stokis = await prisma.user.findMany({
-            where: { role: { in: ["STOKIS", "DC"] } },
+            where,
             select: {
                 id: true,
                 name: true,
                 email: true,
                 address: true,
+                role: true,
+                dcId: true,
             },
             orderBy: { name: "asc" },
         })

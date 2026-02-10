@@ -12,7 +12,7 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        const { role, id: userId } = session.user
+        const { role, id: userId, dcId } = session.user
         const { searchParams } = new URL(request.url)
         const status = searchParams.get("status")
 
@@ -23,11 +23,14 @@ export async function GET(request: Request) {
             where = {
                 order: { stokisId: userId }
             }
-        } else if (!["PUSAT", "FINANCE"].includes(role)) {
+        } else if (role === "FINANCE_DC") {
+            where = {
+                order: { stokis: { dcId: dcId } }
+            }
+        } else if (!["PUSAT", "FINANCE", "FINANCE_ALL"].includes(role)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
-        // Filter by status
         // Filter by status
         if (status && status !== "ALL") {
             const statuses = status.split(",").map(s => s.trim().toUpperCase())
@@ -41,7 +44,7 @@ export async function GET(request: Request) {
             include: {
                 order: {
                     include: {
-                        stokis: { select: { id: true, name: true, email: true, phone: true } }
+                        stokis: { select: { id: true, name: true, email: true, phone: true, dcId: true } }
                     }
                 }
             },
@@ -63,7 +66,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        if (!["PUSAT", "FINANCE"].includes(session.user.role)) {
+        if (!["PUSAT", "FINANCE", "FINANCE_DC", "FINANCE_ALL"].includes(session.user.role)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
