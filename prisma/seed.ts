@@ -89,7 +89,7 @@ async function main() {
         // Create DC User
         const dc = await prisma.user.upsert({
             where: { email },
-            update: {},
+            update: { role: Role.DC, name: `DC ${location}` },
             create: {
                 name: `DC ${location}`,
                 email,
@@ -105,7 +105,7 @@ async function main() {
         const financeEmail = `finance.${citySlug}@dfresto.com`
         await prisma.user.upsert({
             where: { email: financeEmail },
-            update: {},
+            update: { role: Role.FINANCE_DC, dcId: dc.id },
             create: {
                 name: `Finance ${location}`,
                 email: financeEmail,
@@ -120,7 +120,7 @@ async function main() {
     // Create Finance All Area
     await prisma.user.upsert({
         where: { email: 'finance.all@dfresto.com' },
-        update: {},
+        update: { role: Role.FINANCE_ALL },
         create: {
             name: 'Finance All Area',
             email: 'finance.all@dfresto.com',
@@ -142,7 +142,7 @@ async function main() {
         const email = `stokis${i + 1}@dfresto.com`
         const user = await prisma.user.upsert({
             where: { email },
-            update: {},
+            update: { dcId: dcId, role: Role.STOKIS },
             create: {
                 name: `Stokis ${location} ${i < 7 ? 'A' : 'B'}`,
                 email,
