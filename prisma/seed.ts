@@ -207,85 +207,98 @@ async function main() {
 
     const orderStatuses = Object.values(StokisOrderStatus)
 
-    // Generate ~30 Random Orders
-    for (let i = 0; i < 30; i++) {
-        const stokisId = randomItem(stokisIds)
-        const status = randomItem(orderStatuses) as StokisOrderStatus
-        const sku1 = randomItem(Array.from(productMap.keys()))
-        const sku2 = randomItem(Array.from(productMap.keys()))
+    // Generate 3 orders per Stokis (= 42 orders total, 6 per DC area)
+    let orderIdx = 0
+    for (const stokisId of stokisIds) {
+        // Determine useful statuses for testing: PENDING, PO_ISSUED, SHIPPED
+        const statusesForStokis: StokisOrderStatus[] = [
+            'PENDING_PUSAT' as StokisOrderStatus,
+            randomItem(['PO_ISSUED', 'SHIPPED', 'RECEIVED'] as StokisOrderStatus[]),
+            randomItem(orderStatuses) as StokisOrderStatus,
+        ]
 
-        const price1 = productsData.find(p => p.sku === sku1)!.price
-        const price2 = productsData.find(p => p.sku === sku2)!.price
-        const qty1 = randomInt(10, 100)
-        const qty2 = randomInt(10, 100)
+        for (let j = 0; j < 3; j++) {
+            const status = statusesForStokis[j]
+            const sku1 = randomItem(Array.from(productMap.keys()))
+            const sku2 = randomItem(Array.from(productMap.keys()))
 
-        const total = (qty1 * Number(price1)) + (qty2 * Number(price2))
-        const orderDate = new Date()
-        orderDate.setDate(orderDate.getDate() - randomInt(0, 30)) // Past 30 days
+            const price1 = productsData.find(p => p.sku === sku1)!.price
+            const price2 = productsData.find(p => p.sku === sku2)!.price
+            const qty1 = randomInt(10, 100)
+            const qty2 = randomInt(10, 100)
 
-        const order = await prisma.stokisOrder.create({
-            data: {
-                orderNumber: `ORD-DUMMY-${1000 + i}`,
-                stokisId,
-                status,
-                totalAmount: total,
-                createdAt: orderDate,
-                items: {
-                    create: [
-                        { productId: productMap.get(sku1)!, quantity: qty1, price: price1 },
-                        { productId: productMap.get(sku2)!, quantity: qty2, price: price2 },
-                    ]
-                }
-            }
-        })
+            const total = (qty1 * Number(price1)) + (qty2 * Number(price2))
+            const orderDate = new Date()
+            orderDate.setDate(orderDate.getDate() - randomInt(0, 30))
 
-        // Generate Invoice if order is processed/received
-        if (['PO_ISSUED', 'SHIPPED', 'RECEIVED'].includes(status)) {
-            const invoiceStatus = randomItem(['PAID', 'UNPAID', 'OVERDUE', 'UNPAID']) // More UNPAID chance
-            let paidAmount = 0
-            let paidAt = null
-
-            if (invoiceStatus === 'PAID') {
-                paidAmount = total
-                paidAt = new Date()
-            } else if (invoiceStatus === 'OVERDUE') {
-                paidAmount = randomInt(0, total / 2) // Partial or 0
-            }
-
-            const invoice = await prisma.invoice.create({
+            const order = await prisma.stokisOrder.create({
                 data: {
-                    invoiceNumber: `INV-DUMMY-${1000 + i}`,
-                    orderId: order.id,
-                    amount: total,
-                    paidAmount,
-                    status: invoiceStatus as InvoiceStatus,
-                    dueDate: new Date(orderDate.getTime() + (7 * 24 * 60 * 60 * 1000)), // +7 days
-                    paidAt,
-                    createdAt: orderDate
+                    orderNumber: `ORD-DUMMY-${1000 + orderIdx}`,
+                    stokisId,
+                    status,
+                    totalAmount: total,
+                    createdAt: orderDate,
+                    items: {
+                        create: [
+                            { productId: productMap.get(sku1)!, quantity: qty1, price: price1 },
+                            { productId: productMap.get(sku2)!, quantity: qty2, price: price2 },
+                        ]
+                    }
                 }
             })
 
-            // Create Payment record if Paid or Partial
-            if (paidAmount > 0) {
-                await prisma.payment.create({
+            // Generate Invoice if order is processed/received
+            if (['PO_ISSUED', 'SHIPPED', 'RECEIVED'].includes(status)) {
+                const invoiceStatus = randomItem(['PAID', 'UNPAID', 'OVERDUE', 'UNPAID']) // More UNPAID chance
+                let paidAmount = 0
+                let paidAt = null
+
+                if (invoiceStatus === 'PAID') {
+                    paidAmount = total
+                    paidAt = new Date()
+                } else if (invoiceStatus === 'OVERDUE') {
+                    paidAmount = randomInt(0, total / 2) // Partial or 0
+                }
+
+                const invoice = await prisma.invoice.create({
                     data: {
-                        invoiceId: invoice.id,
-                        amount: paidAmount,
-                        paymentDate: new Date(),
-                        method: PaymentMethod.TRANSFER_BCA,
-                        createdBy: 'system-seed',
-                        notes: 'Dummy payment'
+                        invoiceNumber: `INV-DUMMY-${1000 + orderIdx}`,
+                        orderId: order.id,
+                        amount: total,
+                        paidAmount,
+                        status: invoiceStatus as InvoiceStatus,
+                        dueDate: new Date(orderDate.getTime() + (7 * 24 * 60 * 60 * 1000)), // +7 days
+                        paidAt,
+                        createdAt: orderDate
                     }
                 })
+
+                // Create Payment record if Paid or Partial
+                if (paidAmount > 0) {
+                    await prisma.payment.create({
+                        data: {
+                            invoiceId: invoice.id,
+                            amount: paidAmount,
+                            paymentDate: new Date(),
+                            method: PaymentMethod.TRANSFER_BCA,
+                            createdBy: 'system-seed',
+                            notes: 'Dummy payment'
+                        }
+                    })
+                }
             }
-        }
-    }
+
+            orderIdx++
+        } // end for j (orders per stokis)
+    } // end for stokisId
 
     console.log('✅ Dummy Data Generation Completed!')
-    console.log('   - 5 DCs')
-    console.log('   - 10 Stokis (stokis1@dfresto.com ... stokis10@dfresto.com)')
+    console.log('   - 7 DCs (Palembang, Makassar, Medan, Bengkulu, Pekanbaru, Jatim, Jateng)')
+    console.log('   - 7 Finance DC (1 per area)')
+    console.log('   - 1 Finance All Area')
+    console.log('   - 14 Stokis (2 per DC: stokis1@dfresto.com ... stokis14@dfresto.com)')
     console.log('   - 20 Mitra (mitra1@dfresto.com ... mitra20@dfresto.com)')
-    console.log('   - ~30 Random Orders & Invoices')
+    console.log('   - 42 Orders (3 per Stokis, 6 per DC area)')
     console.log('   - Password all users: password123')
 }
 
@@ -297,3 +310,4 @@ main()
     .finally(async () => {
         await prisma.$disconnect()
     })
+
