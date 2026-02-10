@@ -13,8 +13,8 @@ export async function GET(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        // Only PUSAT and FINANCE can check outstanding
-        if (!["PUSAT", "FINANCE"].includes(session.user.role)) {
+        // PUSAT, FINANCE, DC, FINANCE_DC, FINANCE_ALL can check outstanding
+        if (!["PUSAT", "FINANCE", "DC", "FINANCE_DC", "FINANCE_ALL"].includes(session.user.role)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
