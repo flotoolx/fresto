@@ -273,7 +273,6 @@ export default function PembayaranPage() {
                                     <th className="px-4 py-3 text-left">Stokis</th>
                                     <th className="px-4 py-3 text-right">Total</th>
                                     <th className="px-4 py-3 text-right">Sisa</th>
-                                    <th className="px-4 py-3 text-center">Jatuh Tempo</th>
                                     <th className="px-4 py-3 text-center">Action</th>
                                 </tr>
                             </thead>
@@ -294,15 +293,7 @@ export default function PembayaranPage() {
                                             <td className="px-4 py-3 text-right font-medium text-gray-900">
                                                 {formatCurrency(remaining)}
                                             </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${isOverdue
-                                                    ? "bg-red-100 text-red-700"
-                                                    : "bg-gray-100 text-gray-600"
-                                                    }`}>
-                                                    {isOverdue && <AlertTriangle size={12} />}
-                                                    {formatDate(inv.dueDate)}
-                                                </span>
-                                            </td>
+
                                             <td className="px-4 py-3 text-center">
                                                 <button
                                                     onClick={() => openPaymentModal(inv)}

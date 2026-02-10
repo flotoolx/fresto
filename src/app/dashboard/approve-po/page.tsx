@@ -19,7 +19,7 @@ interface StokisOrder {
     totalAmount: number
     notes: string | null
     createdAt: string
-    stokis: { id: string; name: string; address: string | null; email: string }
+    stokis: { id: string; name: string; address: string | null; email: string; role: string }
     items: OrderItem[]
 }
 
@@ -51,6 +51,7 @@ export default function ApprovePOPage() {
     const [showAdjustModal, setShowAdjustModal] = useState(false)
     const [adjustedItems, setAdjustedItems] = useState<{ id: string; quantity: number }[]>([])
     const [adjustNotes, setAdjustNotes] = useState("")
+    const [poTypeFilter, setPoTypeFilter] = useState<"all" | "dc" | "stokis">("all")
 
     useEffect(() => {
         fetchOrders()
@@ -181,46 +182,71 @@ export default function ApprovePOPage() {
                 </div>
             </div>
 
-            {orders.length === 0 ? (
-                <div className="bg-white rounded-xl p-12 shadow-sm text-center">
-                    <CheckCircle className="w-16 h-16 text-green-300 mx-auto mb-4" />
-                    <p className="text-gray-500">Tidak ada PO yang perlu diapprove</p>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    {orders.map((order) => (
-                        <div
-                            key={order.id}
-                            className="bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-                            onClick={() => handleSelectOrder(order)}
+            {/* Filter Buttons */}
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+                <div className="flex gap-2 flex-wrap items-center">
+                    {["all", "dc", "stokis"].map((f) => (
+                        <button
+                            key={f}
+                            onClick={() => setPoTypeFilter(f as "all" | "dc" | "stokis")}
+                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${poTypeFilter === f
+                                ? "bg-purple-500 text-white shadow-md"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                }`}
                         >
-                            <div className="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 className="font-semibold text-gray-800">{order.orderNumber}</h3>
-                                    <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
-                                </div>
-                                <span className="flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-700">
-                                    <Clock size={16} />
-                                    Menunggu Approval
-                                </span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <span className="text-sm font-medium text-gray-700">{order.stokis.name}</span>
-                                    <p className="text-xs text-gray-500">{order.stokis.email}</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-purple-600">
-                                        {formatCurrency(Number(order.totalAmount))}
-                                    </span>
-                                    <ChevronRight size={18} className="text-gray-400" />
-                                </div>
-                            </div>
-                        </div>
+                            {f === "all" ? "Semua" : f === "dc" ? "DC" : "Stokis"}
+                        </button>
                     ))}
                 </div>
-            )}
+            </div>
 
+            {(() => {
+                const filteredOrders = orders.filter(order => {
+                    if (poTypeFilter === "all") return true
+                    if (poTypeFilter === "dc") return order.stokis.role === "DC"
+                    if (poTypeFilter === "stokis") return order.stokis.role === "STOKIS"
+                    return true
+                })
+                return filteredOrders.length === 0 ? (
+                    <div className="bg-white rounded-xl p-12 shadow-sm text-center">
+                        <CheckCircle className="w-16 h-16 text-green-300 mx-auto mb-4" />
+                        <p className="text-gray-500">Tidak ada PO yang perlu diapprove</p>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {filteredOrders.map((order) => (
+                            <div
+                                key={order.id}
+                                className="bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                                onClick={() => handleSelectOrder(order)}
+                            >
+                                <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h3 className="font-semibold text-gray-800">{order.orderNumber}</h3>
+                                        <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
+                                    </div>
+                                    <span className="flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-700">
+                                        <Clock size={16} />
+                                        Menunggu Approval
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <span className="text-sm font-medium text-gray-700">{order.stokis.name}</span>
+                                        <p className="text-xs text-gray-500">{order.stokis.email}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-purple-600">
+                                            {formatCurrency(Number(order.totalAmount))}
+                                        </span>
+                                        <ChevronRight size={18} className="text-gray-400" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )
+            })()}
             {/* Order Detail Modal */}
             {selectedOrder && !showAdjustModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

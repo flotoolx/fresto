@@ -32,7 +32,7 @@ export async function GET() {
         const orders = await prisma.stokisOrder.findMany({
             where,
             include: {
-                stokis: { select: { id: true, name: true, email: true, address: true } },
+                stokis: { select: { id: true, name: true, email: true, address: true, role: true } },
                 items: { include: { product: { include: { gudang: true } } } },
             },
             orderBy: { createdAt: "desc" },

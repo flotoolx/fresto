@@ -266,6 +266,9 @@
 
 ## Reports Page Tab Improvements (Feb 9, 2026) ✅ COMPLETE
 
+### Tab Overview
+- [x] Ubah warna Card Total DC (Slate) & Total Mitra (Orange) agar lebih kontras
+
 ### Tab Produk Terlaris
 - [x] Table menjadi scrollable horizontal di mobile
 - [x] Revenue column tidak terpotong (whitespace-nowrap)
@@ -275,3 +278,32 @@
 - [x] Tambah filter: Semua, DC, Stokis, Mitra
 - [x] Tambah Total card dengan nominal dan jumlah PO
 - [x] Table menjadi scrollable horizontal di mobile
+- [x] Fix filter logic: Semua/DC/Stokis/Mitra berhasil memfilter data
+
+### Tab Tagihan (sebelumnya "Umur Piutang")
+- [x] Ganti nama tab: "Umur Piutang" → "Tagihan"
+
+---
+
+## Approve PO Page Improvements (Feb 9, 2026) ✅ COMPLETE
+
+### Tagihan Warning Section
+- [x] Hapus SVG icon AlertTriangle
+- [x] Ubah teks warning menjadi: "⚠️ Stokis memiliki tagihan tertunggak"
+- [x] Hapus detail Unpaid dan Overdue
+- [x] Tambah tombol "Lihat Pembayaran" → /dashboard/pembayaran
+---
+
+## UI Adjustments (Feb 10, 2026) ✅ COMPLETE
+
+### Halaman Pembayaran (`/dashboard/pembayaran`)
+- [x] Hapus kolom "Jatuh Tempo" dari tabel invoice
+
+### Halaman Approve PO (`/dashboard/approve-po`)
+- [x] Tambah filter Semua / DC / Stokis
+- [x] Update API `/api/orders/stokis` - include `role` di stokis select
+- [x] Filter berdasarkan `stokis.role` (DC / STOKIS)
+
+### Halaman Invoices (`/dashboard/invoices`)
+- [x] Fix layout mobile: 3 card → 2+1 responsive (`grid-cols-2 lg:grid-cols-3`)
+- [x] Card "Belum Lunas" span full width di mobile (`col-span-2 lg:col-span-1`)
