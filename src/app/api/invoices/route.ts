@@ -41,7 +41,7 @@ export async function GET(request: Request) {
             include: {
                 order: {
                     include: {
-                        stokis: { select: { name: true, email: true, phone: true } }
+                        stokis: { select: { id: true, name: true, email: true, phone: true } }
                     }
                 }
             },
