@@ -22,7 +22,7 @@ export async function GET() {
         } else if (role === "PUSAT" || role === "DC") {
             // PUSAT and DC can see all orders
         } else if (role === "FINANCE") {
-            where = { status: "PENDING_FINANCE" }
+            where = { status: { in: ["PENDING_PUSAT", "PENDING_FINANCE"] } }
         } else if (role === "GUDANG") {
             where = { status: { in: ["PO_ISSUED", "PROCESSING"] } }
         } else {

@@ -359,10 +359,15 @@ export default function PembayaranPage() {
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">Rp</span>
                                         <input
-                                            type="number"
-                                            value={paymentForm.amount}
-                                            onChange={(e) => setPaymentForm(prev => ({ ...prev, amount: Number(e.target.value) }))}
+                                            type="text"
+                                            inputMode="numeric"
+                                            value={paymentForm.amount ? paymentForm.amount.toLocaleString("id-ID") : ""}
+                                            onChange={(e) => {
+                                                const raw = e.target.value.replace(/\D/g, "")
+                                                setPaymentForm(prev => ({ ...prev, amount: Number(raw) || 0 }))
+                                            }}
                                             className="w-full border rounded-lg pl-10 pr-4 py-2 text-gray-900"
+                                            placeholder="0"
                                         />
                                     </div>
                                     <button

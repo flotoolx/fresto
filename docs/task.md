@@ -307,3 +307,7 @@
 ### Halaman Invoices (`/dashboard/invoices`)
 - [x] Fix layout mobile: 3 card → 2+1 responsive (`grid-cols-2 lg:grid-cols-3`)
 - [x] Card "Belum Lunas" span full width di mobile (`col-span-2 lg:col-span-1`)
+
+### Fix Pembayaran & Finance
+- [x] Separator ribuan (dot) pada input Jumlah Bayar di modal pembayaran
+- [x] Fix Finance role tidak bisa lihat order Stokis (API filter tambah `PENDING_PUSAT`)
