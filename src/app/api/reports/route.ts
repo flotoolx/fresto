@@ -33,18 +33,30 @@ export async function GET(request: Request) {
             dateFrom.setDate(dateFrom.getDate() - period)
         }
 
+        // Build area filter for DC and FINANCE_DC
+        const userRole = session.user.role
+        const userId = session.user.id
+        const dcId = session.user.dcId
+        let stokisFilter: Record<string, unknown> = {}
+
+        if (userRole === "DC") {
+            stokisFilter = { stokis: { dcId: userId } }
+        } else if (userRole === "FINANCE_DC" && dcId) {
+            stokisFilter = { stokis: { dcId: dcId } }
+        }
+
         switch (reportType) {
             case "monthly-sales":
-                return await getMonthlySalesReport(year)
+                return await getMonthlySalesReport(year, stokisFilter)
             case "top-products":
-                return await getTopProductsReport(dateFrom, dateTo)
+                return await getTopProductsReport(dateFrom, dateTo, stokisFilter)
             case "stokis-performance":
-                return await getStokisPerformanceReport(dateFrom, dateTo)
+                return await getStokisPerformanceReport(dateFrom, dateTo, stokisFilter)
             case "invoice-aging":
-                return await getInvoiceAgingReport()
+                return await getInvoiceAgingReport(stokisFilter)
             case "summary":
             default:
-                return await getSummaryReport(dateFrom, dateTo, period)
+                return await getSummaryReport(dateFrom, dateTo, period, stokisFilter)
         }
     } catch (error) {
         console.error("Error fetching reports:", error)
@@ -53,15 +65,21 @@ export async function GET(request: Request) {
 }
 
 // Summary Report
-async function getSummaryReport(dateFrom: Date, dateTo: Date | undefined, period: number) {
+async function getSummaryReport(dateFrom: Date, dateTo: Date | undefined, period: number, stokisFilter: Record<string, unknown> = {}) {
     // Build date filter
     const dateFilter = dateTo
         ? { gte: dateFrom, lte: dateTo }
         : { gte: dateFrom }
 
+    // Build area-aware filters
+    const hasAreaFilter = Object.keys(stokisFilter).length > 0
+    const userAreaFilter = hasAreaFilter
+        ? { dcId: (stokisFilter.stokis as { dcId: string })?.dcId }
+        : {}
+
     // Orders summary
     const stokisOrders = await prisma.stokisOrder.findMany({
-        where: { createdAt: dateFilter },
+        where: { createdAt: dateFilter, ...stokisFilter },
         include: { stokis: { select: { name: true } } }
     })
 
@@ -86,7 +104,7 @@ async function getSummaryReport(dateFrom: Date, dateTo: Date | undefined, period
     // Active users
     const activeStokis = new Set(stokisOrders.map(o => o.stokisId)).size
     const activeMitra = new Set(mitraOrders.map(o => o.mitraId)).size
-    const totalStokis = await prisma.user.count({ where: { role: "STOKIS", isActive: true } })
+    const totalStokis = await prisma.user.count({ where: { role: "STOKIS", isActive: true, ...userAreaFilter } })
     const totalMitra = await prisma.user.count({ where: { role: "MITRA", isActive: true } })
     const totalDc = await prisma.user.count({ where: { role: "DC", isActive: true } })
 
@@ -114,13 +132,14 @@ async function getSummaryReport(dateFrom: Date, dateTo: Date | undefined, period
 }
 
 // Monthly Sales Report
-async function getMonthlySalesReport(year: number) {
+async function getMonthlySalesReport(year: number, stokisFilter: Record<string, unknown> = {}) {
     const startOfYear = new Date(year, 0, 1)
     const endOfYear = new Date(year, 11, 31, 23, 59, 59)
 
     const stokisOrders = await prisma.stokisOrder.findMany({
         where: {
-            createdAt: { gte: startOfYear, lte: endOfYear }
+            createdAt: { gte: startOfYear, lte: endOfYear },
+            ...stokisFilter
         }
     })
 
@@ -173,14 +192,14 @@ async function getMonthlySalesReport(year: number) {
 }
 
 // Top Products Report
-async function getTopProductsReport(dateFrom: Date, dateTo?: Date) {
+async function getTopProductsReport(dateFrom: Date, dateTo?: Date, stokisFilter: Record<string, unknown> = {}) {
     const dateFilter = dateTo
         ? { gte: dateFrom, lte: dateTo }
         : { gte: dateFrom }
 
     // Get all order items
     const stokisItems = await prisma.stokisOrderItem.findMany({
-        where: { order: { createdAt: dateFilter } },
+        where: { order: { createdAt: dateFilter, ...stokisFilter } },
         include: { product: { select: { id: true, name: true, sku: true, unit: true } } }
     })
 
@@ -229,13 +248,13 @@ async function getTopProductsReport(dateFrom: Date, dateTo?: Date) {
 }
 
 // Stokis Performance Report - Now includes DC and Mitra data
-async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date) {
+async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date, stokisFilter: Record<string, unknown> = {}) {
     const dateFilter = dateTo
         ? { gte: dateFrom, lte: dateTo }
         : { gte: dateFrom }
 
     const stokisOrders = await prisma.stokisOrder.findMany({
-        where: { createdAt: dateFilter },
+        where: { createdAt: dateFilter, ...stokisFilter },
         include: {
             stokis: { select: { id: true, name: true, address: true, phone: true } }
         }
@@ -367,9 +386,12 @@ async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date) {
 }
 
 // Invoice Aging Report - Categorized by DC/Stokis with aging buckets
-async function getInvoiceAgingReport() {
+async function getInvoiceAgingReport(stokisFilter: Record<string, unknown> = {}) {
     // Fetch ALL invoices (including paid) for complete reporting
     const allInvoices = await prisma.invoice.findMany({
+        where: {
+            order: { ...stokisFilter }
+        },
         include: {
             order: {
                 include: {

@@ -189,10 +189,30 @@ export default function DashboardPage() {
                         { label: "Menunggu Approval", value: formatRp(stokisPendingTotal), subtitle: `${stokisPending.length} PO`, icon: ShoppingCart, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/orders-stokis" },
                     ])
                 } else if (role === "DC") {
-                    // DC-specific stats
+                    // DC-specific stats: fetch real data
+                    const [usersRes, ordersRes] = await Promise.all([
+                        fetch("/api/users?role=STOKIS"),
+                        fetch("/api/orders/stokis")
+                    ])
+                    const stokisUsers = usersRes.ok ? await usersRes.json() : []
+                    const dcOrders = ordersRes.ok ? await ordersRes.json() : []
+                    const stokisCount = Array.isArray(stokisUsers) ? stokisUsers.length : 0
+                    const activeOrders = Array.isArray(dcOrders)
+                        ? dcOrders.filter((o: { status: string }) => !["CANCELLED", "RECEIVED"].includes(o.status))
+                        : []
+
+                    const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`
+                    const totalRevenue = Array.isArray(dcOrders)
+                        ? dcOrders.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+                        : 0
+                    const pendingCount = Array.isArray(dcOrders)
+                        ? dcOrders.filter((o: { status: string }) => o.status === "PENDING_PUSAT").length
+                        : 0
+
                     setStats([
-                        { label: "Stokis Area", value: 0, icon: Store, gradient: "from-[#E31E24] to-[#5B2B4E]" },
-                        { label: "Order Aktif", value: 0, icon: ShoppingCart, gradient: "from-[#5B2B4E] to-[#3D1C34]" },
+                        { label: "Stokis Area", value: stokisCount, icon: Store, gradient: "from-[#E31E24] to-[#5B2B4E]", href: "/dashboard/dc-stokis" },
+                        { label: "Order Aktif", value: activeOrders.length, subtitle: `${pendingCount} pending`, icon: ShoppingCart, gradient: "from-[#5B2B4E] to-[#3D1C34]", href: "/dashboard/approve-po" },
+                        { label: "Total Revenue", value: formatRp(totalRevenue), subtitle: `${Array.isArray(dcOrders) ? dcOrders.length : 0} PO`, icon: TrendingUp, gradient: "from-[#3B82F6] to-[#1D4ED8]", href: "/dashboard/reports" },
                     ])
                 } else if (role === "GUDANG") {
                     const res = await fetch("/api/orders/stokis?status=PO_ISSUED")
