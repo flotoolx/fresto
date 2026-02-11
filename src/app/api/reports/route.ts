@@ -76,6 +76,10 @@ async function getSummaryReport(dateFrom: Date, dateTo: Date | undefined, period
     const userAreaFilter = hasAreaFilter
         ? { dcId: (stokisFilter.stokis as { dcId: string })?.dcId }
         : {}
+    // Mitra area filter: filter mitra orders by stokis DC area
+    const mitraAreaFilter = hasAreaFilter
+        ? { stokis: { dcId: (stokisFilter.stokis as { dcId: string })?.dcId } }
+        : {}
 
     // Orders summary
     const stokisOrders = await prisma.stokisOrder.findMany({
@@ -84,7 +88,7 @@ async function getSummaryReport(dateFrom: Date, dateTo: Date | undefined, period
     })
 
     const mitraOrders = await prisma.mitraOrder.findMany({
-        where: { createdAt: dateFilter },
+        where: { createdAt: dateFilter, ...mitraAreaFilter },
         include: { mitra: { select: { name: true } } }
     })
 
@@ -136,6 +140,12 @@ async function getMonthlySalesReport(year: number, stokisFilter: Record<string, 
     const startOfYear = new Date(year, 0, 1)
     const endOfYear = new Date(year, 11, 31, 23, 59, 59)
 
+    // Build mitra area filter from stokisFilter
+    const hasAreaFilter = Object.keys(stokisFilter).length > 0
+    const mitraAreaFilter = hasAreaFilter
+        ? { stokis: { dcId: (stokisFilter.stokis as { dcId: string })?.dcId } }
+        : {}
+
     const stokisOrders = await prisma.stokisOrder.findMany({
         where: {
             createdAt: { gte: startOfYear, lte: endOfYear },
@@ -145,7 +155,8 @@ async function getMonthlySalesReport(year: number, stokisFilter: Record<string, 
 
     const mitraOrders = await prisma.mitraOrder.findMany({
         where: {
-            createdAt: { gte: startOfYear, lte: endOfYear }
+            createdAt: { gte: startOfYear, lte: endOfYear },
+            ...mitraAreaFilter
         }
     })
 
@@ -197,6 +208,12 @@ async function getTopProductsReport(dateFrom: Date, dateTo?: Date, stokisFilter:
         ? { gte: dateFrom, lte: dateTo }
         : { gte: dateFrom }
 
+    // Build mitra area filter from stokisFilter
+    const hasAreaFilter = Object.keys(stokisFilter).length > 0
+    const mitraAreaFilter = hasAreaFilter
+        ? { stokis: { dcId: (stokisFilter.stokis as { dcId: string })?.dcId } }
+        : {}
+
     // Get all order items
     const stokisItems = await prisma.stokisOrderItem.findMany({
         where: { order: { createdAt: dateFilter, ...stokisFilter } },
@@ -204,7 +221,7 @@ async function getTopProductsReport(dateFrom: Date, dateTo?: Date, stokisFilter:
     })
 
     const mitraItems = await prisma.mitraOrderItem.findMany({
-        where: { order: { createdAt: dateFilter } },
+        where: { order: { createdAt: dateFilter, ...mitraAreaFilter } },
         include: { product: { select: { id: true, name: true, sku: true, unit: true } } }
     })
 
@@ -247,31 +264,55 @@ async function getTopProductsReport(dateFrom: Date, dateTo?: Date, stokisFilter:
     })
 }
 
-// Stokis Performance Report - Now includes DC and Mitra data
+// Stokis Performance Report - Now includes DC and Mitra data with product breakdown
 async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date, stokisFilter: Record<string, unknown> = {}) {
     const dateFilter = dateTo
         ? { gte: dateFrom, lte: dateTo }
         : { gte: dateFrom }
 
+    // Build mitra area filter from stokisFilter
+    const hasAreaFilter = Object.keys(stokisFilter).length > 0
+    const mitraAreaFilter = hasAreaFilter
+        ? { stokis: { dcId: (stokisFilter.stokis as { dcId: string })?.dcId } }
+        : {}
+
     const stokisOrders = await prisma.stokisOrder.findMany({
         where: { createdAt: dateFilter, ...stokisFilter },
         include: {
-            stokis: { select: { id: true, name: true, address: true, phone: true } }
+            stokis: { select: { id: true, name: true, address: true, phone: true, uniqueCode: true } },
+            items: { include: { product: { select: { name: true, sku: true, unit: true } } } }
         }
     })
 
     const mitraOrders = await prisma.mitraOrder.findMany({
-        where: { createdAt: dateFilter },
+        where: { createdAt: dateFilter, ...mitraAreaFilter },
         include: {
-            stokis: { select: { id: true, name: true } },
-            mitra: { select: { id: true, name: true, address: true, phone: true } }
+            stokis: { select: { id: true, name: true, uniqueCode: true } },
+            mitra: { select: { id: true, name: true, address: true, phone: true, uniqueCode: true } },
+            items: { include: { product: { select: { name: true, sku: true, unit: true } } } }
         }
     })
 
-    // Aggregate by stokis (existing logic)
+    // Helper: aggregate product stats
+    type ProductStat = { productName: string; sku: string; unit: string; totalQty: number; totalRevenue: number }
+    const aggregateProducts = (items: { quantity: number; price: unknown; product: { name: string; sku: string; unit: string } }[]) => {
+        const map: Record<string, ProductStat> = {}
+        for (const item of items) {
+            const key = item.product.sku
+            if (!map[key]) {
+                map[key] = { productName: item.product.name, sku: key, unit: item.product.unit, totalQty: 0, totalRevenue: 0 }
+            }
+            map[key].totalQty += item.quantity
+            map[key].totalRevenue += item.quantity * Number(item.price)
+        }
+        return Object.values(map).sort((a, b) => b.totalRevenue - a.totalRevenue)
+    }
+
+    // Aggregate by stokis
     const stokisStats: Record<string, {
         stokisId: string
         stokisName: string
+        uniqueCode: string | null
         address: string | null
         phone: string | null
         ordersToPusat: number
@@ -281,6 +322,7 @@ async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date, stokisF
         totalRevenue: number
         mitraCount: number
         mitraList: Set<string>
+        allItems: { quantity: number; price: unknown; product: { name: string; sku: string; unit: string } }[]
     }> = {}
 
     // Count orders to pusat
@@ -290,6 +332,7 @@ async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date, stokisF
             stokisStats[key] = {
                 stokisId: order.stokisId,
                 stokisName: order.stokis.name,
+                uniqueCode: order.stokis.uniqueCode,
                 address: order.stokis.address,
                 phone: order.stokis.phone,
                 ordersToPusat: 0,
@@ -298,11 +341,13 @@ async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date, stokisF
                 revenueFromMitra: 0,
                 totalRevenue: 0,
                 mitraCount: 0,
-                mitraList: new Set()
+                mitraList: new Set(),
+                allItems: []
             }
         }
         stokisStats[key].ordersToPusat++
         stokisStats[key].revenueToPusat += Number(order.totalAmount)
+        stokisStats[key].allItems.push(...order.items)
     }
 
     // Count orders from mitra
@@ -312,6 +357,7 @@ async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date, stokisF
             stokisStats[key] = {
                 stokisId: order.stokisId,
                 stokisName: order.stokis.name,
+                uniqueCode: order.stokis.uniqueCode,
                 address: null,
                 phone: null,
                 ordersToPusat: 0,
@@ -320,7 +366,8 @@ async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date, stokisF
                 revenueFromMitra: 0,
                 totalRevenue: 0,
                 mitraCount: 0,
-                mitraList: new Set()
+                mitraList: new Set(),
+                allItems: []
             }
         }
         stokisStats[key].ordersFromMitra++
@@ -328,33 +375,119 @@ async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date, stokisF
         stokisStats[key].mitraList.add(order.mitraId)
     }
 
-    // Calculate totals for stokis
+    // Calculate totals for stokis with products
     const stokisRankings = Object.values(stokisStats).map(s => ({
-        ...s,
+        stokisId: s.stokisId,
+        stokisName: s.stokisName,
+        uniqueCode: s.uniqueCode,
+        address: s.address,
+        phone: s.phone,
+        ordersToPusat: s.ordersToPusat,
+        ordersFromMitra: s.ordersFromMitra,
+        revenueToPusat: s.revenueToPusat,
+        revenueFromMitra: s.revenueFromMitra,
         totalRevenue: s.revenueToPusat + s.revenueFromMitra,
         mitraCount: s.mitraList.size,
-        mitraList: undefined
+        products: aggregateProducts(s.allItems)
     })).sort((a, b) => b.totalRevenue - a.totalRevenue)
 
-    // DC Performance: Revenue from Stokis orders (DC/Pusat sells to Stokis)
-    // Since we don't have separate DC entities, we show aggregate DC stats
-    const dcPerformance = [{
-        dcId: "pusat",
-        dcName: "PUSAT / DC",
-        address: null,
-        ordersToStokis: stokisOrders.length,
-        totalRevenue: stokisOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0),
-        stokisCount: new Set(stokisOrders.map(o => o.stokisId)).size
-    }]
+    // DC Performance with products
+    // Fetch DCs that have stokis
+    const dcUsers = hasAreaFilter ? [] : await prisma.user.findMany({
+        where: { role: "DC", isActive: true },
+        select: { id: true, name: true, uniqueCode: true, phone: true, address: true }
+    })
 
-    // Mitra Performance: Aggregate orders by Mitra
+    // Build DC performance from actual DC users
+    const allDcItems: { quantity: number; price: unknown; product: { name: string; sku: string; unit: string } }[] = []
+    for (const order of stokisOrders) {
+        allDcItems.push(...order.items)
+    }
+
+    let dcPerformance
+    if (hasAreaFilter) {
+        // For DC/FINANCE_DC, show single aggregate
+        dcPerformance = [{
+            dcId: "area",
+            dcName: "DC Area",
+            uniqueCode: null as string | null,
+            phone: null as string | null,
+            address: null as string | null,
+            ordersToStokis: stokisOrders.length,
+            totalRevenue: stokisOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0),
+            stokisCount: new Set(stokisOrders.map(o => o.stokisId)).size,
+            mitraCount: new Set(mitraOrders.map(o => o.mitraId)).size,
+            products: aggregateProducts(allDcItems)
+        }]
+    } else {
+        // For PUSAT/FINANCE, show per-DC breakdown
+        const dcStokisMap: Record<string, string[]> = {}
+        const dcStokisList = await prisma.user.findMany({
+            where: { role: "STOKIS", dcId: { not: null } },
+            select: { id: true, dcId: true }
+        })
+        for (const s of dcStokisList) {
+            if (s.dcId) {
+                if (!dcStokisMap[s.dcId]) dcStokisMap[s.dcId] = []
+                dcStokisMap[s.dcId].push(s.id)
+            }
+        }
+
+        dcPerformance = dcUsers.map(dc => {
+            const dcStokisIds = new Set(dcStokisMap[dc.id] || [])
+            const dcOrders = stokisOrders.filter(o => dcStokisIds.has(o.stokisId))
+            const dcMitraOrders = mitraOrders.filter(o => dcStokisIds.has(o.stokisId))
+            const dcItems: typeof allDcItems = []
+            for (const o of dcOrders) dcItems.push(...o.items)
+
+            return {
+                dcId: dc.id,
+                dcName: dc.name,
+                uniqueCode: dc.uniqueCode,
+                phone: dc.phone,
+                address: dc.address,
+                ordersToStokis: dcOrders.length,
+                totalRevenue: dcOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0),
+                stokisCount: dcStokisIds.size,
+                mitraCount: new Set(dcMitraOrders.map(o => o.mitraId)).size,
+                products: aggregateProducts(dcItems)
+            }
+        }).filter(d => d.ordersToStokis > 0 || d.stokisCount > 0)
+            .sort((a, b) => b.totalRevenue - a.totalRevenue)
+
+        // Add unassigned stokis orders (stokis without DC)
+        const assignedStokisIds = new Set(dcStokisList.map(s => s.id))
+        const unassignedOrders = stokisOrders.filter(o => !assignedStokisIds.has(o.stokisId))
+        if (unassignedOrders.length > 0) {
+            const uItems: typeof allDcItems = []
+            for (const o of unassignedOrders) uItems.push(...o.items)
+            dcPerformance.push({
+                dcId: "unassigned",
+                dcName: "Tanpa DC",
+                uniqueCode: null,
+                phone: null,
+                address: null,
+                ordersToStokis: unassignedOrders.length,
+                totalRevenue: unassignedOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0),
+                stokisCount: new Set(unassignedOrders.map(o => o.stokisId)).size,
+                mitraCount: 0,
+                products: aggregateProducts(uItems)
+            })
+        }
+    }
+
+    // Mitra Performance with products
     const mitraStats: Record<string, {
         mitraId: string
         mitraName: string
+        uniqueCode: string | null
         address: string | null
+        phone: string | null
         ordersToStokis: number
         totalRevenue: number
         stokisName: string
+        stokisCode: string | null
+        allItems: { quantity: number; price: unknown; product: { name: string; sku: string; unit: string } }[]
     }> = {}
 
     for (const order of mitraOrders) {
@@ -363,17 +496,39 @@ async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date, stokisF
             mitraStats[key] = {
                 mitraId: order.mitraId,
                 mitraName: order.mitra.name,
+                uniqueCode: order.mitra.uniqueCode,
                 address: order.mitra.address,
+                phone: order.mitra.phone,
                 ordersToStokis: 0,
                 totalRevenue: 0,
-                stokisName: order.stokis.name
+                stokisName: order.stokis.name,
+                stokisCode: order.stokis.uniqueCode,
+                allItems: []
             }
         }
         mitraStats[key].ordersToStokis++
         mitraStats[key].totalRevenue += Number(order.totalAmount)
+        mitraStats[key].allItems.push(...order.items)
     }
 
-    const mitraRankings = Object.values(mitraStats).sort((a, b) => b.totalRevenue - a.totalRevenue)
+    const mitraRankings = Object.values(mitraStats).map(m => ({
+        mitraId: m.mitraId,
+        mitraName: m.mitraName,
+        uniqueCode: m.uniqueCode,
+        address: m.address,
+        phone: m.phone,
+        ordersToStokis: m.ordersToStokis,
+        totalRevenue: m.totalRevenue,
+        stokisName: m.stokisName,
+        stokisCode: m.stokisCode,
+        products: aggregateProducts(m.allItems)
+    })).sort((a, b) => b.totalRevenue - a.totalRevenue)
+
+    // Summary aggregates
+    const totalStokisRevenue = stokisOrders.reduce((s, o) => s + Number(o.totalAmount), 0)
+    const totalMitraRevenue = mitraOrders.reduce((s, o) => s + Number(o.totalAmount), 0)
+    const totalRevenue = totalStokisRevenue + totalMitraRevenue
+    const totalOrders = stokisOrders.length + mitraOrders.length
 
     return NextResponse.json({
         stokisPerformance: stokisRankings,
@@ -381,7 +536,18 @@ async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date, stokisF
         mitraPerformance: mitraRankings,
         totalStokis: stokisRankings.length,
         totalDc: dcPerformance.length,
-        totalMitra: mitraRankings.length
+        totalMitra: mitraRankings.length,
+        summary: {
+            totalRevenue,
+            totalOrders,
+            totalStokisRevenue,
+            totalMitraRevenue,
+            avgOrderValue: totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0,
+            stokisRevenueShare: totalRevenue > 0 ? Math.round((totalStokisRevenue / totalRevenue) * 100) : 0,
+            mitraRevenueShare: totalRevenue > 0 ? Math.round((totalMitraRevenue / totalRevenue) * 100) : 0,
+            activeStokis: new Set(stokisOrders.map(o => o.stokisId)).size,
+            activeMitra: new Set(mitraOrders.map(o => o.mitraId)).size
+        }
     })
 }
 

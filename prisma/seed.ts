@@ -79,24 +79,27 @@ async function main() {
     // 4. Create DC (7 DCs)
     console.log('🏭 Creating 7 DCs and Finance DC...')
     const dcLocations = ['Palembang', 'Makassar', 'Medan', 'Bengkulu', 'Pekanbaru', 'Jatim', 'Jateng']
+    const dcCodes = ['PLB', 'MKS', 'MDN', 'BKL', 'PKB', 'JTM', 'JTG']
     const dcIds: string[] = []
 
     for (let i = 0; i < dcLocations.length; i++) {
         const location = dcLocations[i]
         const citySlug = location.toLowerCase().replace(/\s+/g, '')
         const email = `dc.${citySlug}@dfresto.com`
+        const dcCode = `DC-${dcCodes[i]}-${String(i + 1).padStart(3, '0')}`
 
         // Create DC User
         const dc = await prisma.user.upsert({
             where: { email },
-            update: { role: Role.DC, name: `DC ${location}` },
+            update: { role: Role.DC, name: `DC ${location}`, uniqueCode: dcCode },
             create: {
                 name: `DC ${location}`,
                 email,
                 password: hashedPassword,
                 role: Role.DC,
                 address: `Jl. Raya ${location} No. ${i + 1}`,
-                phone: `083333333${i}`
+                phone: `083333333${i}`,
+                uniqueCode: dcCode
             }
         })
         dcIds.push(dc.id)
@@ -138,20 +141,23 @@ async function main() {
         const dcIndex = i % 7 // Distribute evenly among 7 DCs
         const dcId = dcIds[dcIndex]
         const location = dcLocations[dcIndex]
+        const suffix = i < 7 ? 'A' : 'B'
+        const stkCode = `STK-${dcCodes[dcIndex]}-${suffix}${String(dcIndex + 1).padStart(2, '0')}`
 
         const email = `stokis${i + 1}@dfresto.com`
         const user = await prisma.user.upsert({
             where: { email },
-            update: { dcId: dcId, role: Role.STOKIS },
+            update: { dcId: dcId, role: Role.STOKIS, uniqueCode: stkCode },
             create: {
-                name: `Stokis ${location} ${i < 7 ? 'A' : 'B'}`,
+                name: `Stokis ${location} ${suffix}`,
                 email,
                 password: hashedPassword,
                 role: Role.STOKIS,
                 address: `Jl. Stokis ${location} No. ${i + 10}`,
                 phone: `084444444${i}`,
                 province: location,
-                dcId: dcId // Link to DC
+                dcId: dcId,
+                uniqueCode: stkCode
             }
         })
         stokisIds.push(user.id)
@@ -179,10 +185,11 @@ async function main() {
     const mitraIds: string[] = []
     for (let i = 0; i < 20; i++) {
         const email = `mitra${i + 1}@dfresto.com`
+        const mtrCode = `MTR-${String(i + 1).padStart(3, '0')}`
         const assignedStokisId = randomItem(stokisIds)
         const user = await prisma.user.upsert({
             where: { email },
-            update: {},
+            update: { uniqueCode: mtrCode },
             create: {
                 name: `Mitra ${i + 1}`,
                 email,
@@ -190,7 +197,8 @@ async function main() {
                 role: Role.MITRA,
                 address: `Jl. Mitra No. ${i + 1}`,
                 phone: `085555555${i}`,
-                stokisId: assignedStokisId
+                stokisId: assignedStokisId,
+                uniqueCode: mtrCode
             }
         })
         mitraIds.push(user.id)

@@ -338,3 +338,21 @@
 ### Documentation
 - [x] Diagram Alur Lengkap (.html) - Mitra hingga Gudang
 - [x] Testing Checklist (.md) - Skenario pengujian lengkap
+
+---
+
+## Phase 7: Enhanced Reports & Performa (Feb 11, 2026) ✅ COMPLETE
+
+### Report Performa Enhancements
+- [x] Update `getStokisPerformanceReport` API - return `products` breakdown & `uniqueCode`
+- [x] UI: 3 Summary Cards (Revenue, AOV, Split) on Performa Tab
+- [x] UI: Table Column "Kode" (Link to User `uniqueCode`)
+- [x] UI: Expandable Row (Show Top 5 Products per Entity)
+- [x] Export PDF: Full product breakdown (not just top 5)
+- [x] Export Excel: Multi-sheet (DC, Stokis, Mitra) with full product rows
+- [x] Fix: Filter "Semua" logic for DC/Mitra tables
+- [x] Fix: Section Headers (DC Area, Stokis, Mitra) to separate tables
+
+### Data Integrity
+- [x] Update `seed.ts` - Populate `uniqueCode` for DC, Stokis, Mitra
+- [x] Format: `DC-PLB-001`, `STK-PLB-A01`, `MTR-001`

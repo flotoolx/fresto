@@ -28,7 +28,7 @@ export async function GET() {
             // FINANCE_DC sees orders from Stokis in their DC area
             where = { stokis: { dcId: dcId } }
         } else if (role === "FINANCE") {
-            where = { status: { in: ["PENDING_PUSAT", "PENDING_FINANCE"] } }
+            where = { status: "PENDING_PUSAT" }
         } else if (role === "GUDANG") {
             where = { status: { in: ["PO_ISSUED", "PROCESSING"] } }
         } else {

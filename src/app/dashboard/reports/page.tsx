@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import {
     BarChart3,
     TrendingUp,
@@ -11,7 +11,9 @@ import {
     Calendar,
     RefreshCw,
     ShoppingCart,
-    Store
+    Store,
+    ChevronDown,
+    ChevronUp
 } from "lucide-react"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
@@ -69,34 +71,65 @@ interface TopProduct {
     orderCount: number
 }
 
+interface ProductStat {
+    productName: string
+    sku: string
+    unit: string
+    totalQty: number
+    totalRevenue: number
+}
+
 interface StokisPerf {
     stokisId: string
     stokisName: string
+    uniqueCode: string | null
     address: string | null
+    phone: string | null
     ordersToPusat: number
     ordersFromMitra: number
     revenueToPusat: number
     revenueFromMitra: number
     totalRevenue: number
     mitraCount: number
+    products: ProductStat[]
 }
 
 interface DcPerf {
     dcId: string
     dcName: string
+    uniqueCode: string | null
+    phone: string | null
     address: string | null
     ordersToStokis: number
     totalRevenue: number
     stokisCount: number
+    mitraCount: number
+    products: ProductStat[]
 }
 
 interface MitraPerf {
     mitraId: string
     mitraName: string
+    uniqueCode: string | null
     address: string | null
+    phone: string | null
     ordersToStokis: number
     totalRevenue: number
     stokisName: string
+    stokisCode: string | null
+    products: ProductStat[]
+}
+
+interface PerfSummary {
+    totalRevenue: number
+    totalOrders: number
+    totalStokisRevenue: number
+    totalMitraRevenue: number
+    avgOrderValue: number
+    stokisRevenueShare: number
+    mitraRevenueShare: number
+    activeStokis: number
+    activeMitra: number
 }
 
 interface InvoiceAgingSummary {
@@ -168,6 +201,8 @@ export default function ReportsPage() {
     const [stokisPerf, setStokisPerf] = useState<StokisPerf[]>([])
     const [dcPerf, setDcPerf] = useState<DcPerf[]>([])
     const [mitraPerf, setMitraPerf] = useState<MitraPerf[]>([])
+    const [perfSummary, setPerfSummary] = useState<PerfSummary | null>(null)
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
     const [invoiceAging, setInvoiceAging] = useState<InvoiceAgingSummary | null>(null)
     const [agingSummary, setAgingSummary] = useState<AgingSummary | null>(null)
     const [invoiceDetails, setInvoiceDetails] = useState<{ dc: InvoiceDetail[]; stokis: InvoiceDetail[] }>({ dc: [], stokis: [] })
@@ -214,6 +249,8 @@ export default function ReportsPage() {
                     setStokisPerf(data.stokisPerformance || [])
                     setDcPerf(data.dcPerformance || [])
                     setMitraPerf(data.mitraPerformance || [])
+                    setPerfSummary(data.summary || null)
+                    setExpandedRows(new Set())
                 }
                 else if (activeTab === "invoice") {
                     setInvoiceAging(data.summary)
@@ -235,6 +272,7 @@ export default function ReportsPage() {
             minimumFractionDigits: 0,
         }).format(amount)
     }
+
 
     // Export to PDF
     const exportToPDF = () => {
@@ -278,18 +316,51 @@ export default function ReportsPage() {
                 ])
             })
         } else if (activeTab === "stokis" && stokisPerf.length > 0) {
-            autoTable(doc, {
-                startY: 35,
-                head: [["#", "Stokis", "Order ke Pusat", "Order dari Mitra", "Mitra", "Revenue"]],
-                body: stokisPerf.map((s, i) => [
-                    (i + 1).toString(),
-                    s.stokisName,
-                    s.ordersToPusat.toString(),
-                    s.ordersFromMitra.toString(),
-                    s.mitraCount.toString(),
+            doc.setFontSize(12)
+            doc.text("Performa Stokis", 14, 35)
+            const stokisRows: string[][] = []
+            stokisPerf.forEach((s, i) => {
+                stokisRows.push([
+                    String(i + 1), s.uniqueCode || "-", s.stokisName, s.phone || "-",
+                    String(s.ordersToPusat), String(s.ordersFromMitra), String(s.mitraCount),
                     formatCurrency(s.totalRevenue)
                 ])
+                s.products.forEach((p, pi) => {
+                    stokisRows.push(["", "", `  ${pi + 1}. ${p.productName} (${p.sku})`, "", String(p.totalQty), p.unit, "", formatCurrency(p.totalRevenue)])
+                })
             })
+            autoTable(doc, {
+                startY: 40,
+                head: [["#", "Kode", "Stokis", "Telp", "Order Pusat", "Order Mitra", "Mitra", "Revenue"]],
+                body: stokisRows,
+                styles: { fontSize: 7 },
+                headStyles: { fillColor: [71, 85, 105] },
+            })
+            let nextY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || 80
+
+            // Mitra section
+            if (mitraPerf.length > 0) {
+                if (nextY > 230) { doc.addPage(); nextY = 15 }
+                doc.setFontSize(12)
+                doc.text("Performa Mitra", 14, nextY + 8)
+                const mitraRows: string[][] = []
+                mitraPerf.forEach((m, i) => {
+                    mitraRows.push([
+                        String(i + 1), m.uniqueCode || "-", m.mitraName, m.phone || "-",
+                        m.stokisName, String(m.ordersToStokis), formatCurrency(m.totalRevenue)
+                    ])
+                    m.products.forEach((p, pi) => {
+                        mitraRows.push(["", "", `  ${pi + 1}. ${p.productName} (${p.sku})`, "", "", String(p.totalQty) + " " + p.unit, formatCurrency(p.totalRevenue)])
+                    })
+                })
+                autoTable(doc, {
+                    startY: nextY + 12,
+                    head: [["#", "Kode", "Mitra", "Telp", "Stokis", "Orders", "Revenue"]],
+                    body: mitraRows,
+                    styles: { fontSize: 7 },
+                    headStyles: { fillColor: [71, 85, 105] },
+                })
+            }
         } else if (activeTab === "invoice" && invoiceAging) {
             // Get invoices to export based on filter
             const invoicesToExport = invoiceFilter === "all"
@@ -369,15 +440,67 @@ export default function ReportsPage() {
                 Revenue: p.totalRevenue
             }))
         } else if (activeTab === "stokis") {
-            data = stokisPerf.map((s, i) => ({
-                "#": i + 1,
-                Stokis: s.stokisName,
-                Alamat: s.address || "-",
-                "Order ke Pusat": s.ordersToPusat,
-                "Order dari Mitra": s.ordersFromMitra,
-                "Jumlah Mitra": s.mitraCount,
-                "Total Revenue": s.totalRevenue
-            }))
+            // Enhanced export handled by the separate exportToExcel above for stokis tab
+            // This is a fallback for the generic button
+            const wb = XLSX.utils.book_new()
+            const stokisData: Record<string, unknown>[] = []
+            stokisPerf.forEach(s => {
+                stokisData.push({
+                    "Kode": s.uniqueCode || "-",
+                    "Nama Stokis": s.stokisName,
+                    "Telp": s.phone || "-",
+                    "Order ke Pusat": s.ordersToPusat,
+                    "Order dari Mitra": s.ordersFromMitra,
+                    "Jumlah Mitra": s.mitraCount,
+                    "Revenue": s.totalRevenue,
+                    "Produk": "", "SKU": "", "Qty": "", "Unit": "", "Revenue Produk": ""
+                })
+                s.products.forEach(p => {
+                    stokisData.push({
+                        "Kode": "", "Nama Stokis": "", "Telp": "",
+                        "Order ke Pusat": "", "Order dari Mitra": "", "Jumlah Mitra": "", "Revenue": "",
+                        "Produk": p.productName, "SKU": p.sku, "Qty": p.totalQty, "Unit": p.unit, "Revenue Produk": p.totalRevenue
+                    })
+                })
+            })
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stokisData), "Stokis")
+
+            const mitraData: Record<string, unknown>[] = []
+            mitraPerf.forEach(m => {
+                mitraData.push({
+                    "Kode": m.uniqueCode || "-", "Nama Mitra": m.mitraName, "Telp": m.phone || "-",
+                    "Stokis": m.stokisName, "Kode Stokis": m.stokisCode || "-",
+                    "Orders": m.ordersToStokis, "Revenue": m.totalRevenue,
+                    "Produk": "", "SKU": "", "Qty": "", "Unit": "", "Revenue Produk": ""
+                })
+                m.products.forEach(p => {
+                    mitraData.push({
+                        "Kode": "", "Nama Mitra": "", "Telp": "", "Stokis": "", "Kode Stokis": "", "Orders": "", "Revenue": "",
+                        "Produk": p.productName, "SKU": p.sku, "Qty": p.totalQty, "Unit": p.unit, "Revenue Produk": p.totalRevenue
+                    })
+                })
+            })
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(mitraData), "Mitra")
+
+            const dcData: Record<string, unknown>[] = []
+            dcPerf.forEach(d => {
+                dcData.push({
+                    "Kode": d.uniqueCode || "-", "Nama DC": d.dcName, "Telp": d.phone || "-",
+                    "Order ke Stokis": d.ordersToStokis, "Jumlah Stokis": d.stokisCount,
+                    "Jumlah Mitra": d.mitraCount, "Revenue": d.totalRevenue,
+                    "Produk": "", "SKU": "", "Qty": "", "Unit": "", "Revenue Produk": ""
+                })
+                d.products.forEach(p => {
+                    dcData.push({
+                        "Kode": "", "Nama DC": "", "Telp": "", "Order ke Stokis": "", "Jumlah Stokis": "", "Jumlah Mitra": "", "Revenue": "",
+                        "Produk": p.productName, "SKU": p.sku, "Qty": p.totalQty, "Unit": p.unit, "Revenue Produk": p.totalRevenue
+                    })
+                })
+            })
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dcData), "DC")
+
+            XLSX.writeFile(wb, `performa-report.xlsx`)
+            return
         } else if (activeTab === "invoice" && invoiceAging) {
             // Get invoices to export based on filter
             const invoicesToExport = invoiceFilter === "all"
@@ -841,30 +964,25 @@ export default function ReportsPage() {
                             )}
                             {/* Stokis Performance */}
                             {activeTab === "stokis" && (() => {
-                                // Calculate totals based on filter
-                                const getTotalRevenue = () => {
-                                    if (perfFilter === "dc") return dcPerf.reduce((sum, d) => sum + d.totalRevenue, 0)
-                                    if (perfFilter === "stokis") return stokisPerf.reduce((sum, s) => sum + s.totalRevenue, 0)
-                                    if (perfFilter === "mitra") return mitraPerf.reduce((sum, m) => sum + m.totalRevenue, 0)
-                                    return stokisPerf.reduce((sum, s) => sum + s.totalRevenue, 0)
-                                }
-                                const getTotalPO = () => {
-                                    if (perfFilter === "dc") return dcPerf.reduce((sum, d) => sum + d.ordersToStokis, 0)
-                                    if (perfFilter === "stokis") return stokisPerf.reduce((sum, s) => sum + s.ordersToPusat + s.ordersFromMitra, 0)
-                                    if (perfFilter === "mitra") return mitraPerf.reduce((sum, m) => sum + m.ordersToStokis, 0)
-                                    return stokisPerf.reduce((sum, s) => sum + s.ordersToPusat + s.ordersFromMitra, 0)
+                                const toggleExpand = (id: string) => {
+                                    setExpandedRows(prev => {
+                                        const next = new Set(prev)
+                                        if (next.has(id)) next.delete(id)
+                                        else next.add(id)
+                                        return next
+                                    })
                                 }
 
                                 return (
                                     <div className="space-y-3">
                                         {/* Header with Filter */}
                                         <div className="flex items-center justify-between flex-wrap gap-2">
-                                            <h3 className="font-semibold text-gray-900 text-sm">Performa ({period} Hari Terakhir)</h3>
+                                            <h3 className="font-semibold text-gray-900 text-sm">Performa ({useCustomDate ? "Custom" : `${period} Hari Terakhir`})</h3>
                                             <div className="flex gap-1">
                                                 {(["all", "dc", "stokis", "mitra"] as const).map((f) => (
                                                     <button
                                                         key={f}
-                                                        onClick={() => setPerfFilter(f)}
+                                                        onClick={() => { setPerfFilter(f); setExpandedRows(new Set()) }}
                                                         className={`px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-medium rounded-lg transition-colors ${perfFilter === f
                                                             ? "bg-purple-600 text-white"
                                                             : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -876,127 +994,259 @@ export default function ReportsPage() {
                                             </div>
                                         </div>
 
-                                        {/* Total Card */}
-                                        <div className="grid grid-cols-1 gap-2">
-                                            <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
-                                                <div className="absolute top-0 right-0 w-10 md:w-12 h-10 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                                <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                                                    <Receipt size={14} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
-                                                    <span className="text-[10px] md:text-xs text-white/80">Total {perfFilter === "all" ? "" : perfFilter.toUpperCase()}</span>
+                                        {/* Summary Cards */}
+                                        {perfSummary && (
+                                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                                                <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
+                                                    <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                                    <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                                                        <TrendingUp size={12} className="opacity-80 md:w-[14px] md:h-[14px] flex-shrink-0" />
+                                                        <span className="text-[10px] md:text-xs text-white/80 truncate">Total Revenue</span>
+                                                    </div>
+                                                    <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(perfSummary.totalRevenue)}</p>
+                                                    <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">{perfSummary.totalOrders} PO</p>
                                                 </div>
-                                                <p className="text-sm md:text-xl font-bold leading-tight">
-                                                    {formatCurrency(getTotalRevenue())}
-                                                </p>
-                                                <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">
-                                                    {getTotalPO()} PO
-                                                </p>
+                                                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
+                                                    <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                                    <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                                                        <ShoppingCart size={12} className="opacity-80 md:w-[14px] md:h-[14px] flex-shrink-0" />
+                                                        <span className="text-[10px] md:text-xs text-white/80 truncate">Avg Order Value</span>
+                                                    </div>
+                                                    <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(perfSummary.avgOrderValue)}</p>
+                                                    <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">{perfSummary.activeStokis} Stokis · {perfSummary.activeMitra} Mitra aktif</p>
+                                                </div>
+                                                <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden col-span-2 lg:col-span-1">
+                                                    <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                                    <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                                                        <BarChart3 size={12} className="opacity-80 md:w-[14px] md:h-[14px] flex-shrink-0" />
+                                                        <span className="text-[10px] md:text-xs text-white/80 truncate">Revenue Split</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <div className="flex-1 bg-white/20 rounded-full h-2 overflow-hidden">
+                                                            <div className="bg-emerald-400 h-full rounded-full" style={{ width: `${perfSummary.stokisRevenueShare}%` }} />
+                                                        </div>
+                                                        <span className="text-[10px] md:text-xs font-medium">{perfSummary.stokisRevenueShare}%</span>
+                                                    </div>
+                                                    <p className="text-[9px] md:text-xs text-white/60 mt-1">Stokis {perfSummary.stokisRevenueShare}% · Mitra {perfSummary.mitraRevenueShare}%</p>
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
 
                                         {/* DC Table */}
-                                        {perfFilter === "dc" && (
-                                            <div className="bg-white rounded-xl border border-gray-100 overflow-x-auto">
-                                                <table className="w-full text-xs min-w-[400px]">
-                                                    <thead className="bg-slate-50">
-                                                        <tr>
-                                                            <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
-                                                            <th className="px-3 py-2 text-left font-semibold text-gray-600">DC</th>
-                                                            <th className="px-3 py-2 text-right font-semibold text-gray-600">Order ke Stokis</th>
-                                                            <th className="px-3 py-2 text-right font-semibold text-gray-600">Stokis</th>
-                                                            <th className="px-3 py-2 text-right font-semibold text-gray-600">Revenue</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-gray-100">
-                                                        {dcPerf.map((d, i) => (
-                                                            <tr key={d.dcId} className="hover:bg-slate-50 transition-colors">
-                                                                <td className="px-3 py-2 font-bold text-gray-400">{i + 1}</td>
-                                                                <td className="px-3 py-2">
-                                                                    <p className="font-medium text-gray-900">{d.dcName}</p>
-                                                                </td>
-                                                                <td className="px-3 py-2 text-right text-gray-600">{d.ordersToStokis}</td>
-                                                                <td className="px-3 py-2 text-right text-gray-600">{d.stokisCount}</td>
-                                                                <td className="px-3 py-2 text-right font-bold text-emerald-600 whitespace-nowrap">{formatCurrency(d.totalRevenue)}</td>
+                                        {(perfFilter === "all" || perfFilter === "dc") && dcPerf.length > 0 && (
+                                            <div>
+                                                {perfFilter === "all" && (
+                                                    <div className="flex items-center gap-2 mb-2 mt-1">
+                                                        <div className="w-1 h-5 bg-blue-500 rounded-full" />
+                                                        <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">DC Area</span>
+                                                        <span className="text-[10px] text-gray-400">({dcPerf.length})</span>
+                                                    </div>
+                                                )}
+                                                <div className="bg-white rounded-xl border border-gray-100 overflow-x-auto">
+                                                    <table className="w-full text-xs min-w-[500px]">
+                                                        <thead className="bg-slate-50">
+                                                            <tr>
+                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
+                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">Kode</th>
+                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">DC</th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-gray-600">Order</th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-gray-600">Stokis</th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-gray-600">Mitra</th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-gray-600">Revenue</th>
+                                                                <th className="px-3 py-2 text-center font-semibold text-gray-600">Produk</th>
                                                             </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-100">
+                                                            {dcPerf.map((d, i) => (
+                                                                <React.Fragment key={d.dcId}>
+                                                                    <tr className="hover:bg-slate-50 transition-colors">
+                                                                        <td className="px-3 py-2 font-bold text-gray-400">{i + 1}</td>
+                                                                        <td className="px-3 py-2 font-mono text-[10px] text-purple-600">{d.uniqueCode || "-"}</td>
+                                                                        <td className="px-3 py-2">
+                                                                            <p className="font-medium text-gray-900">{d.dcName}</p>
+                                                                            {d.phone && <p className="text-[10px] text-gray-500">{d.phone}</p>}
+                                                                        </td>
+                                                                        <td className="px-3 py-2 text-right text-gray-600">{d.ordersToStokis}</td>
+                                                                        <td className="px-3 py-2 text-right text-gray-600">{d.stokisCount}</td>
+                                                                        <td className="px-3 py-2 text-right text-gray-600">{d.mitraCount}</td>
+                                                                        <td className="px-3 py-2 text-right font-bold text-emerald-600 whitespace-nowrap">{formatCurrency(d.totalRevenue)}</td>
+                                                                        <td className="px-3 py-2 text-center">
+                                                                            {d.products.length > 0 && (
+                                                                                <button onClick={() => toggleExpand(`dc-${d.dcId}`)} className="text-blue-500 hover:text-blue-700">
+                                                                                    {expandedRows.has(`dc-${d.dcId}`) ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                                                                </button>
+                                                                            )}
+                                                                        </td>
+                                                                    </tr>
+                                                                    {expandedRows.has(`dc-${d.dcId}`) && d.products.length > 0 && (
+                                                                        <tr>
+                                                                            <td colSpan={8} className="px-6 py-2 bg-slate-50">
+                                                                                <p className="text-[10px] font-semibold text-gray-500 mb-1">Top 5 Produk</p>
+                                                                                <div className="space-y-1">
+                                                                                    {d.products.slice(0, 5).map((p, pi) => (
+                                                                                        <div key={pi} className="flex items-center justify-between text-[10px]">
+                                                                                            <span className="text-gray-700">{pi + 1}. {p.productName} <span className="text-gray-400">({p.sku})</span></span>
+                                                                                            <span className="text-gray-600">{p.totalQty} {p.unit} · <span className="font-medium text-emerald-600">{formatCurrency(p.totalRevenue)}</span></span>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                    )}
+                                                                </React.Fragment>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         )}
 
                                         {/* Stokis Table */}
-                                        {(perfFilter === "all" || perfFilter === "stokis") && (
-                                            <div className="bg-white rounded-xl border border-gray-100 overflow-x-auto">
-                                                <table className="w-full text-xs min-w-[600px]">
-                                                    <thead className="bg-slate-50">
-                                                        <tr>
-                                                            <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
-                                                            <th className="px-3 py-2 text-left font-semibold text-gray-600">Stokis</th>
-                                                            <th className="px-3 py-2 text-right font-semibold text-gray-600">Order ke Pusat</th>
-                                                            <th className="px-3 py-2 text-right font-semibold text-gray-600">Order dari Mitra</th>
-                                                            <th className="px-3 py-2 text-right font-semibold text-gray-600">Mitra</th>
-                                                            <th className="px-3 py-2 text-right font-semibold text-gray-600">Revenue</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-gray-100">
-                                                        {stokisPerf.map((s, i) => (
-                                                            <tr key={s.stokisId} className="hover:bg-slate-50 transition-colors">
-                                                                <td className="px-3 py-2 font-bold text-gray-400">{i + 1}</td>
-                                                                <td className="px-3 py-2">
-                                                                    <p className="font-medium text-gray-900">{s.stokisName}</p>
-                                                                    {s.address && <p className="text-[10px] text-gray-500">{s.address}</p>}
-                                                                </td>
-                                                                <td className="px-3 py-2 text-right text-gray-600">{s.ordersToPusat}</td>
-                                                                <td className="px-3 py-2 text-right text-gray-600">{s.ordersFromMitra}</td>
-                                                                <td className="px-3 py-2 text-right text-gray-600">{s.mitraCount}</td>
-                                                                <td className="px-3 py-2 text-right font-bold text-emerald-600 whitespace-nowrap">{formatCurrency(s.totalRevenue)}</td>
+                                        {(perfFilter === "all" || perfFilter === "stokis") && stokisPerf.length > 0 && (
+                                            <div>
+                                                {perfFilter === "all" && (
+                                                    <div className="flex items-center gap-2 mb-2 mt-1">
+                                                        <div className="w-1 h-5 bg-emerald-500 rounded-full" />
+                                                        <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">Stokis</span>
+                                                        <span className="text-[10px] text-gray-400">({stokisPerf.length})</span>
+                                                    </div>
+                                                )}
+                                                <div className="bg-white rounded-xl border border-gray-100 overflow-x-auto">
+                                                    <table className="w-full text-xs min-w-[700px]">
+                                                        <thead className="bg-slate-50">
+                                                            <tr>
+                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
+                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">Kode</th>
+                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">Stokis</th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-gray-600">Order Pusat</th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-gray-600">Order Mitra</th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-gray-600">Mitra</th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-gray-600">Revenue</th>
+                                                                <th className="px-3 py-2 text-center font-semibold text-gray-600">Produk</th>
                                                             </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-100">
+                                                            {stokisPerf.map((s, i) => (
+                                                                <React.Fragment key={s.stokisId}>
+                                                                    <tr className="hover:bg-slate-50 transition-colors">
+                                                                        <td className="px-3 py-2 font-bold text-gray-400">{i + 1}</td>
+                                                                        <td className="px-3 py-2 font-mono text-[10px] text-purple-600">{s.uniqueCode || "-"}</td>
+                                                                        <td className="px-3 py-2">
+                                                                            <p className="font-medium text-gray-900">{s.stokisName}</p>
+                                                                            {s.phone && <p className="text-[10px] text-gray-500">{s.phone}</p>}
+                                                                        </td>
+                                                                        <td className="px-3 py-2 text-right text-gray-600">{s.ordersToPusat}</td>
+                                                                        <td className="px-3 py-2 text-right text-gray-600">{s.ordersFromMitra}</td>
+                                                                        <td className="px-3 py-2 text-right text-gray-600">{s.mitraCount}</td>
+                                                                        <td className="px-3 py-2 text-right font-bold text-emerald-600 whitespace-nowrap">{formatCurrency(s.totalRevenue)}</td>
+                                                                        <td className="px-3 py-2 text-center">
+                                                                            {s.products.length > 0 && (
+                                                                                <button onClick={() => toggleExpand(`stk-${s.stokisId}`)} className="text-blue-500 hover:text-blue-700">
+                                                                                    {expandedRows.has(`stk-${s.stokisId}`) ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                                                                </button>
+                                                                            )}
+                                                                        </td>
+                                                                    </tr>
+                                                                    {expandedRows.has(`stk-${s.stokisId}`) && s.products.length > 0 && (
+                                                                        <tr>
+                                                                            <td colSpan={8} className="px-6 py-2 bg-slate-50">
+                                                                                <p className="text-[10px] font-semibold text-gray-500 mb-1">Top 5 Produk</p>
+                                                                                <div className="space-y-1">
+                                                                                    {s.products.slice(0, 5).map((p, pi) => (
+                                                                                        <div key={pi} className="flex items-center justify-between text-[10px]">
+                                                                                            <span className="text-gray-700">{pi + 1}. {p.productName} <span className="text-gray-400">({p.sku})</span></span>
+                                                                                            <span className="text-gray-600">{p.totalQty} {p.unit} · <span className="font-medium text-emerald-600">{formatCurrency(p.totalRevenue)}</span></span>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                    )}
+                                                                </React.Fragment>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         )}
 
                                         {/* Mitra Table */}
-                                        {perfFilter === "mitra" && (
-                                            <div className="bg-white rounded-xl border border-gray-100 overflow-x-auto">
-                                                <table className="w-full text-xs min-w-[500px]">
-                                                    <thead className="bg-slate-50">
-                                                        <tr>
-                                                            <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
-                                                            <th className="px-3 py-2 text-left font-semibold text-gray-600">Mitra</th>
-                                                            <th className="px-3 py-2 text-left font-semibold text-gray-600">Stokis</th>
-                                                            <th className="px-3 py-2 text-right font-semibold text-gray-600">Orders</th>
-                                                            <th className="px-3 py-2 text-right font-semibold text-gray-600">Revenue</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-gray-100">
-                                                        {mitraPerf.map((m, i) => (
-                                                            <tr key={m.mitraId} className="hover:bg-slate-50 transition-colors">
-                                                                <td className="px-3 py-2 font-bold text-gray-400">{i + 1}</td>
-                                                                <td className="px-3 py-2">
-                                                                    <p className="font-medium text-gray-900">{m.mitraName}</p>
-                                                                    {m.address && <p className="text-[10px] text-gray-500">{m.address}</p>}
-                                                                </td>
-                                                                <td className="px-3 py-2 text-gray-600">{m.stokisName}</td>
-                                                                <td className="px-3 py-2 text-right text-gray-600">{m.ordersToStokis}</td>
-                                                                <td className="px-3 py-2 text-right font-bold text-emerald-600 whitespace-nowrap">{formatCurrency(m.totalRevenue)}</td>
+                                        {(perfFilter === "all" || perfFilter === "mitra") && mitraPerf.length > 0 && (
+                                            <div>
+                                                {perfFilter === "all" && (
+                                                    <div className="flex items-center gap-2 mb-2 mt-1">
+                                                        <div className="w-1 h-5 bg-purple-500 rounded-full" />
+                                                        <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">Mitra</span>
+                                                        <span className="text-[10px] text-gray-400">({mitraPerf.length})</span>
+                                                    </div>
+                                                )}
+                                                <div className="bg-white rounded-xl border border-gray-100 overflow-x-auto">
+                                                    <table className="w-full text-xs min-w-[600px]">
+                                                        <thead className="bg-slate-50">
+                                                            <tr>
+                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
+                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">Kode</th>
+                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">Mitra</th>
+                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">Stokis</th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-gray-600">Orders</th>
+                                                                <th className="px-3 py-2 text-right font-semibold text-gray-600">Revenue</th>
+                                                                <th className="px-3 py-2 text-center font-semibold text-gray-600">Produk</th>
                                                             </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-100">
+                                                            {mitraPerf.map((m, i) => (
+                                                                <React.Fragment key={m.mitraId}>
+                                                                    <tr className="hover:bg-slate-50 transition-colors">
+                                                                        <td className="px-3 py-2 font-bold text-gray-400">{i + 1}</td>
+                                                                        <td className="px-3 py-2 font-mono text-[10px] text-purple-600">{m.uniqueCode || "-"}</td>
+                                                                        <td className="px-3 py-2">
+                                                                            <p className="font-medium text-gray-900">{m.mitraName}</p>
+                                                                            {m.phone && <p className="text-[10px] text-gray-500">{m.phone}</p>}
+                                                                        </td>
+                                                                        <td className="px-3 py-2">
+                                                                            <p className="text-gray-600">{m.stokisName}</p>
+                                                                            {m.stokisCode && <p className="text-[10px] text-gray-400 font-mono">{m.stokisCode}</p>}
+                                                                        </td>
+                                                                        <td className="px-3 py-2 text-right text-gray-600">{m.ordersToStokis}</td>
+                                                                        <td className="px-3 py-2 text-right font-bold text-emerald-600 whitespace-nowrap">{formatCurrency(m.totalRevenue)}</td>
+                                                                        <td className="px-3 py-2 text-center">
+                                                                            {m.products.length > 0 && (
+                                                                                <button onClick={() => toggleExpand(`mtr-${m.mitraId}`)} className="text-blue-500 hover:text-blue-700">
+                                                                                    {expandedRows.has(`mtr-${m.mitraId}`) ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                                                                </button>
+                                                                            )}
+                                                                        </td>
+                                                                    </tr>
+                                                                    {expandedRows.has(`mtr-${m.mitraId}`) && m.products.length > 0 && (
+                                                                        <tr>
+                                                                            <td colSpan={7} className="px-6 py-2 bg-slate-50">
+                                                                                <p className="text-[10px] font-semibold text-gray-500 mb-1">Top 5 Produk</p>
+                                                                                <div className="space-y-1">
+                                                                                    {m.products.slice(0, 5).map((p, pi) => (
+                                                                                        <div key={pi} className="flex items-center justify-between text-[10px]">
+                                                                                            <span className="text-gray-700">{pi + 1}. {p.productName} <span className="text-gray-400">({p.sku})</span></span>
+                                                                                            <span className="text-gray-600">{p.totalQty} {p.unit} · <span className="font-medium text-emerald-600">{formatCurrency(p.totalRevenue)}</span></span>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                    )}
+                                                                </React.Fragment>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         )}
 
                                         {/* Empty state */}
-                                        {((perfFilter === "dc" && dcPerf.length === 0) ||
-                                            (perfFilter === "stokis" && stokisPerf.length === 0) ||
-                                            (perfFilter === "mitra" && mitraPerf.length === 0) ||
-                                            (perfFilter === "all" && stokisPerf.length === 0)) && (
-                                                <div className="text-center py-8 text-gray-400">
-                                                    <Users size={32} className="mx-auto mb-2 opacity-50" />
-                                                    <p className="text-sm">Belum ada data</p>
-                                                </div>
-                                            )}
+                                        {dcPerf.length === 0 && stokisPerf.length === 0 && mitraPerf.length === 0 && (
+                                            <div className="text-center py-8 text-gray-400">
+                                                <Users size={32} className="mx-auto mb-2 opacity-50" />
+                                                <p className="text-sm">Belum ada data</p>
+                                            </div>
+                                        )}
                                     </div>
                                 )
                             })()}
@@ -1138,7 +1388,8 @@ export default function ReportsPage() {
                                 </div>
                             )}
                         </>
-                    )}
+                    )
+                    }
                 </div>
             </div>
         </div>

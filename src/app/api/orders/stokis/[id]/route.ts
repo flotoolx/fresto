@@ -28,8 +28,8 @@ export async function PATCH(
 
         // Handle adjust action
         if (body.action === "adjust") {
-            // FINANCE, PUSAT, DC, FINANCE_DC, FINANCE_ALL, and STOKIS can adjust
-            if (!["FINANCE", "PUSAT", "DC", "FINANCE_DC", "FINANCE_ALL", "STOKIS"].includes(role)) {
+            // FINANCE, PUSAT, DC, FINANCE_DC, and STOKIS can adjust (FINANCE_ALL is view-only)
+            if (!["FINANCE", "PUSAT", "DC", "FINANCE_DC", "STOKIS"].includes(role)) {
                 return NextResponse.json({ error: "Forbidden" }, { status: 403 })
             }
 
@@ -50,18 +50,18 @@ export async function PATCH(
                 return NextResponse.json({ error: "Order not found" }, { status: 404 })
             }
 
-            // Stokis can only adjust their own orders in PENDING states
+            // Stokis can only adjust their own orders in PENDING_PUSAT
             if (role === "STOKIS") {
                 if (order.stokisId !== userId) {
                     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
                 }
-                if (!["PENDING_PUSAT", "PENDING_FINANCE"].includes(order.status)) {
+                if (order.status !== "PENDING_PUSAT") {
                     return NextResponse.json({ error: "Cannot adjust order in this status" }, { status: 400 })
                 }
             }
 
-            // Finance/PUSAT/DC can adjust PENDING_PUSAT or PENDING_FINANCE orders
-            if (["FINANCE", "PUSAT", "DC", "FINANCE_DC", "FINANCE_ALL"].includes(role) && !["PENDING_PUSAT", "PENDING_FINANCE"].includes(order.status)) {
+            // Finance/PUSAT/DC can adjust PENDING_PUSAT orders
+            if (["FINANCE", "PUSAT", "DC", "FINANCE_DC"].includes(role) && order.status !== "PENDING_PUSAT") {
                 return NextResponse.json({ error: "Cannot adjust order in this status" }, { status: 400 })
             }
 
@@ -100,10 +100,12 @@ export async function PATCH(
             }
 
             // If Finance, PUSAT, or DC adjusts, also approve the PO
-            if (["FINANCE", "PUSAT", "DC", "FINANCE_DC", "FINANCE_ALL"].includes(role)) {
+            if (["FINANCE", "PUSAT", "DC", "FINANCE_DC"].includes(role)) {
                 updateData.status = "PO_ISSUED" as StokisOrderStatus
                 updateData.financeApproveAt = new Date()
                 updateData.poIssuedAt = new Date()
+                updateData.approvedBy = userId
+                updateData.approvedByName = session.user.name || role
 
                 // Generate Invoice
                 try {
@@ -144,14 +146,13 @@ export async function PATCH(
             return NextResponse.json({ error: "Order not found" }, { status: 404 })
         }
 
-        // Permission check - PUSAT and FINANCE can approve PO directly from PENDING_PUSAT
+        // Permission check - PUSAT, FINANCE, DC, FINANCE_DC can approve PO from PENDING_PUSAT
         const allowedTransitions: Record<string, { roles: string[]; from: string[] }> = {
-            PENDING_FINANCE: { roles: ["PUSAT"], from: ["PENDING_PUSAT"] },
-            PO_ISSUED: { roles: ["FINANCE", "PUSAT", "DC", "FINANCE_DC", "FINANCE_ALL"], from: ["PENDING_PUSAT", "PENDING_FINANCE"] },
+            PO_ISSUED: { roles: ["FINANCE", "PUSAT", "DC", "FINANCE_DC"], from: ["PENDING_PUSAT"] },
             PROCESSING: { roles: ["GUDANG"], from: ["PO_ISSUED"] },
             SHIPPED: { roles: ["GUDANG"], from: ["PROCESSING"] },
             RECEIVED: { roles: ["STOKIS"], from: ["SHIPPED"] },
-            CANCELLED: { roles: ["PUSAT", "FINANCE", "DC", "FINANCE_DC", "FINANCE_ALL", "STOKIS"], from: ["PENDING_PUSAT", "PENDING_FINANCE"] },
+            CANCELLED: { roles: ["PUSAT", "FINANCE", "DC", "FINANCE_DC", "STOKIS"], from: ["PENDING_PUSAT"] },
         }
 
         const transition = allowedTransitions[status]
@@ -173,10 +174,11 @@ export async function PATCH(
         }
 
         const updateData: Record<string, unknown> = { status }
-        if (["PENDING_FINANCE"].includes(status)) updateData.pusatApproveAt = new Date()
         if (status === "PO_ISSUED") {
             updateData.financeApproveAt = new Date()
             updateData.poIssuedAt = new Date()
+            updateData.approvedBy = userId
+            updateData.approvedByName = session.user.name || role
         }
         if (status === "SHIPPED") updateData.shippedAt = new Date()
         if (status === "RECEIVED") updateData.receivedAt = new Date()
@@ -192,12 +194,7 @@ export async function PATCH(
 
         // Send push notifications based on status change
         try {
-            if (["PENDING_FINANCE"].includes(status)) {
-                // Notify Finance that PO needs approval
-                await sendPushToRole("FINANCE" as Role,
-                    PushTemplates.poNeedsApproval(order.orderNumber, order.stokis.name)
-                )
-            } else if (status === "PO_ISSUED") {
+            if (status === "PO_ISSUED") {
                 // Generate Invoice automatically
                 try {
                     await generateInvoice(order.id)
@@ -210,10 +207,11 @@ export async function PATCH(
                 await sendPushToRole("GUDANG" as Role,
                     PushTemplates.poApproved(order.orderNumber)
                 )
-                // Also notify Stokis
+                // Also notify Stokis with approver info
+                const approverName = session.user.name || role
                 await sendPushToUser(order.stokisId, {
-                    title: "✅ PO Disetujui Finance",
-                    body: `PO ${order.orderNumber} sedang diproses Gudang`,
+                    title: "✅ PO Disetujui",
+                    body: `PO ${order.orderNumber} disetujui oleh ${approverName}, sedang diproses Gudang`,
                     url: "/dashboard/history-pusat"
                 })
             } else if (status === "SHIPPED") {

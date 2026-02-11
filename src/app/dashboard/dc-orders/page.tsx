@@ -17,7 +17,6 @@ interface Order {
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
     PENDING_PUSAT: { label: "Menunggu Pusat", color: "bg-yellow-100 text-yellow-700", icon: <Clock size={14} /> },
-    PENDING_FINANCE: { label: "Menunggu Finance", color: "bg-orange-100 text-orange-700", icon: <Clock size={14} /> },
     PO_ISSUED: { label: "PO Issued", color: "bg-blue-100 text-blue-700", icon: <Package size={14} /> },
     PROCESSING: { label: "Diproses", color: "bg-purple-100 text-purple-700", icon: <Package size={14} /> },
     SHIPPED: { label: "Dikirim", color: "bg-indigo-100 text-indigo-700", icon: <Truck size={14} /> },
@@ -100,7 +99,6 @@ export default function DCOrdersPage() {
                 >
                     <option value="ALL">Semua Status</option>
                     <option value="PENDING_PUSAT">Menunggu Pusat</option>
-                    <option value="PENDING_FINANCE">Menunggu Finance</option>
                     <option value="PO_ISSUED">PO Issued</option>
                     <option value="PROCESSING">Diproses</option>
                     <option value="SHIPPED">Dikirim</option>

@@ -20,7 +20,6 @@ enum Role {
 
 enum StokisOrderStatus {
   PENDING_PUSAT
-  PENDING_FINANCE
   PO_ISSUED
   PROCESSING
   SHIPPED
@@ -151,6 +150,10 @@ model StokisOrder {
   poIssuedAt       DateTime?
   shippedAt        DateTime?
   receivedAt       DateTime?
+
+  // Approval tracking
+  approvedBy       String?   // User ID yang melakukan approval
+  approvedByName   String?   // Nama user yang approve
 
   stokisId    String
   stokis      User              @relation("StokisOrders", fields: [stokisId], references: [id])
