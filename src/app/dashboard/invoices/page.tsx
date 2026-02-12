@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import Link from "next/link"
 import {
     Receipt,
@@ -31,6 +32,8 @@ interface Invoice {
 }
 
 export default function InvoicesPage() {
+    const { data: session } = useSession()
+    const role = session?.user?.role || ""
     const [invoices, setInvoices] = useState<Invoice[]>([])
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState("ALL")
@@ -211,91 +214,160 @@ export default function InvoicesPage() {
                 </div>
             </div>
 
-            {/* Invoice Cards Grid */}
-            <div className="grid sm:grid-cols-2 gap-4">
-                {filteredInvoices.map((invoice) => {
-                    const daysUntilDue = getDaysUntilDue(invoice.dueDate)
-                    const isOverdue = invoice.status === "OVERDUE"
-                    const isPaid = invoice.status === "PAID"
-                    const isUnpaid = invoice.status === "UNPAID"
-
-                    return (
-                        <div
-                            key={invoice.id}
-                            className={`bg-white rounded-xl p-5 shadow-sm border-l-4 ${isPaid ? "border-l-green-500" :
-                                isOverdue ? "border-l-red-500" :
-                                    "border-l-yellow-500"
-                                }`}
-                        >
-                            {/* Card Header */}
-                            <div className="flex items-start justify-between mb-3">
-                                <div>
-                                    <h3 className="font-bold text-gray-900">{invoice.invoiceNumber}</h3>
-                                    <p className="text-sm text-gray-500">{invoice.order.orderNumber}</p>
-                                </div>
-                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isPaid ? "bg-green-100 text-green-700" :
-                                    isOverdue ? "bg-red-100 text-red-700" :
-                                        "bg-yellow-100 text-yellow-700"
-                                    }`}>
-                                    {invoice.status}
-                                </span>
-                            </div>
-
-                            {/* Stokis Info */}
-                            <div className="mb-3">
-                                <p className="font-medium text-gray-800">{invoice.order.stokis.name}</p>
-                                <p className="text-sm text-gray-500">{invoice.order.stokis.email}</p>
-                            </div>
-
-                            {/* Amount & Due Date */}
-                            <div className="flex items-end justify-between mb-4">
-                                <div>
-                                    <p className="text-xs text-gray-500">Jatuh Tempo</p>
-                                    <p className="font-medium text-gray-800">{formatDate(invoice.dueDate)}</p>
-                                    {isUnpaid && daysUntilDue <= 7 && daysUntilDue > 0 && (
-                                        <p className="text-xs text-red-600 font-medium">{daysUntilDue} hari lagi</p>
-                                    )}
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-xs text-gray-500">Total</p>
-                                    <p className="text-xl font-bold text-green-600">{formatCurrency(invoice.amount)}</p>
-                                </div>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex gap-2 pt-3 border-t">
-                                <Link
-                                    href={`/invoice/${invoice.id}`}
-                                    target="_blank"
-                                    className="flex-1 flex items-center justify-center gap-2 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
-                                >
-                                    <Printer size={16} /> Print
-                                </Link>
-                                {(isUnpaid || isOverdue) && (
-                                    <button
-                                        onClick={() => handleMarkAsPaid(invoice.id)}
-                                        disabled={updatingId === invoice.id}
-                                        className="flex-1 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 text-sm font-medium"
-                                    >
-                                        {updatingId === invoice.id ? "..." : "✓ Mark Paid"}
-                                    </button>
-                                )}
-                                {isPaid && (
-                                    <div className="flex-1 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium text-center flex items-center justify-center gap-1">
-                                        <CheckCircle size={16} /> Lunas
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
-
-            {/* Empty State */}
-            {filteredInvoices.length === 0 && (
+            {/* Invoice List */}
+            {filteredInvoices.length === 0 ? (
                 <div className="bg-white rounded-xl p-12 shadow-sm text-center">
                     <Receipt size={48} className="mx-auto mb-3 text-gray-300" />
                     <p className="text-gray-500">Tidak ada invoice ditemukan</p>
+                </div>
+            ) : (role === "FINANCE_DC" || role === "FINANCE_ALL") ? (
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-[650px]">
+                            <thead className="bg-gray-50 border-b">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tanggal</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nomor PO</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Konsumen</th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Nominal</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {filteredInvoices.map((invoice) => {
+                                    const isPaid = invoice.status === "PAID"
+                                    const isOverdue = invoice.status === "OVERDUE"
+                                    const isUnpaid = invoice.status === "UNPAID"
+                                    const statusColor = isPaid
+                                        ? "bg-green-100 text-green-700"
+                                        : isOverdue
+                                            ? "bg-red-100 text-red-700"
+                                            : "bg-yellow-100 text-yellow-700"
+                                    const statusLabel = isPaid ? "Lunas" : isOverdue ? "Overdue" : "Belum Lunas"
+                                    return (
+                                        <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{formatDate(invoice.createdAt)}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <p className="text-sm font-medium text-gray-900">{invoice.invoiceNumber}</p>
+                                                <p className="text-xs text-gray-500">{invoice.order.orderNumber}</p>
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-gray-700">{invoice.order.stokis.name}</td>
+                                            <td className="px-4 py-3 text-sm font-semibold text-green-600 text-right whitespace-nowrap">{formatCurrency(invoice.amount)}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+                                                    {statusLabel}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <Link
+                                                        href={`/invoice/${invoice.id}`}
+                                                        target="_blank"
+                                                        className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                                        title="Print"
+                                                    >
+                                                        <Printer size={16} />
+                                                    </Link>
+                                                    {(isUnpaid || isOverdue) && (
+                                                        <button
+                                                            onClick={() => handleMarkAsPaid(invoice.id)}
+                                                            disabled={updatingId === invoice.id}
+                                                            className="px-2 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 text-xs font-medium"
+                                                        >
+                                                            {updatingId === invoice.id ? "..." : "✓ Paid"}
+                                                        </button>
+                                                    )}
+                                                    {isPaid && (
+                                                        <span className="text-green-600"><CheckCircle size={16} /></span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ) : (
+                <div className="grid sm:grid-cols-2 gap-4">
+                    {filteredInvoices.map((invoice) => {
+                        const daysUntilDue = getDaysUntilDue(invoice.dueDate)
+                        const isOverdue = invoice.status === "OVERDUE"
+                        const isPaid = invoice.status === "PAID"
+                        const isUnpaid = invoice.status === "UNPAID"
+
+                        return (
+                            <div
+                                key={invoice.id}
+                                className={`bg-white rounded-xl p-5 shadow-sm border-l-4 ${isPaid ? "border-l-green-500" :
+                                    isOverdue ? "border-l-red-500" :
+                                        "border-l-yellow-500"
+                                    }`}
+                            >
+                                {/* Card Header */}
+                                <div className="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h3 className="font-bold text-gray-900">{invoice.invoiceNumber}</h3>
+                                        <p className="text-sm text-gray-500">{invoice.order.orderNumber}</p>
+                                    </div>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isPaid ? "bg-green-100 text-green-700" :
+                                        isOverdue ? "bg-red-100 text-red-700" :
+                                            "bg-yellow-100 text-yellow-700"
+                                        }`}>
+                                        {invoice.status}
+                                    </span>
+                                </div>
+
+                                {/* Stokis Info */}
+                                <div className="mb-3">
+                                    <p className="font-medium text-gray-800">{invoice.order.stokis.name}</p>
+                                    <p className="text-sm text-gray-500">{invoice.order.stokis.email}</p>
+                                </div>
+
+                                {/* Amount & Due Date */}
+                                <div className="flex items-end justify-between mb-4">
+                                    <div>
+                                        <p className="text-xs text-gray-500">Jatuh Tempo</p>
+                                        <p className="font-medium text-gray-800">{formatDate(invoice.dueDate)}</p>
+                                        {isUnpaid && daysUntilDue <= 7 && daysUntilDue > 0 && (
+                                            <p className="text-xs text-red-600 font-medium">{daysUntilDue} hari lagi</p>
+                                        )}
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs text-gray-500">Total</p>
+                                        <p className="text-xl font-bold text-green-600">{formatCurrency(invoice.amount)}</p>
+                                    </div>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex gap-2 pt-3 border-t">
+                                    <Link
+                                        href={`/invoice/${invoice.id}`}
+                                        target="_blank"
+                                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
+                                    >
+                                        <Printer size={16} /> Print
+                                    </Link>
+                                    {(isUnpaid || isOverdue) && (
+                                        <button
+                                            onClick={() => handleMarkAsPaid(invoice.id)}
+                                            disabled={updatingId === invoice.id}
+                                            className="flex-1 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 text-sm font-medium"
+                                        >
+                                            {updatingId === invoice.id ? "..." : "✓ Mark Paid"}
+                                        </button>
+                                    )}
+                                    {isPaid && (
+                                        <div className="flex-1 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium text-center flex items-center justify-center gap-1">
+                                            <CheckCircle size={16} /> Lunas
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )
+                    })}
                 </div>
             )}
         </div>
