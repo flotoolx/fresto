@@ -84,6 +84,20 @@ export default function MitraOrderPage() {
         setCart((prev) => prev.filter((item) => item.product.id !== productId))
     }
 
+    const setQuantity = (productId: string, qty: number) => {
+        if (qty <= 0) {
+            removeFromCart(productId)
+            return
+        }
+        setCart((prev) =>
+            prev.map((item) =>
+                item.product.id === productId
+                    ? { ...item, quantity: qty }
+                    : item
+            )
+        )
+    }
+
     const totalAmount = cart.reduce(
         (sum, item) => sum + item.product.price * item.quantity,
         0
@@ -226,7 +240,17 @@ export default function MitraOrderPage() {
                                                 >
                                                     <Minus size={14} />
                                                 </button>
-                                                <span className="w-8 text-center text-gray-900 font-medium">{item.quantity}</span>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={item.quantity}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value)
+                                                        if (!isNaN(val)) setQuantity(item.product.id, val)
+                                                    }}
+                                                    onFocus={(e) => e.target.select()}
+                                                    className="w-14 text-center text-gray-900 font-medium border rounded px-1 py-0.5 text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                />
                                                 <button
                                                     onClick={() => updateQuantity(item.product.id, 1)}
                                                     className="p-1 border rounded hover:bg-gray-100"
