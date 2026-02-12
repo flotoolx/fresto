@@ -188,6 +188,21 @@ export default function DashboardPage() {
                         { label: "Total", value: formatRp(stokisTotal), subtitle: `${allStokisOrders.length} PO`, icon: Store, gradient: "from-[#3B82F6] to-[#1D4ED8]", href: "/dashboard/orders-stokis" },
                         { label: "Menunggu Approval", value: formatRp(stokisPendingTotal), subtitle: `${stokisPending.length} PO`, icon: ShoppingCart, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/orders-stokis" },
                     ])
+                } else if (role === "FINANCE_DC") {
+                    const stokisRes = await fetch(`/api/orders/stokis`)
+                    const stokisOrders = stokisRes.ok ? await stokisRes.json() : []
+
+                    const allOrders = Array.isArray(stokisOrders) ? stokisOrders : []
+                    const totalAmount = allOrders.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+                    const pending = allOrders.filter((o: { status: string }) => o.status === "PENDING_PUSAT")
+                    const pendingAmount = pending.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+
+                    const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`
+
+                    setStats([
+                        { label: "Total", value: formatRp(totalAmount), subtitle: `${allOrders.length} PO`, icon: Package, gradient: "from-[#E31E24] to-[#B91C22]", href: "/dashboard/orders-stokis" },
+                        { label: "Menunggu Approval", value: formatRp(pendingAmount), subtitle: `${pending.length} PO`, icon: ShoppingCart, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/approve-po" },
+                    ])
                 } else if (role === "DC") {
                     // DC-specific stats: fetch real data
                     const [usersRes, ordersRes] = await Promise.all([
@@ -586,6 +601,28 @@ export default function DashboardPage() {
                         <div key={i} className="bg-gray-100 rounded-xl p-4 h-24 animate-pulse" />
                     ))}
                 </div>
+            ) : role === "FINANCE_DC" ? (
+                <div className="grid grid-cols-2 gap-4">
+                    {stats.map((stat, index) => (
+                        <Link
+                            key={index}
+                            href={stat.href || "#"}
+                            className={`bg-gradient-to-br ${stat.gradient} rounded-xl p-4 text-white relative overflow-hidden shadow-md hover:shadow-lg hover:scale-105 transition-all cursor-pointer`}
+                        >
+                            <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                            <div className="relative">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <stat.icon size={16} className="opacity-80" />
+                                    <span className="text-white/80 text-xs font-medium">{stat.label}</span>
+                                </div>
+                                <p className="text-2xl font-bold">{stat.value}</p>
+                                {stat.subtitle && (
+                                    <p className="text-xs text-white/70 mt-0.5">{stat.subtitle}</p>
+                                )}
+                            </div>
+                        </Link>
+                    ))}
+                </div>
             ) : (role === "STOKIS" || role === "FINANCE") ? (
                 <div className="flex flex-col lg:flex-row gap-6">
                     {/* Left Section */}
@@ -735,7 +772,7 @@ export default function DashboardPage() {
                                 </Link>
                             </>
                         )}
-                        {role === "FINANCE" && (
+                        {(role === "FINANCE" || role === "FINANCE_DC") && (
                             <>
                                 <Link
                                     href="/dashboard/approve-po"
