@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useSession } from "next-auth/react"
 import { Receipt, Clock, CheckCircle, ChevronRight, AlertTriangle, Printer, Edit3 } from "lucide-react"
 import ExportButton from "@/components/ExportButton"
 import Link from "next/link"
@@ -19,7 +20,7 @@ interface StokisOrder {
     totalAmount: number
     notes: string | null
     createdAt: string
-    stokis: { id: string; name: string; address: string | null; email: string; role: string }
+    stokis: { id: string; name: string; address: string | null; email: string; role: string; dcId: string | null }
     items: OrderItem[]
 }
 
@@ -41,8 +42,20 @@ interface OutstandingData {
     }[]
 }
 
+const statusConfig: Record<string, { label: string; color: string }> = {
+    PENDING_PUSAT: { label: "Menunggu Approval", color: "bg-orange-100 text-orange-700" },
+    PO_ISSUED: { label: "PO Issued", color: "bg-blue-100 text-blue-700" },
+    PROCESSING: { label: "Diproses", color: "bg-indigo-100 text-indigo-700" },
+    SHIPPED: { label: "Dikirim", color: "bg-cyan-100 text-cyan-700" },
+    RECEIVED: { label: "Diterima", color: "bg-green-100 text-green-700" },
+    CANCELLED: { label: "Dibatalkan", color: "bg-red-100 text-red-700" },
+}
+
 export default function ApprovePOPage() {
+    const { data: session } = useSession()
+    const role = session?.user?.role || ""
     const [orders, setOrders] = useState<StokisOrder[]>([])
+    const [allOrders, setAllOrders] = useState<StokisOrder[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedOrder, setSelectedOrder] = useState<StokisOrder | null>(null)
     const [updating, setUpdating] = useState(false)
@@ -52,6 +65,7 @@ export default function ApprovePOPage() {
     const [adjustedItems, setAdjustedItems] = useState<{ id: string; quantity: number }[]>([])
     const [adjustNotes, setAdjustNotes] = useState("")
     const [poTypeFilter, setPoTypeFilter] = useState<"all" | "dc" | "stokis">("all")
+    const [dcFilter, setDcFilter] = useState<"pusat" | "alldc" | "dc">("pusat")
 
     useEffect(() => {
         fetchOrders()
@@ -61,8 +75,10 @@ export default function ApprovePOPage() {
         try {
             const res = await fetch("/api/orders/stokis")
             const data = await res.json()
-            // Filter PENDING_PUSAT orders for approval
-            setOrders(data.filter((o: StokisOrder) => o.status === "PENDING_PUSAT"))
+            const all = Array.isArray(data) ? data : []
+            setAllOrders(all)
+            // Filter PENDING_PUSAT orders for approval (non-FINANCE_DC)
+            setOrders(all.filter((o: StokisOrder) => o.status === "PENDING_PUSAT"))
         } catch (err) {
             console.error("Error fetching orders:", err)
         } finally {
@@ -185,22 +201,94 @@ export default function ApprovePOPage() {
             {/* Filter Buttons */}
             <div className="bg-white rounded-xl p-4 shadow-sm">
                 <div className="flex gap-2 flex-wrap items-center">
-                    {["all", "dc", "stokis"].map((f) => (
-                        <button
-                            key={f}
-                            onClick={() => setPoTypeFilter(f as "all" | "dc" | "stokis")}
-                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${poTypeFilter === f
-                                ? "bg-purple-500 text-white shadow-md"
-                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                }`}
-                        >
-                            {f === "all" ? "Semua" : f === "dc" ? "DC" : "Stokis"}
-                        </button>
-                    ))}
+                    {role === "FINANCE_DC" ? (
+                        ["pusat", "alldc", "dc"].map((f) => (
+                            <button
+                                key={f}
+                                onClick={() => setDcFilter(f as "pusat" | "alldc" | "dc")}
+                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${dcFilter === f
+                                    ? "bg-purple-500 text-white shadow-md"
+                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    }`}
+                            >
+                                {f === "pusat" ? "Pusat" : f === "alldc" ? "All DC" : "DC"}
+                            </button>
+                        ))
+                    ) : (
+                        ["all", "dc", "stokis"].map((f) => (
+                            <button
+                                key={f}
+                                onClick={() => setPoTypeFilter(f as "all" | "dc" | "stokis")}
+                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${poTypeFilter === f
+                                    ? "bg-purple-500 text-white shadow-md"
+                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    }`}
+                            >
+                                {f === "all" ? "Semua" : f === "dc" ? "DC" : "Stokis"}
+                            </button>
+                        ))
+                    )}
                 </div>
             </div>
 
-            {(() => {
+            {/* FINANCE_DC Table View */}
+            {role === "FINANCE_DC" ? (() => {
+                const dcFiltered = dcFilter === "pusat"
+                    ? allOrders.filter(o => o.status === "PENDING_PUSAT")
+                    : dcFilter === "alldc"
+                        ? allOrders
+                        : allOrders.filter(o => o.stokis.dcId === session?.user?.dcId)
+
+                return dcFiltered.length === 0 ? (
+                    <div className="bg-white rounded-xl p-12 shadow-sm text-center">
+                        <CheckCircle className="w-16 h-16 text-green-300 mx-auto mb-4" />
+                        <p className="text-gray-500">
+                            {dcFilter === "pusat" ? "Tidak ada PO menunggu approval" : "Tidak ada data PO"}
+                        </p>
+                    </div>
+                ) : (
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[600px]">
+                                <thead className="bg-gray-50 border-b">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tanggal</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nomor PO</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Konsumen</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Nominal</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {dcFiltered.map((order) => {
+                                        const st = statusConfig[order.status] || statusConfig.PENDING_PUSAT
+                                        const clickable = order.status === "PENDING_PUSAT"
+                                        return (
+                                            <tr
+                                                key={order.id}
+                                                onClick={() => clickable && handleSelectOrder(order)}
+                                                className={`transition-colors ${clickable ? "hover:bg-purple-50 cursor-pointer" : "hover:bg-gray-50"}`}
+                                            >
+                                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{formatDate(order.createdAt)}</td>
+                                                <td className="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">{order.orderNumber}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-700">{order.stokis.name}</td>
+                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${st.color}`}>
+                                                        {st.label}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-sm font-semibold text-purple-600 text-right whitespace-nowrap">
+                                                    {formatCurrency(Number(order.totalAmount))}
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )
+            })() : (() => {
                 const filteredOrders = orders.filter(order => {
                     if (poTypeFilter === "all") return true
                     if (poTypeFilter === "dc") return order.stokis.role === "DC"
