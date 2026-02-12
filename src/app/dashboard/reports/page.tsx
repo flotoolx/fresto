@@ -181,9 +181,9 @@ export default function ReportsPage() {
     const [loading, setLoading] = useState(true)
     const [year, setYear] = useState(new Date().getFullYear())
     const [period, setPeriod] = useState(30)
-    const [invoiceFilter, setInvoiceFilter] = useState<"all" | "dc" | "stokis">("all")
+    const [invoiceFilter, setInvoiceFilter] = useState<"all" | "unpaid" | "paid">("all")
     const [invoiceSortOrder, setInvoiceSortOrder] = useState<"asc" | "desc">("desc")
-    const [perfFilter, setPerfFilter] = useState<"all" | "dc" | "stokis" | "mitra">("all")
+    const [perfFilter, setPerfFilter] = useState<"stokis" | "mitra">("stokis")
 
     // Custom date range for Overview
     const [useCustomDate, setUseCustomDate] = useState(false)
@@ -363,11 +363,12 @@ export default function ReportsPage() {
             }
         } else if (activeTab === "invoice" && invoiceAging) {
             // Get invoices to export based on filter
-            const invoicesToExport = invoiceFilter === "all"
-                ? [...invoiceDetails.dc, ...invoiceDetails.stokis]
-                : invoiceFilter === "dc"
-                    ? invoiceDetails.dc
-                    : invoiceDetails.stokis
+            const allInvoices = [...invoiceDetails.dc, ...invoiceDetails.stokis]
+            const invoicesToExport = invoiceFilter === "unpaid"
+                ? allInvoices.filter(inv => inv.status !== "PAID")
+                : invoiceFilter === "paid"
+                    ? allInvoices.filter(inv => inv.status === "PAID")
+                    : allInvoices
 
             // Summary section
             autoTable(doc, {
@@ -503,11 +504,12 @@ export default function ReportsPage() {
             return
         } else if (activeTab === "invoice" && invoiceAging) {
             // Get invoices to export based on filter
-            const invoicesToExport = invoiceFilter === "all"
-                ? [...invoiceDetails.dc, ...invoiceDetails.stokis]
-                : invoiceFilter === "dc"
-                    ? invoiceDetails.dc
-                    : invoiceDetails.stokis
+            const allInvoicesXl = [...invoiceDetails.dc, ...invoiceDetails.stokis]
+            const invoicesToExport = invoiceFilter === "unpaid"
+                ? allInvoicesXl.filter(inv => inv.status !== "PAID")
+                : invoiceFilter === "paid"
+                    ? allInvoicesXl.filter(inv => inv.status === "PAID")
+                    : allInvoicesXl
 
             const getAgingLabel = (category: string) => {
                 const labels: Record<string, string> = {
@@ -742,32 +744,32 @@ export default function ReportsPage() {
                                 <div className="space-y-4">
                                     {/* Stats Grid - Compact */}
                                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-                                        {/* Total Revenue */}
+                                        {/* Total Stokis */}
                                         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                             <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                                                <TrendingUp size={12} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
-                                                <span className="text-[10px] md:text-xs text-white/80 truncate">Total Revenue</span>
+                                                <Users size={12} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
+                                                <span className="text-[10px] md:text-xs text-white/80 truncate">Total Stokis</span>
                                             </div>
-                                            <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(summary.summary.totalRevenue)}</p>
-                                            <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO: <span className="font-bold">{summary.summary.stokisOrders + summary.summary.mitraOrders}</span></p>
+                                            <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{summary.users.totalStokis}</p>
+                                            <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Order: <span className="font-bold">{summary.users.activeStokis}</span></p>
                                         </div>
-                                        {/* Total DC */}
+                                        {/* Total Mitra */}
                                         <div className="bg-gradient-to-br from-slate-600 to-slate-700 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                             <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                                                <Store size={12} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
-                                                <span className="text-[10px] md:text-xs text-white/80 truncate">Total DC</span>
+                                                <Users size={12} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
+                                                <span className="text-[10px] md:text-xs text-white/80 truncate">Total Mitra</span>
                                             </div>
-                                            <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(summary.summary.totalDcRevenue)}</p>
-                                            <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO DC: <span className="font-bold">{summary.summary.stokisOrders}</span></p>
+                                            <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{summary.users.totalMitra}</p>
+                                            <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Order: <span className="font-bold">{summary.users.activeMitra}</span></p>
                                         </div>
-                                        {/* Total Stokis */}
+                                        {/* Total Revenue Stokis */}
                                         <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                             <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                                                <Store size={12} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
-                                                <span className="text-[10px] md:text-xs text-white/80 truncate">Total Stokis</span>
+                                                <TrendingUp size={12} className="opacity-80 md:w-[16px] md:h-[16px] flex-shrink-0" />
+                                                <span className="text-[10px] md:text-xs text-white/80 truncate">Total Revenue Stokis</span>
                                             </div>
                                             <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(summary.summary.totalStokisRevenue)}</p>
                                             <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">Total PO Stokis: <span className="font-bold">{summary.summary.stokisOrders}</span></p>
@@ -932,7 +934,7 @@ export default function ReportsPage() {
                                         <table className="w-full text-xs min-w-[600px]">
                                             <thead className="bg-slate-50">
                                                 <tr>
-                                                    <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
+                                                    <th className="px-3 py-2 text-left font-semibold text-gray-600">No</th>
                                                     <th className="px-3 py-2 text-left font-semibold text-gray-600">Produk</th>
                                                     <th className="px-3 py-2 text-left font-semibold text-gray-600">SKU</th>
                                                     <th className="px-3 py-2 text-right font-semibold text-gray-600">Qty</th>
@@ -979,7 +981,7 @@ export default function ReportsPage() {
                                         <div className="flex items-center justify-between flex-wrap gap-2">
                                             <h3 className="font-semibold text-gray-900 text-sm">Performa ({useCustomDate ? "Custom" : `${period} Hari Terakhir`})</h3>
                                             <div className="flex gap-1">
-                                                {(["all", "dc", "stokis", "mitra"] as const).map((f) => (
+                                                {(["stokis", "mitra"] as const).map((f) => (
                                                     <button
                                                         key={f}
                                                         onClick={() => { setPerfFilter(f); setExpandedRows(new Set()) }}
@@ -988,7 +990,7 @@ export default function ReportsPage() {
                                                             : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                                                             }`}
                                                     >
-                                                        {f === "all" ? "Semua" : f.toUpperCase()}
+                                                        {f === "stokis" ? "STOKIS" : "MITRA"}
                                                     </button>
                                                 ))}
                                             </div>
@@ -1033,15 +1035,13 @@ export default function ReportsPage() {
                                         )}
 
                                         {/* DC Table */}
-                                        {(perfFilter === "all" || perfFilter === "dc") && dcPerf.length > 0 && (
+                                        {dcPerf.length > 0 && (
                                             <div>
-                                                {perfFilter === "all" && (
-                                                    <div className="flex items-center gap-2 mb-2 mt-1">
-                                                        <div className="w-1 h-5 bg-blue-500 rounded-full" />
-                                                        <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">DC Area</span>
-                                                        <span className="text-[10px] text-gray-400">({dcPerf.length})</span>
-                                                    </div>
-                                                )}
+                                                <div className="flex items-center gap-2 mb-2 mt-1">
+                                                    <div className="w-1 h-5 bg-blue-500 rounded-full" />
+                                                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">DC Area</span>
+                                                    <span className="text-[10px] text-gray-400">({dcPerf.length})</span>
+                                                </div>
                                                 <div className="bg-white rounded-xl border border-gray-100 overflow-x-auto">
                                                     <table className="w-full text-xs min-w-[500px]">
                                                         <thead className="bg-slate-50">
@@ -1102,15 +1102,13 @@ export default function ReportsPage() {
                                         )}
 
                                         {/* Stokis Table */}
-                                        {(perfFilter === "all" || perfFilter === "stokis") && stokisPerf.length > 0 && (
+                                        {perfFilter === "stokis" && stokisPerf.length > 0 && (
                                             <div>
-                                                {perfFilter === "all" && (
-                                                    <div className="flex items-center gap-2 mb-2 mt-1">
-                                                        <div className="w-1 h-5 bg-emerald-500 rounded-full" />
-                                                        <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">Stokis</span>
-                                                        <span className="text-[10px] text-gray-400">({stokisPerf.length})</span>
-                                                    </div>
-                                                )}
+                                                <div className="flex items-center gap-2 mb-2 mt-1">
+                                                    <div className="w-1 h-5 bg-emerald-500 rounded-full" />
+                                                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">Stokis</span>
+                                                    <span className="text-[10px] text-gray-400">({stokisPerf.length})</span>
+                                                </div>
                                                 <div className="bg-white rounded-xl border border-gray-100 overflow-x-auto">
                                                     <table className="w-full text-xs min-w-[700px]">
                                                         <thead className="bg-slate-50">
@@ -1171,15 +1169,13 @@ export default function ReportsPage() {
                                         )}
 
                                         {/* Mitra Table */}
-                                        {(perfFilter === "all" || perfFilter === "mitra") && mitraPerf.length > 0 && (
+                                        {perfFilter === "mitra" && mitraPerf.length > 0 && (
                                             <div>
-                                                {perfFilter === "all" && (
-                                                    <div className="flex items-center gap-2 mb-2 mt-1">
-                                                        <div className="w-1 h-5 bg-purple-500 rounded-full" />
-                                                        <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">Mitra</span>
-                                                        <span className="text-[10px] text-gray-400">({mitraPerf.length})</span>
-                                                    </div>
-                                                )}
+                                                <div className="flex items-center gap-2 mb-2 mt-1">
+                                                    <div className="w-1 h-5 bg-purple-500 rounded-full" />
+                                                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">Mitra</span>
+                                                    <span className="text-[10px] text-gray-400">({mitraPerf.length})</span>
+                                                </div>
                                                 <div className="bg-white rounded-xl border border-gray-100 overflow-x-auto">
                                                     <table className="w-full text-xs min-w-[600px]">
                                                         <thead className="bg-slate-50">
@@ -1256,16 +1252,16 @@ export default function ReportsPage() {
                                 <div className="space-y-4">
                                     {/* Filter and Sort Buttons */}
                                     <div className="flex gap-2 flex-wrap items-center">
-                                        {["all", "dc", "stokis"].map((filter) => (
+                                        {["all", "unpaid", "paid"].map((filter) => (
                                             <button
                                                 key={filter}
-                                                onClick={() => setInvoiceFilter(filter as "all" | "dc" | "stokis")}
+                                                onClick={() => setInvoiceFilter(filter as "all" | "unpaid" | "paid")}
                                                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${invoiceFilter === filter
                                                     ? "bg-blue-500 text-white shadow-md"
                                                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                                                     }`}
                                             >
-                                                {filter === "all" ? "Semua" : filter === "dc" ? "DC" : "Stokis"}
+                                                {filter === "all" ? "Semua" : filter === "unpaid" ? "Belum Bayar" : "Lunas"}
                                             </button>
                                         ))}
                                         <div className="ml-auto flex items-center gap-2">
@@ -1333,11 +1329,14 @@ export default function ReportsPage() {
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-100">
                                                     {(() => {
-                                                        let invoicesToShow = invoiceFilter === "all"
-                                                            ? [...invoiceDetails.dc, ...invoiceDetails.stokis]
-                                                            : invoiceFilter === "dc"
-                                                                ? invoiceDetails.dc
-                                                                : invoiceDetails.stokis
+                                                        let invoicesToShow = [...invoiceDetails.dc, ...invoiceDetails.stokis]
+
+                                                        // Filter by status
+                                                        if (invoiceFilter === "unpaid") {
+                                                            invoicesToShow = invoicesToShow.filter(inv => inv.status !== "PAID")
+                                                        } else if (invoiceFilter === "paid") {
+                                                            invoicesToShow = invoicesToShow.filter(inv => inv.status === "PAID")
+                                                        }
 
                                                         // Sort by order date
                                                         invoicesToShow = [...invoicesToShow].sort((a, b) => {

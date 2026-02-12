@@ -62,7 +62,7 @@ export default function InvoicesPage() {
     }
 
     const handleMarkAsPaid = async (invoiceId: string) => {
-        if (!confirm("Tandai invoice ini sebagai PAID?")) return
+        if (!confirm("Tandai invoice ini sebagai Lunas?")) return
 
         setUpdatingId(invoiceId)
         try {
@@ -237,14 +237,11 @@ export default function InvoicesPage() {
                             <tbody className="divide-y divide-gray-100">
                                 {filteredInvoices.map((invoice) => {
                                     const isPaid = invoice.status === "PAID"
-                                    const isOverdue = invoice.status === "OVERDUE"
-                                    const isUnpaid = invoice.status === "UNPAID"
+                                    const isUnpaid = invoice.status === "UNPAID" || invoice.status === "OVERDUE"
                                     const statusColor = isPaid
                                         ? "bg-green-100 text-green-700"
-                                        : isOverdue
-                                            ? "bg-red-100 text-red-700"
-                                            : "bg-yellow-100 text-yellow-700"
-                                    const statusLabel = isPaid ? "Lunas" : isOverdue ? "Overdue" : "Belum Lunas"
+                                        : "bg-yellow-100 text-yellow-700"
+                                    const statusLabel = isPaid ? "Lunas" : "Belum Lunas"
                                     return (
                                         <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{formatDate(invoice.createdAt)}</td>
@@ -269,13 +266,13 @@ export default function InvoicesPage() {
                                                     >
                                                         <Printer size={16} />
                                                     </Link>
-                                                    {(isUnpaid || isOverdue) && (
+                                                    {isUnpaid && (
                                                         <button
                                                             onClick={() => handleMarkAsPaid(invoice.id)}
                                                             disabled={updatingId === invoice.id}
                                                             className="px-2 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 text-xs font-medium"
                                                         >
-                                                            {updatingId === invoice.id ? "..." : "✓ Paid"}
+                                                            {updatingId === invoice.id ? "..." : "✓ Lunas"}
                                                         </button>
                                                     )}
                                                     {isPaid && (
@@ -294,17 +291,13 @@ export default function InvoicesPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                     {filteredInvoices.map((invoice) => {
                         const daysUntilDue = getDaysUntilDue(invoice.dueDate)
-                        const isOverdue = invoice.status === "OVERDUE"
                         const isPaid = invoice.status === "PAID"
-                        const isUnpaid = invoice.status === "UNPAID"
+                        const isUnpaid = invoice.status === "UNPAID" || invoice.status === "OVERDUE"
 
                         return (
                             <div
                                 key={invoice.id}
-                                className={`bg-white rounded-xl p-5 shadow-sm border-l-4 ${isPaid ? "border-l-green-500" :
-                                    isOverdue ? "border-l-red-500" :
-                                        "border-l-yellow-500"
-                                    }`}
+                                className={`bg-white rounded-xl p-5 shadow-sm border-l-4 ${isPaid ? "border-l-green-500" : "border-l-yellow-500"}`}
                             >
                                 {/* Card Header */}
                                 <div className="flex items-start justify-between mb-3">
@@ -312,11 +305,8 @@ export default function InvoicesPage() {
                                         <h3 className="font-bold text-gray-900">{invoice.invoiceNumber}</h3>
                                         <p className="text-sm text-gray-500">{invoice.order.orderNumber}</p>
                                     </div>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isPaid ? "bg-green-100 text-green-700" :
-                                        isOverdue ? "bg-red-100 text-red-700" :
-                                            "bg-yellow-100 text-yellow-700"
-                                        }`}>
-                                        {invoice.status}
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isPaid ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                                        {isPaid ? "Lunas" : "Belum Lunas"}
                                     </span>
                                 </div>
 
@@ -350,13 +340,13 @@ export default function InvoicesPage() {
                                     >
                                         <Printer size={16} /> Print
                                     </Link>
-                                    {(isUnpaid || isOverdue) && (
+                                    {isUnpaid && (
                                         <button
                                             onClick={() => handleMarkAsPaid(invoice.id)}
                                             disabled={updatingId === invoice.id}
                                             className="flex-1 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 text-sm font-medium"
                                         >
-                                            {updatingId === invoice.id ? "..." : "✓ Mark Paid"}
+                                            {updatingId === invoice.id ? "..." : "✓ Lunas"}
                                         </button>
                                     )}
                                     {isPaid && (
