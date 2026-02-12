@@ -85,6 +85,20 @@ export default function StokisOrderPusatPage() {
         setCart((prev) => prev.filter((item) => item.product.id !== productId))
     }
 
+    const setQuantity = (productId: string, qty: number) => {
+        if (qty <= 0) {
+            removeFromCart(productId)
+            return
+        }
+        setCart((prev) =>
+            prev.map((item) =>
+                item.product.id === productId
+                    ? { ...item, quantity: qty }
+                    : item
+            )
+        )
+    }
+
     const totalAmount = cart.reduce(
         (sum, item) => sum + item.product.price * item.quantity,
         0
@@ -210,8 +224,8 @@ export default function StokisOrderPusatPage() {
                                         <button
                                             onClick={() => addToCart(product)}
                                             className={`p-2 rounded-lg transition-all duration-300 ${recentlyAdded.has(product.id)
-                                                    ? "bg-emerald-500 text-white scale-110"
-                                                    : "bg-green-500 text-white hover:bg-green-600"
+                                                ? "bg-emerald-500 text-white scale-110"
+                                                : "bg-green-500 text-white hover:bg-green-600"
                                                 }`}
                                         >
                                             {recentlyAdded.has(product.id) ? <Check size={18} /> : <Plus size={18} />}
@@ -251,7 +265,17 @@ export default function StokisOrderPusatPage() {
                                                 >
                                                     <Minus size={14} />
                                                 </button>
-                                                <span className="w-8 text-center text-gray-900 font-medium">{item.quantity}</span>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={item.quantity}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value)
+                                                        if (!isNaN(val)) setQuantity(item.product.id, val)
+                                                    }}
+                                                    onFocus={(e) => e.target.select()}
+                                                    className="w-14 text-center text-gray-900 font-medium border rounded px-1 py-0.5 text-sm focus:ring-2 focus:ring-green-400 focus:border-green-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                />
                                                 <button
                                                     onClick={() => updateQuantity(item.product.id, 1)}
                                                     className="p-1 border rounded hover:bg-gray-100"
