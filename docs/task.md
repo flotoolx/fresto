@@ -390,3 +390,21 @@
 - [x] Use Pure CSS/Tailwind (No external chart library) ✅
 - [x] Recursive layout (Stacked on mobile, Side-by-side on desktop) ✅
 - [x] Git commit ✅ `fc03644`
+- [x] Update Charts: Show Total Stokis/Mitra & Active Users instead of Revenue/PO ✅
+- [x] Remove 'Rasio Order' text ✅
+- [x] Git commit ✅ `59ef38c`
+
+---
+
+## Phase 10: Performa Tab Refinement (Feb 13, 2026) ✅ COMPLETE
+
+### Dynamic Summary Cards
+- [x] Purple Card: Switch between Stokis & Mitra info based on filter ✅
+- [x] Purple Card: Show Total User & Active User counts dynamically ✅
+- [x] Revenue & Avg Order Card: Filter data based on selected tab (Stokis/Mitra) ✅
+- [x] Revenue & Avg Order Card: Calculate specific totals for Stokis/Mitra ✅
+
+### Table & UI Cleanup
+- [x] Stokis Table: Remove 'Order Mitra' & 'Mitra' columns (redundant) ✅
+- [x] Purple Card: Remove word 'Stokis'/'Mitra' from value (show number only) ✅
+- [x] Git commit ✅ `26479b4`

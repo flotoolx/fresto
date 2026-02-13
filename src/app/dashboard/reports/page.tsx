@@ -1053,7 +1053,9 @@ export default function ReportsPage() {
                                         {perfSummary && (
                                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                                                 {(() => {
-                                                    const filteredRevenue = perfFilter === "stokis" ? perfSummary.totalStokisRevenue : perfSummary.totalMitraRevenue
+                                                    const filteredRevenue = perfFilter === "stokis"
+                                                        ? stokisPerf.reduce((sum, s) => sum + s.revenueToPusat, 0)
+                                                        : mitraPerf.reduce((sum, m) => sum + m.totalRevenue, 0)
                                                     const filteredOrders = perfFilter === "stokis"
                                                         ? stokisPerf.reduce((sum, s) => sum + s.ordersToPusat, 0)
                                                         : mitraPerf.reduce((sum, m) => sum + m.ordersToStokis, 0)
@@ -1118,7 +1120,7 @@ export default function ReportsPage() {
                                                     <table className="w-full text-xs min-w-[500px]">
                                                         <thead className="bg-slate-50">
                                                             <tr>
-                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
+                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">No.</th>
                                                                 <th className="px-3 py-2 text-left font-semibold text-gray-600">Kode</th>
                                                                 <th className="px-3 py-2 text-left font-semibold text-gray-600">DC</th>
                                                                 <th className="px-3 py-2 text-right font-semibold text-gray-600">Order</th>
@@ -1185,7 +1187,7 @@ export default function ReportsPage() {
                                                     <table className="w-full text-xs min-w-[700px]">
                                                         <thead className="bg-slate-50">
                                                             <tr>
-                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
+                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">No.</th>
                                                                 <th className="px-3 py-2 text-left font-semibold text-gray-600">Kode</th>
                                                                 <th className="px-3 py-2 text-left font-semibold text-gray-600">Stokis</th>
                                                                 <th className="px-3 py-2 text-right font-semibold text-gray-600">Order Pusat</th>
@@ -1248,7 +1250,7 @@ export default function ReportsPage() {
                                                     <table className="w-full text-xs min-w-[600px]">
                                                         <thead className="bg-slate-50">
                                                             <tr>
-                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
+                                                                <th className="px-3 py-2 text-left font-semibold text-gray-600">No.</th>
                                                                 <th className="px-3 py-2 text-left font-semibold text-gray-600">Kode</th>
                                                                 <th className="px-3 py-2 text-left font-semibold text-gray-600">Mitra</th>
                                                                 <th className="px-3 py-2 text-left font-semibold text-gray-600">Stokis</th>
