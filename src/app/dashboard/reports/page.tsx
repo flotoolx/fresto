@@ -451,10 +451,16 @@ export default function ReportsPage() {
                 ["Kode", "Nama Stokis", "Telp", "Order ke Pusat", "Order dari Mitra", "Jumlah Mitra", "Produk", "SKU", "Qty", "Unit", "Revenue Produk"]
             ]
             stokisPerf.forEach(s => {
-                stokisAoa.push([s.uniqueCode || "-", s.stokisName, s.phone || "-", s.ordersToPusat, s.ordersFromMitra, s.mitraCount])
-                s.products.forEach(p => {
-                    stokisAoa.push(["", "", "", "", "", "", p.productName, p.sku, p.totalQty, p.unit, p.totalRevenue])
-                })
+                const base = [s.uniqueCode || "-", s.stokisName, s.phone || "-", s.ordersToPusat, s.ordersFromMitra, s.mitraCount]
+                if (s.products.length > 0) {
+                    const first = s.products[0]
+                    stokisAoa.push([...base, first.productName, first.sku, first.totalQty, first.unit, first.totalRevenue])
+                    s.products.slice(1).forEach(p => {
+                        stokisAoa.push(["", "", "", "", "", "", p.productName, p.sku, p.totalQty, p.unit, p.totalRevenue])
+                    })
+                } else {
+                    stokisAoa.push(base as (string | number)[])
+                }
             })
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(stokisAoa), "Stokis")
 
