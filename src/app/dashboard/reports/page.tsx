@@ -1054,7 +1054,7 @@ export default function ReportsPage() {
                                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                                                 {(() => {
                                                     const filteredRevenue = perfFilter === "stokis"
-                                                        ? stokisPerf.reduce((sum, s) => sum + s.totalRevenue, 0)
+                                                        ? stokisPerf.reduce((sum, s) => sum + s.revenueToPusat, 0)
                                                         : mitraPerf.reduce((sum, m) => sum + m.totalRevenue, 0)
                                                     const filteredOrders = perfFilter === "stokis"
                                                         ? stokisPerf.reduce((sum, s) => sum + s.ordersToPusat, 0)
@@ -1206,7 +1206,7 @@ export default function ReportsPage() {
                                                                             {s.phone && <p className="text-[10px] text-gray-500">{s.phone}</p>}
                                                                         </td>
                                                                         <td className="px-3 py-2 text-right text-gray-600">{s.ordersToPusat}</td>
-                                                                        <td className="px-3 py-2 text-right font-bold text-emerald-600 whitespace-nowrap">{formatCurrency(s.totalRevenue)}</td>
+                                                                        <td className="px-3 py-2 text-right font-bold text-emerald-600 whitespace-nowrap">{formatCurrency(s.revenueToPusat)}</td>
                                                                         <td className="px-3 py-2 text-center">
                                                                             {s.products.length > 0 && (
                                                                                 <button onClick={() => toggleExpand(`stk-${s.stokisId}`)} className="text-blue-500 hover:text-blue-700">
