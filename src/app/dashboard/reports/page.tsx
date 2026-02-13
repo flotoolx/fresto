@@ -827,11 +827,6 @@ export default function ReportsPage() {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        {/* Summary */}
-                                                        <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                                                            <span className="text-xs text-gray-500">Rasio Order</span>
-                                                            <span className="text-sm font-bold text-gray-900">{active} / {total} ({activePct}%)</span>
-                                                        </div>
                                                     </div>
                                                 )
                                             })()}
@@ -876,11 +871,6 @@ export default function ReportsPage() {
                                                                     {activePct > 15 && <span className="text-[10px] font-bold text-white">{activePct}%</span>}
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                        {/* Summary */}
-                                                        <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                                                            <span className="text-xs text-gray-500">Rasio Order</span>
-                                                            <span className="text-sm font-bold text-gray-900">{active} / {total} ({activePct}%)</span>
                                                         </div>
                                                     </div>
                                                 )
