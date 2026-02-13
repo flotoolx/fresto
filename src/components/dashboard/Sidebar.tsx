@@ -18,8 +18,7 @@ import {
     Store,
     HelpCircle,
     CreditCard,
-    FileText,
-    FileSpreadsheet
+    FileText
 } from "lucide-react"
 import { useState } from "react"
 import Image from "next/image"
@@ -39,7 +38,6 @@ const roleMenus: Record<string, { label: string; href: string; icon: React.React
         { label: "Pembayaran", href: "/dashboard/pembayaran", icon: <CreditCard size={20} /> },
         // { label: "Tagihan", href: "/dashboard/tagihan", icon: <FileText size={20} /> }, // HIDDEN - Phase 7
         { label: "Invoices", href: "/dashboard/invoices", icon: <Receipt size={20} /> },
-        { label: "Laporan Harga", href: "/dashboard/laporan-harga", icon: <FileSpreadsheet size={20} /> },
         { label: "Laporan", href: "/dashboard/reports", icon: <BarChart3 size={20} /> },
     ],
     GUDANG: [
@@ -71,7 +69,6 @@ const roleMenus: Record<string, { label: string; href: string; icon: React.React
         { label: "Approve PO", href: "/dashboard/approve-po", icon: <ShoppingCart size={20} /> },
         { label: "Pembayaran", href: "/dashboard/pembayaran", icon: <CreditCard size={20} /> },
         { label: "Invoices", href: "/dashboard/invoices", icon: <Receipt size={20} /> },
-        { label: "Laporan Harga", href: "/dashboard/laporan-harga", icon: <FileSpreadsheet size={20} /> },
         { label: "Laporan", href: "/dashboard/reports", icon: <BarChart3 size={20} /> },
     ],
     FINANCE_ALL: [
@@ -79,7 +76,6 @@ const roleMenus: Record<string, { label: string; href: string; icon: React.React
         { label: "Approve PO", href: "/dashboard/approve-po", icon: <ShoppingCart size={20} /> },
         { label: "Pembayaran", href: "/dashboard/pembayaran", icon: <CreditCard size={20} /> },
         { label: "Invoices", href: "/dashboard/invoices", icon: <Receipt size={20} /> },
-        { label: "Laporan Harga", href: "/dashboard/laporan-harga", icon: <FileSpreadsheet size={20} /> },
         { label: "Laporan", href: "/dashboard/reports", icon: <BarChart3 size={20} /> },
     ],
 }
