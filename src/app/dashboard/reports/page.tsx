@@ -1073,16 +1073,22 @@ export default function ReportsPage() {
                                                 <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden col-span-2 lg:col-span-1">
                                                     <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                                     <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                                                        <BarChart3 size={12} className="opacity-80 md:w-[14px] md:h-[14px] flex-shrink-0" />
-                                                        <span className="text-[10px] md:text-xs text-white/80 truncate">Revenue Split</span>
+                                                        <Users size={12} className="opacity-80 md:w-[14px] md:h-[14px] flex-shrink-0" />
+                                                        <span className="text-[10px] md:text-xs text-white/80 truncate">
+                                                            {perfFilter === "stokis" ? "Stokis" : "Mitra"}
+                                                        </span>
                                                     </div>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <div className="flex-1 bg-white/20 rounded-full h-2 overflow-hidden">
-                                                            <div className="bg-emerald-400 h-full rounded-full" style={{ width: `${perfSummary.stokisRevenueShare}%` }} />
-                                                        </div>
-                                                        <span className="text-[10px] md:text-xs font-medium">{perfSummary.stokisRevenueShare}%</span>
-                                                    </div>
-                                                    <p className="text-[9px] md:text-xs text-white/60 mt-1">Stokis {perfSummary.stokisRevenueShare}% · Mitra {perfSummary.mitraRevenueShare}%</p>
+                                                    <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">
+                                                        {perfFilter === "stokis"
+                                                            ? `${summary?.users?.totalStokis || 0} Stokis`
+                                                            : `${summary?.users?.totalMitra || 0} Mitra`
+                                                        }
+                                                    </p>
+                                                    <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">
+                                                        Yang Order: <span className="font-bold text-white/90">
+                                                            {perfFilter === "stokis" ? perfSummary.activeStokis : perfSummary.activeMitra}
+                                                        </span>
+                                                    </p>
                                                 </div>
                                             </div>
                                         )}
