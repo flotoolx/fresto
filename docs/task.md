@@ -356,3 +356,25 @@
 ### Data Integrity
 - [x] Update `seed.ts` - Populate `uniqueCode` for DC, Stokis, Mitra
 - [x] Format: `DC-PLB-001`, `STK-PLB-A01`, `MTR-001`
+
+---
+
+## Phase 8: UI Refinements & Fixes (Feb 13, 2026) ✅ COMPLETE
+
+### Reports Page Enhancements
+- [x] Tab Overview: Restructured cards (Total Stokis, Total Revenue Stokis, Total Revenue Mitra) ✅
+- [x] Tab Produk: Header '#' changed to 'No' ✅
+- [x] Tab Performa: Removed 'Semua' and 'DC' filters (only Stokis & Mitra) ✅
+- [x] Tab Performa: Hidden 'DC Area' table for FINANCE_DC role ✅
+- [x] Tab Performa: Fixed Excel Export (Removed Revenue column, eliminated empty row gap) ✅
+- [x] Tab Tagihan: Changed filter to Status (Semua / Belum Bayar / Lunas) ✅
+- [x] Removed Laporan Harga page & menu completely ✅
+
+### Invoices Page Updates
+- [x] Removed 'Overdue' status (all non-PAID show as Belum Lunas) ✅
+- [x] Renamed 'Paid' status/button to 'Lunas' ✅
+- [x] Fixed Confirmation Message ('Tandai Lunas?') ✅
+
+### Finance DC Fixes
+- [x] Fixed 403 Forbidden on Payment Creation (Allowed FINANCE_DC/FINANCE_ALL roles) ✅
+- [x] Git commit ✅ `95072ca`

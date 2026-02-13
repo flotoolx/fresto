@@ -785,42 +785,111 @@ export default function ReportsPage() {
                                     </div>
 
 
-                                    {/* Order Status Pipeline - Compact */}
-                                    <div className="bg-white rounded-xl p-4 border border-gray-100">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h3 className="font-semibold text-gray-900 text-sm">Pipeline Order Stokis</h3>
-                                            <span className="text-xs text-gray-500">{period} hari</span>
-                                        </div>
-                                        {Object.keys(summary.orderStatus).length > 0 ? (
-                                            <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
-                                                {Object.entries(summary.orderStatus).map(([status, count], idx) => {
-                                                    const colors = [
-                                                        "from-amber-500 to-yellow-500",
-                                                        "from-blue-500 to-cyan-500",
-                                                        "from-purple-500 to-violet-500",
-                                                        "from-emerald-500 to-teal-500",
-                                                        "from-rose-500 to-pink-500",
-                                                        "from-indigo-500 to-blue-500"
-                                                    ]
-                                                    const colorClass = colors[idx % colors.length]
-                                                    return (
-                                                        <div key={status} className="bg-gray-50 rounded-lg p-3 text-center hover:bg-gray-100 transition cursor-pointer">
-                                                            <div className={`w-10 h-10 mx-auto mb-2 rounded-lg bg-gradient-to-br ${colorClass} flex items-center justify-center text-white font-bold text-sm`}>
-                                                                {count}
+                                    {/* Revenue & PO Charts */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                        {/* Revenue Comparison */}
+                                        <div className="bg-white rounded-xl p-4 border border-gray-100">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h3 className="font-semibold text-gray-900 text-sm">Ringkasan Revenue</h3>
+                                                <span className="text-xs text-gray-500">{period} hari</span>
+                                            </div>
+                                            {(() => {
+                                                const totalRev = summary.summary.totalStokisRevenue + summary.summary.totalMitraRevenue
+                                                const stokisPct = totalRev > 0 ? Math.round((summary.summary.totalStokisRevenue / totalRev) * 100) : 0
+                                                const mitraPct = totalRev > 0 ? 100 - stokisPct : 0
+                                                return (
+                                                    <div className="space-y-4">
+                                                        {/* Stokis Revenue Bar */}
+                                                        <div>
+                                                            <div className="flex items-center justify-between mb-1.5">
+                                                                <span className="text-xs font-medium text-gray-700">Revenue Stokis</span>
+                                                                <span className="text-xs font-bold text-purple-600">{formatCurrency(summary.summary.totalStokisRevenue)}</span>
                                                             </div>
-                                                            <div className="text-[10px] font-medium text-gray-600 uppercase">
-                                                                {status.replace(/_/g, " ")}
+                                                            <div className="w-full h-5 bg-gray-100 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-gradient-to-r from-purple-500 to-violet-500 rounded-full flex items-center justify-end pr-2 transition-all duration-700"
+                                                                    style={{ width: `${Math.max(stokisPct, 3)}%` }}
+                                                                >
+                                                                    {stokisPct > 15 && <span className="text-[10px] font-bold text-white">{stokisPct}%</span>}
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    )
-                                                })}
+                                                        {/* Mitra Revenue Bar */}
+                                                        <div>
+                                                            <div className="flex items-center justify-between mb-1.5">
+                                                                <span className="text-xs font-medium text-gray-700">Revenue Mitra</span>
+                                                                <span className="text-xs font-bold text-amber-600">{formatCurrency(summary.summary.totalMitraRevenue)}</span>
+                                                            </div>
+                                                            <div className="w-full h-5 bg-gray-100 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full flex items-center justify-end pr-2 transition-all duration-700"
+                                                                    style={{ width: `${Math.max(mitraPct, 3)}%` }}
+                                                                >
+                                                                    {mitraPct > 15 && <span className="text-[10px] font-bold text-white">{mitraPct}%</span>}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        {/* Total */}
+                                                        <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                                                            <span className="text-xs text-gray-500">Total Revenue</span>
+                                                            <span className="text-sm font-bold text-gray-900">{formatCurrency(totalRev)}</span>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })()}
+                                        </div>
+
+                                        {/* Total PO Comparison */}
+                                        <div className="bg-white rounded-xl p-4 border border-gray-100">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h3 className="font-semibold text-gray-900 text-sm">Total PO</h3>
+                                                <span className="text-xs text-gray-500">{period} hari</span>
                                             </div>
-                                        ) : (
-                                            <div className="text-center py-6">
-                                                <ShoppingCart size={24} className="mx-auto mb-2 text-gray-300" />
-                                                <p className="text-gray-400 text-sm">Belum ada data order</p>
-                                            </div>
-                                        )}
+                                            {(() => {
+                                                const totalPO = summary.summary.stokisOrders + summary.summary.mitraOrders
+                                                const stokisPct = totalPO > 0 ? Math.round((summary.summary.stokisOrders / totalPO) * 100) : 0
+                                                const mitraPct = totalPO > 0 ? 100 - stokisPct : 0
+                                                return (
+                                                    <div className="space-y-4">
+                                                        {/* Stokis PO Bar */}
+                                                        <div>
+                                                            <div className="flex items-center justify-between mb-1.5">
+                                                                <span className="text-xs font-medium text-gray-700">PO Stokis</span>
+                                                                <span className="text-xs font-bold text-blue-600">{summary.summary.stokisOrders} order</span>
+                                                            </div>
+                                                            <div className="w-full h-5 bg-gray-100 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-end pr-2 transition-all duration-700"
+                                                                    style={{ width: `${Math.max(stokisPct, 3)}%` }}
+                                                                >
+                                                                    {stokisPct > 15 && <span className="text-[10px] font-bold text-white">{stokisPct}%</span>}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        {/* Mitra PO Bar */}
+                                                        <div>
+                                                            <div className="flex items-center justify-between mb-1.5">
+                                                                <span className="text-xs font-medium text-gray-700">PO Mitra</span>
+                                                                <span className="text-xs font-bold text-emerald-600">{summary.summary.mitraOrders} order</span>
+                                                            </div>
+                                                            <div className="w-full h-5 bg-gray-100 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-end pr-2 transition-all duration-700"
+                                                                    style={{ width: `${Math.max(mitraPct, 3)}%` }}
+                                                                >
+                                                                    {mitraPct > 15 && <span className="text-[10px] font-bold text-white">{mitraPct}%</span>}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        {/* Total */}
+                                                        <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                                                            <span className="text-xs text-gray-500">Total PO</span>
+                                                            <span className="text-sm font-bold text-gray-900">{totalPO} order</span>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })()}
+                                        </div>
                                     </div>
                                 </div>
                             )}
