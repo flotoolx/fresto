@@ -12,8 +12,8 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        // Only FINANCE and PUSAT can view payments
-        if (!["FINANCE", "PUSAT"].includes(session.user.role)) {
+        // Only FINANCE, FINANCE_DC, FINANCE_ALL, and PUSAT can view payments
+        if (!["FINANCE", "FINANCE_DC", "FINANCE_ALL", "PUSAT"].includes(session.user.role)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
@@ -66,8 +66,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        // Only FINANCE can create payments
-        if (session.user.role !== "FINANCE") {
+        // FINANCE, FINANCE_DC, and FINANCE_ALL can create payments
+        if (!["FINANCE", "FINANCE_DC", "FINANCE_ALL"].includes(session.user.role)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
