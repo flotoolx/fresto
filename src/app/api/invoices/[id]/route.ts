@@ -63,7 +63,7 @@ export async function PATCH(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        if (!["PUSAT", "FINANCE"].includes(session.user.role)) {
+        if (!["PUSAT", "FINANCE", "FINANCE_DC", "FINANCE_ALL"].includes(session.user.role)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
