@@ -1054,7 +1054,7 @@ export default function ReportsPage() {
                                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                                                 {(() => {
                                                     const filteredRevenue = perfFilter === "stokis"
-                                                        ? stokisPerf.reduce((sum, s) => sum + s.revenueToPusat, 0)
+                                                        ? stokisPerf.reduce((sum, s) => sum + s.totalRevenue, 0)
                                                         : mitraPerf.reduce((sum, m) => sum + m.totalRevenue, 0)
                                                     const filteredOrders = perfFilter === "stokis"
                                                         ? stokisPerf.reduce((sum, s) => sum + s.ordersToPusat, 0)
