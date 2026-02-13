@@ -447,26 +447,16 @@ export default function ReportsPage() {
             // Enhanced export handled by the separate exportToExcel above for stokis tab
             // This is a fallback for the generic button
             const wb = XLSX.utils.book_new()
-            const stokisData: Record<string, unknown>[] = []
+            const stokisAoa: (string | number)[][] = [
+                ["Kode", "Nama Stokis", "Telp", "Order ke Pusat", "Order dari Mitra", "Jumlah Mitra", "Produk", "SKU", "Qty", "Unit", "Revenue Produk"]
+            ]
             stokisPerf.forEach(s => {
-                stokisData.push({
-                    "Kode": s.uniqueCode || "-",
-                    "Nama Stokis": s.stokisName,
-                    "Telp": s.phone || "-",
-                    "Order ke Pusat": s.ordersToPusat,
-                    "Order dari Mitra": s.ordersFromMitra,
-                    "Jumlah Mitra": s.mitraCount
-                })
+                stokisAoa.push([s.uniqueCode || "-", s.stokisName, s.phone || "-", s.ordersToPusat, s.ordersFromMitra, s.mitraCount])
                 s.products.forEach(p => {
-                    stokisData.push({
-                        "Kode": "", "Nama Stokis": "", "Telp": "",
-                        "Order ke Pusat": "", "Order dari Mitra": "", "Jumlah Mitra": "",
-                        "Produk": p.productName, "SKU": p.sku, "Qty": p.totalQty, "Unit": p.unit, "Revenue Produk": p.totalRevenue
-                    })
+                    stokisAoa.push(["", "", "", "", "", "", p.productName, p.sku, p.totalQty, p.unit, p.totalRevenue])
                 })
             })
-            const stokisHeaders = ["Kode", "Nama Stokis", "Telp", "Order ke Pusat", "Order dari Mitra", "Jumlah Mitra", "Produk", "SKU", "Qty", "Unit", "Revenue Produk"]
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stokisData, { header: stokisHeaders }), "Stokis")
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(stokisAoa), "Stokis")
 
             const mitraData: Record<string, unknown>[] = []
             mitraPerf.forEach(m => {
