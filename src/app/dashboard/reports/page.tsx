@@ -1052,24 +1052,37 @@ export default function ReportsPage() {
                                         {/* Summary Cards */}
                                         {perfSummary && (
                                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                                                <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
-                                                    <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                                    <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                                                        <TrendingUp size={12} className="opacity-80 md:w-[14px] md:h-[14px] flex-shrink-0" />
-                                                        <span className="text-[10px] md:text-xs text-white/80 truncate">Total Revenue</span>
-                                                    </div>
-                                                    <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(perfSummary.totalRevenue)}</p>
-                                                    <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">{perfSummary.totalOrders} PO</p>
-                                                </div>
-                                                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
-                                                    <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                                    <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                                                        <ShoppingCart size={12} className="opacity-80 md:w-[14px] md:h-[14px] flex-shrink-0" />
-                                                        <span className="text-[10px] md:text-xs text-white/80 truncate">Avg Order Value</span>
-                                                    </div>
-                                                    <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(perfSummary.avgOrderValue)}</p>
-                                                    <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">{perfSummary.activeStokis} Stokis · {perfSummary.activeMitra} Mitra aktif</p>
-                                                </div>
+                                                {(() => {
+                                                    const filteredRevenue = perfFilter === "stokis" ? perfSummary.totalStokisRevenue : perfSummary.totalMitraRevenue
+                                                    const filteredOrders = perfFilter === "stokis"
+                                                        ? stokisPerf.reduce((sum, s) => sum + s.ordersToPusat, 0)
+                                                        : mitraPerf.reduce((sum, m) => sum + m.ordersToStokis, 0)
+                                                    const filteredAvg = filteredOrders > 0 ? filteredRevenue / filteredOrders : 0
+                                                    return (
+                                                        <>
+                                                            <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
+                                                                <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                                                <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                                                                    <TrendingUp size={12} className="opacity-80 md:w-[14px] md:h-[14px] flex-shrink-0" />
+                                                                    <span className="text-[10px] md:text-xs text-white/80 truncate">Total Revenue</span>
+                                                                </div>
+                                                                <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(filteredRevenue)}</p>
+                                                                <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">{filteredOrders} PO</p>
+                                                            </div>
+                                                            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden">
+                                                                <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                                                <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                                                                    <ShoppingCart size={12} className="opacity-80 md:w-[14px] md:h-[14px] flex-shrink-0" />
+                                                                    <span className="text-[10px] md:text-xs text-white/80 truncate">Avg Order Value</span>
+                                                                </div>
+                                                                <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">{formatCurrency(filteredAvg)}</p>
+                                                                <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">
+                                                                    {perfFilter === "stokis" ? `${perfSummary.activeStokis} Stokis aktif` : `${perfSummary.activeMitra} Mitra aktif`}
+                                                                </p>
+                                                            </div>
+                                                        </>
+                                                    )
+                                                })()}
                                                 <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl p-2 md:p-4 text-white relative overflow-hidden col-span-2 lg:col-span-1">
                                                     <div className="absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                                                     <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
@@ -1080,8 +1093,8 @@ export default function ReportsPage() {
                                                     </div>
                                                     <p className="text-[11px] sm:text-sm md:text-xl font-bold leading-tight">
                                                         {perfFilter === "stokis"
-                                                            ? `${summary?.users?.totalStokis || 0} Stokis`
-                                                            : `${summary?.users?.totalMitra || 0} Mitra`
+                                                            ? summary?.users?.totalStokis || 0
+                                                            : summary?.users?.totalMitra || 0
                                                         }
                                                     </p>
                                                     <p className="text-[9px] md:text-xs text-white/60 mt-0.5 md:mt-1">
@@ -1176,8 +1189,6 @@ export default function ReportsPage() {
                                                                 <th className="px-3 py-2 text-left font-semibold text-gray-600">Kode</th>
                                                                 <th className="px-3 py-2 text-left font-semibold text-gray-600">Stokis</th>
                                                                 <th className="px-3 py-2 text-right font-semibold text-gray-600">Order Pusat</th>
-                                                                <th className="px-3 py-2 text-right font-semibold text-gray-600">Order Mitra</th>
-                                                                <th className="px-3 py-2 text-right font-semibold text-gray-600">Mitra</th>
                                                                 <th className="px-3 py-2 text-right font-semibold text-gray-600">Revenue</th>
                                                                 <th className="px-3 py-2 text-center font-semibold text-gray-600">Produk</th>
                                                             </tr>
@@ -1193,8 +1204,6 @@ export default function ReportsPage() {
                                                                             {s.phone && <p className="text-[10px] text-gray-500">{s.phone}</p>}
                                                                         </td>
                                                                         <td className="px-3 py-2 text-right text-gray-600">{s.ordersToPusat}</td>
-                                                                        <td className="px-3 py-2 text-right text-gray-600">{s.ordersFromMitra}</td>
-                                                                        <td className="px-3 py-2 text-right text-gray-600">{s.mitraCount}</td>
                                                                         <td className="px-3 py-2 text-right font-bold text-emerald-600 whitespace-nowrap">{formatCurrency(s.totalRevenue)}</td>
                                                                         <td className="px-3 py-2 text-center">
                                                                             {s.products.length > 0 && (
@@ -1206,7 +1215,7 @@ export default function ReportsPage() {
                                                                     </tr>
                                                                     {expandedRows.has(`stk-${s.stokisId}`) && s.products.length > 0 && (
                                                                         <tr>
-                                                                            <td colSpan={8} className="px-6 py-2 bg-slate-50">
+                                                                            <td colSpan={6} className="px-6 py-2 bg-slate-50">
                                                                                 <p className="text-[10px] font-semibold text-gray-500 mb-1">Top 5 Produk</p>
                                                                                 <div className="space-y-1">
                                                                                     {s.products.slice(0, 5).map((p, pi) => (
