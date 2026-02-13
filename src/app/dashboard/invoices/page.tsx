@@ -231,7 +231,6 @@ export default function InvoicesPage() {
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Konsumen</th>
                                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Nominal</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -255,30 +254,6 @@ export default function InvoicesPage() {
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}>
                                                     {statusLabel}
                                                 </span>
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <Link
-                                                        href={`/invoice/${invoice.id}`}
-                                                        target="_blank"
-                                                        className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                                                        title="Print"
-                                                    >
-                                                        <Printer size={16} />
-                                                    </Link>
-                                                    {isUnpaid && (
-                                                        <button
-                                                            onClick={() => handleMarkAsPaid(invoice.id)}
-                                                            disabled={updatingId === invoice.id}
-                                                            className="px-2 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 text-xs font-medium"
-                                                        >
-                                                            {updatingId === invoice.id ? "..." : "✓ Lunas"}
-                                                        </button>
-                                                    )}
-                                                    {isPaid && (
-                                                        <span className="text-green-600"><CheckCircle size={16} /></span>
-                                                    )}
-                                                </div>
                                             </td>
                                         </tr>
                                     )
@@ -340,15 +315,6 @@ export default function InvoicesPage() {
                                     >
                                         <Printer size={16} /> Print
                                     </Link>
-                                    {isUnpaid && (
-                                        <button
-                                            onClick={() => handleMarkAsPaid(invoice.id)}
-                                            disabled={updatingId === invoice.id}
-                                            className="flex-1 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 text-sm font-medium"
-                                        >
-                                            {updatingId === invoice.id ? "..." : "✓ Lunas"}
-                                        </button>
-                                    )}
                                     {isPaid && (
                                         <div className="flex-1 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium text-center flex items-center justify-center gap-1">
                                             <CheckCircle size={16} /> Lunas
