@@ -455,8 +455,7 @@ export default function ReportsPage() {
                     "Telp": s.phone || "-",
                     "Order ke Pusat": s.ordersToPusat,
                     "Order dari Mitra": s.ordersFromMitra,
-                    "Jumlah Mitra": s.mitraCount,
-                    "Produk": "", "SKU": "", "Qty": "", "Unit": "", "Revenue Produk": ""
+                    "Jumlah Mitra": s.mitraCount
                 })
                 s.products.forEach(p => {
                     stokisData.push({
@@ -466,7 +465,8 @@ export default function ReportsPage() {
                     })
                 })
             })
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stokisData), "Stokis")
+            const stokisHeaders = ["Kode", "Nama Stokis", "Telp", "Order ke Pusat", "Order dari Mitra", "Jumlah Mitra", "Produk", "SKU", "Qty", "Unit", "Revenue Produk"]
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stokisData, { header: stokisHeaders }), "Stokis")
 
             const mitraData: Record<string, unknown>[] = []
             mitraPerf.forEach(m => {
