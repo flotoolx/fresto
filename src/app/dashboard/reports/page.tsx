@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import {
     BarChart3,
     TrendingUp,
@@ -177,6 +178,8 @@ interface InvoiceDetail {
 type TabType = "overview" | "monthly" | "products" | "stokis" | "invoice"
 
 export default function ReportsPage() {
+    const { data: session } = useSession()
+    const role = session?.user?.role || ""
     const [activeTab, setActiveTab] = useState<TabType>("overview")
     const [loading, setLoading] = useState(true)
     const [year, setYear] = useState(new Date().getFullYear())
@@ -1035,7 +1038,7 @@ export default function ReportsPage() {
                                         )}
 
                                         {/* DC Table */}
-                                        {dcPerf.length > 0 && (
+                                        {role !== "FINANCE_DC" && dcPerf.length > 0 && (
                                             <div>
                                                 <div className="flex items-center gap-2 mb-2 mt-1">
                                                     <div className="w-1 h-5 bg-blue-500 rounded-full" />
