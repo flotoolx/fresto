@@ -378,3 +378,15 @@
 ### Finance DC Fixes
 - [x] Fixed 403 Forbidden on Payment Creation (Allowed FINANCE_DC/FINANCE_ALL roles) ✅
 - [x] Git commit ✅ `95072ca`
+
+---
+
+## Phase 9: Overview Dashboard Charts (Feb 13, 2026) ✅ COMPLETE
+
+### Pipeline Order Section Redesign
+- [x] Removed colored grid "Pipeline Order Stokis" ✅
+- [x] Implemented Revenue Comparison Chart (Stokis vs Mitra) ✅
+- [x] Implemented Total PO Comparison Chart (Stokis vs Mitra) ✅
+- [x] Use Pure CSS/Tailwind (No external chart library) ✅
+- [x] Recursive layout (Stacked on mobile, Side-by-side on desktop) ✅
+- [x] Git commit ✅ `fc03644`

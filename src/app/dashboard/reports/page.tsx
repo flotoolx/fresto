@@ -785,106 +785,102 @@ export default function ReportsPage() {
                                     </div>
 
 
-                                    {/* Revenue & PO Charts */}
+                                    {/* Stokis & Mitra Charts */}
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                                        {/* Revenue Comparison */}
+                                        {/* Total Stokis */}
                                         <div className="bg-white rounded-xl p-4 border border-gray-100">
                                             <div className="flex items-center justify-between mb-4">
-                                                <h3 className="font-semibold text-gray-900 text-sm">Ringkasan Revenue</h3>
+                                                <h3 className="font-semibold text-gray-900 text-sm">Total Stokis</h3>
                                                 <span className="text-xs text-gray-500">{period} hari</span>
                                             </div>
                                             {(() => {
-                                                const totalRev = summary.summary.totalStokisRevenue + summary.summary.totalMitraRevenue
-                                                const stokisPct = totalRev > 0 ? Math.round((summary.summary.totalStokisRevenue / totalRev) * 100) : 0
-                                                const mitraPct = totalRev > 0 ? 100 - stokisPct : 0
+                                                const total = summary.users.totalStokis || 0
+                                                const active = summary.users.activeStokis || 0
+                                                const activePct = total > 0 ? Math.round((active / total) * 100) : 0
                                                 return (
                                                     <div className="space-y-4">
-                                                        {/* Stokis Revenue Bar */}
+                                                        {/* Total Stokis Bar */}
                                                         <div>
                                                             <div className="flex items-center justify-between mb-1.5">
-                                                                <span className="text-xs font-medium text-gray-700">Revenue Stokis</span>
-                                                                <span className="text-xs font-bold text-purple-600">{formatCurrency(summary.summary.totalStokisRevenue)}</span>
+                                                                <span className="text-xs font-medium text-gray-700">Jumlah Stokis</span>
+                                                                <span className="text-xs font-bold text-blue-600">{total} stokis</span>
+                                                            </div>
+                                                            <div className="w-full h-5 bg-gray-100 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-700"
+                                                                    style={{ width: '100%' }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        {/* Active Stokis Bar */}
+                                                        <div>
+                                                            <div className="flex items-center justify-between mb-1.5">
+                                                                <span className="text-xs font-medium text-gray-700">Stokis Yang Order</span>
+                                                                <span className="text-xs font-bold text-purple-600">{active} stokis</span>
                                                             </div>
                                                             <div className="w-full h-5 bg-gray-100 rounded-full overflow-hidden">
                                                                 <div
                                                                     className="h-full bg-gradient-to-r from-purple-500 to-violet-500 rounded-full flex items-center justify-end pr-2 transition-all duration-700"
-                                                                    style={{ width: `${Math.max(stokisPct, 3)}%` }}
+                                                                    style={{ width: `${Math.max(activePct, 3)}%` }}
                                                                 >
-                                                                    {stokisPct > 15 && <span className="text-[10px] font-bold text-white">{stokisPct}%</span>}
+                                                                    {activePct > 15 && <span className="text-[10px] font-bold text-white">{activePct}%</span>}
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        {/* Mitra Revenue Bar */}
-                                                        <div>
-                                                            <div className="flex items-center justify-between mb-1.5">
-                                                                <span className="text-xs font-medium text-gray-700">Revenue Mitra</span>
-                                                                <span className="text-xs font-bold text-amber-600">{formatCurrency(summary.summary.totalMitraRevenue)}</span>
-                                                            </div>
-                                                            <div className="w-full h-5 bg-gray-100 rounded-full overflow-hidden">
-                                                                <div
-                                                                    className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full flex items-center justify-end pr-2 transition-all duration-700"
-                                                                    style={{ width: `${Math.max(mitraPct, 3)}%` }}
-                                                                >
-                                                                    {mitraPct > 15 && <span className="text-[10px] font-bold text-white">{mitraPct}%</span>}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        {/* Total */}
+                                                        {/* Summary */}
                                                         <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                                                            <span className="text-xs text-gray-500">Total Revenue</span>
-                                                            <span className="text-sm font-bold text-gray-900">{formatCurrency(totalRev)}</span>
+                                                            <span className="text-xs text-gray-500">Rasio Order</span>
+                                                            <span className="text-sm font-bold text-gray-900">{active} / {total} ({activePct}%)</span>
                                                         </div>
                                                     </div>
                                                 )
                                             })()}
                                         </div>
 
-                                        {/* Total PO Comparison */}
+                                        {/* Total Mitra */}
                                         <div className="bg-white rounded-xl p-4 border border-gray-100">
                                             <div className="flex items-center justify-between mb-4">
-                                                <h3 className="font-semibold text-gray-900 text-sm">Total PO</h3>
+                                                <h3 className="font-semibold text-gray-900 text-sm">Total Mitra</h3>
                                                 <span className="text-xs text-gray-500">{period} hari</span>
                                             </div>
                                             {(() => {
-                                                const totalPO = summary.summary.stokisOrders + summary.summary.mitraOrders
-                                                const stokisPct = totalPO > 0 ? Math.round((summary.summary.stokisOrders / totalPO) * 100) : 0
-                                                const mitraPct = totalPO > 0 ? 100 - stokisPct : 0
+                                                const total = summary.users.totalMitra || 0
+                                                const active = summary.users.activeMitra || 0
+                                                const activePct = total > 0 ? Math.round((active / total) * 100) : 0
                                                 return (
                                                     <div className="space-y-4">
-                                                        {/* Stokis PO Bar */}
+                                                        {/* Total Mitra Bar */}
                                                         <div>
                                                             <div className="flex items-center justify-between mb-1.5">
-                                                                <span className="text-xs font-medium text-gray-700">PO Stokis</span>
-                                                                <span className="text-xs font-bold text-blue-600">{summary.summary.stokisOrders} order</span>
+                                                                <span className="text-xs font-medium text-gray-700">Jumlah Mitra</span>
+                                                                <span className="text-xs font-bold text-amber-600">{total} mitra</span>
                                                             </div>
                                                             <div className="w-full h-5 bg-gray-100 rounded-full overflow-hidden">
                                                                 <div
-                                                                    className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-end pr-2 transition-all duration-700"
-                                                                    style={{ width: `${Math.max(stokisPct, 3)}%` }}
-                                                                >
-                                                                    {stokisPct > 15 && <span className="text-[10px] font-bold text-white">{stokisPct}%</span>}
-                                                                </div>
+                                                                    className="h-full bg-gradient-to-r from-amber-500 to-orange-400 rounded-full transition-all duration-700"
+                                                                    style={{ width: '100%' }}
+                                                                />
                                                             </div>
                                                         </div>
-                                                        {/* Mitra PO Bar */}
+                                                        {/* Active Mitra Bar */}
                                                         <div>
                                                             <div className="flex items-center justify-between mb-1.5">
-                                                                <span className="text-xs font-medium text-gray-700">PO Mitra</span>
-                                                                <span className="text-xs font-bold text-emerald-600">{summary.summary.mitraOrders} order</span>
+                                                                <span className="text-xs font-medium text-gray-700">Mitra Yang Order</span>
+                                                                <span className="text-xs font-bold text-emerald-600">{active} mitra</span>
                                                             </div>
                                                             <div className="w-full h-5 bg-gray-100 rounded-full overflow-hidden">
                                                                 <div
                                                                     className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-end pr-2 transition-all duration-700"
-                                                                    style={{ width: `${Math.max(mitraPct, 3)}%` }}
+                                                                    style={{ width: `${Math.max(activePct, 3)}%` }}
                                                                 >
-                                                                    {mitraPct > 15 && <span className="text-[10px] font-bold text-white">{mitraPct}%</span>}
+                                                                    {activePct > 15 && <span className="text-[10px] font-bold text-white">{activePct}%</span>}
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        {/* Total */}
+                                                        {/* Summary */}
                                                         <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                                                            <span className="text-xs text-gray-500">Total PO</span>
-                                                            <span className="text-sm font-bold text-gray-900">{totalPO} order</span>
+                                                            <span className="text-xs text-gray-500">Rasio Order</span>
+                                                            <span className="text-sm font-bold text-gray-900">{active} / {total} ({activePct}%)</span>
                                                         </div>
                                                     </div>
                                                 )
