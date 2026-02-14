@@ -98,10 +98,6 @@ export default function PembayaranPage() {
             const res = await fetch("/api/stokis")
             const data = await res.json()
             setStokisList(data)
-            // FINANCE_DC: auto-select the first stokis (no "Semua Stokis" option)
-            if (role === "FINANCE_DC" && data.length > 0 && !filterStokis) {
-                setFilterStokis(data[0].id)
-            }
         } catch (err) {
             console.error("Error fetching stokis:", err)
         }
@@ -212,19 +208,21 @@ export default function PembayaranPage() {
             {/* Filters */}
             <div className="bg-white rounded-xl p-4 shadow-sm">
                 <div className="flex flex-wrap gap-3">
-                    <div className="relative">
-                        <select
-                            value={filterStokis}
-                            onChange={(e) => setFilterStokis(e.target.value)}
-                            className="appearance-none bg-gray-50 border rounded-lg px-4 py-2 pr-8 text-gray-700 text-sm"
-                        >
-                            {role !== "FINANCE_DC" && <option value="">Semua Stokis</option>}
-                            {stokisList.map(s => (
-                                <option key={s.id} value={s.id}>{s.name}</option>
-                            ))}
-                        </select>
-                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                    </div>
+                    {role !== "FINANCE_DC" && (
+                        <div className="relative">
+                            <select
+                                value={filterStokis}
+                                onChange={(e) => setFilterStokis(e.target.value)}
+                                className="appearance-none bg-gray-50 border rounded-lg px-4 py-2 pr-8 text-gray-700 text-sm"
+                            >
+                                <option value="">Semua Stokis</option>
+                                {stokisList.map(s => (
+                                    <option key={s.id} value={s.id}>{s.name}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        </div>
+                    )}
                     <div className="relative">
                         <select
                             value={filterStatus}

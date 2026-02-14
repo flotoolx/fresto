@@ -213,32 +213,22 @@ export default function ApprovePOPage() {
             <div className="bg-white rounded-xl p-4 shadow-sm">
                 {(role === "FINANCE_DC" || role === "FINANCE_ALL") ? (
                     <div className="flex flex-col sm:flex-row gap-3">
-                        <select
-                            value={role === "FINANCE_DC" ? dcFilter : financeAllFilter}
-                            onChange={(e) => role === "FINANCE_DC"
-                                ? setDcFilter(e.target.value as "pusat" | "alldc" | "dc")
-                                : setFinanceAllFilter(e.target.value)
-                            }
-                            className="px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-all cursor-pointer"
-                        >
-                            {role === "FINANCE_DC" ? (
-                                <>
-                                    <option value="pusat">Pusat</option>
-                                    <option value="alldc">All DC</option>
-                                    <option value="dc">DC</option>
-                                </>
-                            ) : (
-                                <>
-                                    <option value="all">Semua</option>
-                                    <option value="PENDING_PUSAT">Menunggu Approval</option>
-                                    <option value="PO_ISSUED">PO Issued</option>
-                                    <option value="PROCESSING">Diproses</option>
-                                    <option value="SHIPPED">Dikirim</option>
-                                    <option value="RECEIVED">Diterima</option>
-                                    <option value="CANCELLED">Dibatalkan</option>
-                                </>
-                            )}
-                        </select>
+                        {/* FINANCE_DC: no filter dropdown, just search */}
+                        {role === "FINANCE_ALL" && (
+                            <select
+                                value={financeAllFilter}
+                                onChange={(e) => setFinanceAllFilter(e.target.value)}
+                                className="px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-all cursor-pointer"
+                            >
+                                <option value="all">Semua</option>
+                                <option value="PENDING_PUSAT">Menunggu Approval</option>
+                                <option value="PO_ISSUED">PO Issued</option>
+                                <option value="PROCESSING">Diproses</option>
+                                <option value="SHIPPED">Dikirim</option>
+                                <option value="RECEIVED">Diterima</option>
+                                <option value="CANCELLED">Dibatalkan</option>
+                            </select>
+                        )}
                         <div className="relative flex-1">
                             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
@@ -274,11 +264,8 @@ export default function ApprovePOPage() {
                 let filtered: StokisOrder[]
 
                 if (role === "FINANCE_DC") {
-                    filtered = dcFilter === "pusat"
-                        ? allOrders.filter(o => o.status === "PENDING_PUSAT")
-                        : dcFilter === "alldc"
-                            ? allOrders
-                            : allOrders.filter(o => o.stokis.dcId === session?.user?.dcId)
+                    // FINANCE_DC: show only PENDING_PUSAT orders (no filter dropdown)
+                    filtered = allOrders.filter(o => o.status === "PENDING_PUSAT")
                 } else {
                     // FINANCE_ALL
                     filtered = financeAllFilter === "all"

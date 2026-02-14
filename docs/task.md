@@ -435,3 +435,12 @@
 ### Ekspor Tab Tagihan (Excel & PDF)
 - [x] Perbaiki Logika Filter: `getInvoices()` sekarang memfilter berdasarkan status pembayaran (Belum Bayar/Lunas/Semua) ✅
 - [x] Terapkan Filter ke Ekspor: PDF dan Excel sekarang mengikuti tampilan terfilter yang dipilih ✅
+
+---
+
+## Fase 12: Perbaikan Halaman Pembayaran FINANCE_DC (14 Feb 2026) ✅ SELESAI
+
+### Filter Stokis
+- [x] Hilangkan opsi "Semua Stokis" dari dropdown filter untuk role FINANCE_DC ✅
+- [x] Auto-select stokis pertama saat halaman dimuat untuk FINANCE_DC ✅
+- [x] Git commit ✅ `236bf0f`
