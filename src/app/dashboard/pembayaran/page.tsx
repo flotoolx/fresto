@@ -71,6 +71,10 @@ export default function PembayaranPage() {
         if (role === "FINANCE_ALL") {
             router.replace("/dashboard")
         }
+        // Default filter FINANCE_DC to "Belum Bayar"
+        if (role === "FINANCE_DC" && filterStatus === "") {
+            setFilterStatus("UNPAID")
+        }
     }, [role, router])
 
     useEffect(() => {
@@ -161,7 +165,11 @@ export default function PembayaranPage() {
     // Filter invoices
     const filteredInvoices = invoices.filter(inv => {
         if (filterStokis && inv.order.stokis.id !== filterStokis) return false
-        if (filterStatus && inv.status !== filterStatus) return false
+        if (filterStatus) {
+            if (filterStatus === "PAID" && inv.status !== "PAID") return false
+            if (filterStatus === "UNPAID" && inv.status === "PAID") return false
+            if (filterStatus === "OVERDUE" && inv.status !== "OVERDUE") return false
+        }
         if (searchQuery) {
             const query = searchQuery.toLowerCase()
             if (!inv.invoiceNumber.toLowerCase().includes(query) &&
@@ -171,6 +179,12 @@ export default function PembayaranPage() {
         }
         return true
     })
+        // Sort: unpaid/overdue first, then paid
+        .sort((a, b) => {
+            const aIsPaid = a.status === "PAID" ? 1 : 0
+            const bIsPaid = b.status === "PAID" ? 1 : 0
+            return aIsPaid - bIsPaid
+        })
 
     // Calculate summary
     const paidInvoices = filteredInvoices.filter(inv => inv.status === "PAID")
@@ -232,6 +246,7 @@ export default function PembayaranPage() {
                             <option value="">Semua Status</option>
                             <option value="UNPAID">Belum Bayar</option>
                             <option value="OVERDUE">Jatuh Tempo</option>
+                            <option value="PAID">Lunas</option>
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     </div>
@@ -295,28 +310,36 @@ export default function PembayaranPage() {
                             <tbody className="divide-y">
                                 {filteredInvoices.map(inv => {
                                     const remaining = Number(inv.amount) - Number(inv.paidAmount)
+                                    const isPaid = inv.status === "PAID" || remaining <= 0
                                     const isOverdue = inv.status === "OVERDUE"
                                     return (
-                                        <tr key={inv.id} className={isOverdue ? "bg-red-50" : ""}>
+                                        <tr key={inv.id} className={isPaid ? "bg-gray-50/80" : isOverdue ? "bg-red-50" : ""}>
                                             <td className="px-4 py-3">
-                                                <span className="font-medium text-gray-900">{inv.invoiceNumber}</span>
-                                                <p className="text-xs text-gray-500">{inv.order.orderNumber}</p>
+                                                <span className={`font-medium ${isPaid ? "text-gray-400" : "text-gray-900"}`}>{inv.invoiceNumber}</span>
+                                                <p className={`text-xs ${isPaid ? "text-gray-300" : "text-gray-500"}`}>{inv.order.orderNumber}</p>
                                             </td>
-                                            <td className="px-4 py-3 text-gray-700">{inv.order.stokis.name}</td>
-                                            <td className="px-4 py-3 text-right text-gray-700">
+                                            <td className={`px-4 py-3 ${isPaid ? "text-gray-400" : "text-gray-700"}`}>{inv.order.stokis.name}</td>
+                                            <td className={`px-4 py-3 text-right ${isPaid ? "text-gray-400" : "text-gray-700"}`}>
                                                 {formatCurrency(Number(inv.amount))}
                                             </td>
-                                            <td className="px-4 py-3 text-right font-medium text-gray-900">
+                                            <td className={`px-4 py-3 text-right font-medium ${isPaid ? "text-gray-400" : "text-gray-900"}`}>
                                                 {formatCurrency(remaining)}
                                             </td>
 
                                             <td className="px-4 py-3 text-center">
-                                                <button
-                                                    onClick={() => openPaymentModal(inv)}
-                                                    className="px-3 py-1.5 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600"
-                                                >
-                                                    Bayar
-                                                </button>
+                                                {isPaid ? (
+                                                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">
+                                                        <CheckCircle size={12} />
+                                                        Lunas
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => openPaymentModal(inv)}
+                                                        className="px-3 py-1.5 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600"
+                                                    >
+                                                        Bayar
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     )

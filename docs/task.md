@@ -438,9 +438,17 @@
 
 ---
 
-## Fase 12: Perbaikan Halaman Pembayaran FINANCE_DC (14 Feb 2026) ✅ SELESAI
+## Fase 12: Perbaikan Filter FINANCE_DC (14 Feb 2026) ✅ SELESAI
 
-### Filter Stokis
-- [x] Hilangkan opsi "Semua Stokis" dari dropdown filter untuk role FINANCE_DC ✅
-- [x] Auto-select stokis pertama saat halaman dimuat untuk FINANCE_DC ✅
-- [x] Git commit ✅ `236bf0f`
+### Halaman Approve PO
+- [x] Hapus dropdown filter Pusat/All DC/DC untuk FINANCE_DC ✅
+- [x] FINANCE_DC sekarang hanya melihat PO PENDING_PUSAT + search box ✅
+
+### Halaman Pembayaran
+- [x] Hapus dropdown filter stokis (DC Palembang, Stokis Bekasi, dll) untuk FINANCE_DC ✅
+- [x] FINANCE_DC sekarang langsung melihat semua data area mereka tanpa filter stokis ✅
+
+### Git Commits
+- [x] `236bf0f` — Hilangkan "Semua Stokis" + auto-select stokis pertama
+- [x] `caa91c3` — Hapus filter Pusat/All DC/DC di approve-po dan filter stokis di pembayaran
+
