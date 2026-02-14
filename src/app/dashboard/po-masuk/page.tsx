@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Package, Clock, Truck, ChevronRight, Printer, Search, CheckCircle } from "lucide-react"
+import { Package, Clock, Truck, ChevronRight, Printer, Search, CheckCircle, AlertCircle } from "lucide-react"
 import ExportButton from "@/components/ExportButton"
 import Link from "next/link"
 
@@ -90,7 +90,7 @@ export default function GudangPOMasukPage() {
 
     // Separate active vs history
     const activeOrders = useMemo(() =>
-        orders.filter(o => ["PO_ISSUED", "PROCESSING"].includes(o.status)),
+        orders.filter(o => ["PENDING_PUSAT", "PO_ISSUED", "PROCESSING"].includes(o.status)),
         [orders]
     )
     const historyOrders = useMemo(() =>
@@ -118,6 +118,7 @@ export default function GudangPOMasukPage() {
     }, [baseList, filterStatus, searchQuery])
 
     // Summary stats
+    const pendingCount = activeOrders.filter(o => o.status === "PENDING_PUSAT").length
     const poIssuedCount = activeOrders.filter(o => o.status === "PO_ISSUED").length
     const processingCount = activeOrders.filter(o => o.status === "PROCESSING").length
 
@@ -146,24 +147,33 @@ export default function GudangPOMasukPage() {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
+                <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-10 h-10 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-1 mb-1">
+                        <AlertCircle size={14} className="opacity-80" />
+                        <span className="text-[10px] md:text-xs text-white/80">Belum Approve</span>
+                    </div>
+                    <p className="text-xl md:text-2xl font-bold">{pendingCount}</p>
+                    <p className="text-[9px] md:text-xs text-white/60 mt-0.5">Menunggu pusat</p>
+                </div>
                 <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-10 h-10 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                    <div className="flex items-center gap-1 mb-1">
                         <Clock size={14} className="opacity-80" />
-                        <span className="text-[11px] md:text-xs text-white/80">PO Baru</span>
+                        <span className="text-[10px] md:text-xs text-white/80">PO Baru</span>
                     </div>
                     <p className="text-xl md:text-2xl font-bold">{poIssuedCount}</p>
-                    <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Menunggu diproses</p>
+                    <p className="text-[9px] md:text-xs text-white/60 mt-0.5">Siap diproses</p>
                 </div>
                 <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-10 h-10 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                    <div className="flex items-center gap-1 mb-1">
                         <Package size={14} className="opacity-80" />
-                        <span className="text-[11px] md:text-xs text-white/80">Sedang Diproses</span>
+                        <span className="text-[10px] md:text-xs text-white/80">Diproses</span>
                     </div>
                     <p className="text-xl md:text-2xl font-bold">{processingCount}</p>
-                    <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Siap dikirim</p>
+                    <p className="text-[9px] md:text-xs text-white/60 mt-0.5">Siap dikirim</p>
                 </div>
             </div>
 
@@ -199,6 +209,7 @@ export default function GudangPOMasukPage() {
                             className="appearance-none bg-gray-50 border rounded-lg px-3 py-2 text-gray-700 text-sm"
                         >
                             <option value="">Semua Status</option>
+                            <option value="PENDING_PUSAT">Belum Disetujui</option>
                             <option value="PO_ISSUED">PO Baru</option>
                             <option value="PROCESSING">Sedang Diproses</option>
                         </select>
@@ -234,13 +245,15 @@ export default function GudangPOMasukPage() {
             ) : (
                 <div className="space-y-3">
                     {filteredOrders.map((order) => {
+                        const isPending = order.status === "PENDING_PUSAT"
                         const isPOIssued = order.status === "PO_ISSUED"
                         const isProcessing = order.status === "PROCESSING"
                         const isShipped = order.status === "SHIPPED"
                         return (
                             <div
                                 key={order.id}
-                                className={`bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all border-l-4 ${isPOIssued ? "border-l-blue-500" :
+                                className={`bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all border-l-4 ${isPending ? "border-l-amber-400 opacity-80" :
+                                    isPOIssued ? "border-l-blue-500" :
                                         isProcessing ? "border-l-purple-500" :
                                             "border-l-green-500"
                                     }`}
@@ -251,12 +264,13 @@ export default function GudangPOMasukPage() {
                                         <h3 className="font-semibold text-gray-800 text-sm">{order.orderNumber}</h3>
                                         <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
                                     </div>
-                                    <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${isPOIssued ? "bg-blue-100 text-blue-700 border-blue-200" :
+                                    <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${isPending ? "bg-amber-100 text-amber-700 border-amber-200" :
+                                        isPOIssued ? "bg-blue-100 text-blue-700 border-blue-200" :
                                             isProcessing ? "bg-purple-100 text-purple-700 border-purple-200" :
                                                 "bg-green-100 text-green-700 border-green-200"
                                         }`}>
-                                        {isPOIssued ? <Clock size={12} /> : isProcessing ? <Package size={12} /> : <CheckCircle size={12} />}
-                                        {isPOIssued ? "PO Baru" : isProcessing ? "Diproses" : "Dikirim"}
+                                        {isPending ? <AlertCircle size={12} /> : isPOIssued ? <Clock size={12} /> : isProcessing ? <Package size={12} /> : <CheckCircle size={12} />}
+                                        {isPending ? "Belum Disetujui" : isPOIssued ? "PO Baru" : isProcessing ? "Diproses" : "Dikirim"}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center">
@@ -309,6 +323,16 @@ export default function GudangPOMasukPage() {
                                     <p className="text-sm text-gray-600">{selectedOrder.stokis.address}</p>
                                 )}
                             </div>
+
+                            {selectedOrder.status === "PENDING_PUSAT" && (
+                                <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
+                                    <AlertCircle size={18} className="text-amber-600 flex-shrink-0" />
+                                    <div>
+                                        <p className="text-sm font-medium text-amber-800">Belum Disetujui</p>
+                                        <p className="text-xs text-amber-600">PO ini masih menunggu persetujuan dari Pusat/Finance</p>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="space-y-4">
                                 <div>

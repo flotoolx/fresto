@@ -488,4 +488,4 @@
 - [x] Perluas filter GUDANG di `/api/orders/stokis` untuk include SHIPPED orders ✅
 
 ### Git Commits
-- [x] Commit pending
+- [x] Git commit ✅ `3585c93`

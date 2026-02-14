@@ -311,13 +311,10 @@ export default function DashboardPage() {
                         { label: "Total Revenue", value: formatRp(totalRevenue), subtitle: `${Array.isArray(dcOrders) ? dcOrders.length : 0} PO`, icon: TrendingUp, gradient: "from-[#3B82F6] to-[#1D4ED8]", href: "/dashboard/reports" },
                     ])
                 } else if (role === "GUDANG") {
-                    const [ordersRes, inventoryRes] = await Promise.all([
-                        fetch("/api/orders/stokis"),
-                        fetch("/api/inventory"),
-                    ])
+                    const ordersRes = await fetch("/api/orders/stokis")
                     const orders = ordersRes.ok ? await ordersRes.json() : []
-                    const inventoryData = inventoryRes.ok ? await inventoryRes.json() : []
 
+                    const pendingApproval = Array.isArray(orders) ? orders.filter((o: { status: string }) => o.status === "PENDING_PUSAT").length : 0
                     const poIssued = Array.isArray(orders) ? orders.filter((o: { status: string }) => o.status === "PO_ISSUED") : []
                     const processing = Array.isArray(orders) ? orders.filter((o: { status: string }) => o.status === "PROCESSING") : []
 
@@ -327,14 +324,11 @@ export default function DashboardPage() {
                         o.status === "SHIPPED" && o.shippedAt && o.shippedAt.startsWith(today)
                     ).length : 0
 
-                    // Low stock count
-                    const lowStock = Array.isArray(inventoryData) ? inventoryData.filter((i: { quantity: number; minStock: number }) => i.quantity <= i.minStock).length : 0
-
                     setStats([
                         { label: "PO Masuk", value: poIssued.length, icon: Package, gradient: "from-[#E31E24] to-[#B91C22]", href: "/dashboard/po-masuk" },
                         { label: "Sedang Diproses", value: processing.length, icon: Activity, gradient: "from-[#8B5CF6] to-[#6D28D9]", href: "/dashboard/po-masuk" },
                         { label: "Terkirim Hari Ini", value: shippedToday, icon: Package, gradient: "from-[#10B981] to-[#059669]" },
-                        { label: "Stok Menipis", value: lowStock, subtitle: lowStock > 0 ? "Perlu restock" : "Aman", icon: Package, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/inventory" },
+                        { label: "Menunggu Approval", value: pendingApproval, subtitle: "Belum disetujui", icon: Package, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/po-masuk" },
                     ])
 
                     // Recent activity - last 5 orders
@@ -983,6 +977,7 @@ export default function DashboardPage() {
                     <div className="divide-y divide-gray-50">
                         {recentOrders.map((order) => {
                             const statusConfig: Record<string, { label: string; color: string }> = {
+                                PENDING_PUSAT: { label: "Belum Disetujui", color: "bg-amber-100 text-amber-700" },
                                 PO_ISSUED: { label: "PO Baru", color: "bg-blue-100 text-blue-700" },
                                 PROCESSING: { label: "Diproses", color: "bg-purple-100 text-purple-700" },
                                 SHIPPED: { label: "Dikirim", color: "bg-green-100 text-green-700" },

@@ -30,7 +30,7 @@ export async function GET() {
         } else if (role === "FINANCE") {
             where = { status: "PENDING_PUSAT" }
         } else if (role === "GUDANG") {
-            where = { status: { in: ["PO_ISSUED", "PROCESSING", "SHIPPED"] } }
+            where = { status: { in: ["PENDING_PUSAT", "PO_ISSUED", "PROCESSING", "SHIPPED"] } }
         } else {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
