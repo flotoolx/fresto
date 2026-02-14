@@ -78,11 +78,14 @@ export default function ReportPreviewPage() {
 
     const getInvoices = (): InvoiceDetail[] => {
         if (!data) return []
-        let invoices = filter === "dc"
-            ? data.details.dc
-            : filter === "stokis"
-                ? data.details.stokis
-                : [...data.details.dc, ...data.details.stokis]
+        let invoices = [...data.details.dc, ...data.details.stokis]
+
+        // Filter by payment status
+        if (filter === "unpaid") {
+            invoices = invoices.filter(inv => inv.status !== "PAID")
+        } else if (filter === "paid") {
+            invoices = invoices.filter(inv => inv.status === "PAID")
+        }
 
         // Sort
         invoices = [...invoices].sort((a, b) => {

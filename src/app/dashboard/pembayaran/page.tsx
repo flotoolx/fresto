@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { CreditCard, Search, ChevronDown, AlertTriangle, CheckCircle, X, Upload } from "lucide-react"
 
 interface Invoice {
@@ -39,6 +41,9 @@ const paymentMethods = [
 ]
 
 export default function PembayaranPage() {
+    const { data: session } = useSession()
+    const router = useRouter()
+    const role = session?.user?.role || ""
     const [invoices, setInvoices] = useState<Invoice[]>([])
     const [stokisList, setStokisList] = useState<Stokis[]>([])
     const [loading, setLoading] = useState(true)
@@ -61,10 +66,19 @@ export default function PembayaranPage() {
         notes: ""
     })
 
+    // Redirect FINANCE_ALL — view only, no payment access
     useEffect(() => {
-        fetchInvoices()
-        fetchStokisList()
-    }, [])
+        if (role === "FINANCE_ALL") {
+            router.replace("/dashboard")
+        }
+    }, [role, router])
+
+    useEffect(() => {
+        if (role && role !== "FINANCE_ALL") {
+            fetchInvoices()
+            fetchStokisList()
+        }
+    }, [role])
 
     const fetchInvoices = async () => {
         try {
@@ -84,6 +98,10 @@ export default function PembayaranPage() {
             const res = await fetch("/api/stokis")
             const data = await res.json()
             setStokisList(data)
+            // FINANCE_DC: auto-select the first stokis (no "Semua Stokis" option)
+            if (role === "FINANCE_DC" && data.length > 0 && !filterStokis) {
+                setFilterStokis(data[0].id)
+            }
         } catch (err) {
             console.error("Error fetching stokis:", err)
         }
@@ -200,7 +218,7 @@ export default function PembayaranPage() {
                             onChange={(e) => setFilterStokis(e.target.value)}
                             className="appearance-none bg-gray-50 border rounded-lg px-4 py-2 pr-8 text-gray-700 text-sm"
                         >
-                            <option value="">Semua Stokis</option>
+                            {role !== "FINANCE_DC" && <option value="">Semua Stokis</option>}
                             {stokisList.map(s => (
                                 <option key={s.id} value={s.id}>{s.name}</option>
                             ))}

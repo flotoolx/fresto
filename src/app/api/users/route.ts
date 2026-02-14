@@ -55,6 +55,7 @@ export async function GET(request: Request) {
                 uniqueCode: true,
                 isActive: true,
                 dcId: true,
+                stokisId: true,
                 stokis: {
                     select: { name: true },
                 },

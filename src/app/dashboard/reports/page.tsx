@@ -320,50 +320,31 @@ export default function ReportsPage() {
             })
         } else if (activeTab === "stokis" && stokisPerf.length > 0) {
             doc.setFontSize(12)
-            doc.text("Performa Stokis", 14, 35)
+            doc.text(perfFilter === "stokis" ? "Performa Stokis" : "Performa Stokis (dengan Order Mitra)", 14, 35)
+            const showMitraCol = perfFilter === "mitra"
             const stokisRows: string[][] = []
-            stokisPerf.forEach((s, i) => {
-                stokisRows.push([
-                    String(i + 1), s.uniqueCode || "-", s.stokisName, s.phone || "-",
-                    String(s.ordersToPusat), String(s.ordersFromMitra), String(s.mitraCount),
-                    formatCurrency(s.totalRevenue)
-                ])
-                s.products.forEach((p, pi) => {
-                    stokisRows.push(["", "", `  ${pi + 1}. ${p.productName} (${p.sku})`, "", String(p.totalQty), p.unit, "", formatCurrency(p.totalRevenue)])
-                })
+            stokisPerf.forEach(s => {
+                const baseRow = showMitraCol
+                    ? [s.uniqueCode || "-", s.stokisName, s.phone || "-", String(s.ordersToPusat), String(s.ordersFromMitra), String(s.mitraCount)]
+                    : [s.uniqueCode || "-", s.stokisName, s.phone || "-", String(s.ordersToPusat), String(s.mitraCount)]
+                if (s.products.length > 0) {
+                    s.products.forEach(p => {
+                        stokisRows.push([...baseRow, p.productName, p.sku, String(p.totalQty), p.unit, formatCurrency(p.totalRevenue)])
+                    })
+                } else {
+                    stokisRows.push([...baseRow, "", "", "", "", ""])
+                }
             })
+            const pdfHead = showMitraCol
+                ? [["Kode", "Nama Stokis", "Telp", "Order ke Pusat", "Order dari Mitra", "Jumlah Mitra", "Produk", "SKU", "Qty", "Unit", "Revenue Produk"]]
+                : [["Kode", "Nama Stokis", "Telp", "Order ke Pusat", "Jumlah Mitra", "Produk", "SKU", "Qty", "Unit", "Revenue Produk"]]
             autoTable(doc, {
                 startY: 40,
-                head: [["#", "Kode", "Stokis", "Telp", "Order Pusat", "Order Mitra", "Mitra", "Revenue"]],
+                head: pdfHead,
                 body: stokisRows,
                 styles: { fontSize: 7 },
                 headStyles: { fillColor: [71, 85, 105] },
             })
-            let nextY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || 80
-
-            // Mitra section
-            if (mitraPerf.length > 0) {
-                if (nextY > 230) { doc.addPage(); nextY = 15 }
-                doc.setFontSize(12)
-                doc.text("Performa Mitra", 14, nextY + 8)
-                const mitraRows: string[][] = []
-                mitraPerf.forEach((m, i) => {
-                    mitraRows.push([
-                        String(i + 1), m.uniqueCode || "-", m.mitraName, m.phone || "-",
-                        m.stokisName, String(m.ordersToStokis), formatCurrency(m.totalRevenue)
-                    ])
-                    m.products.forEach((p, pi) => {
-                        mitraRows.push(["", "", `  ${pi + 1}. ${p.productName} (${p.sku})`, "", "", String(p.totalQty) + " " + p.unit, formatCurrency(p.totalRevenue)])
-                    })
-                })
-                autoTable(doc, {
-                    startY: nextY + 12,
-                    head: [["#", "Kode", "Mitra", "Telp", "Stokis", "Orders", "Revenue"]],
-                    body: mitraRows,
-                    styles: { fontSize: 7 },
-                    headStyles: { fillColor: [71, 85, 105] },
-                })
-            }
         } else if (activeTab === "invoice" && invoiceAging) {
             // Get invoices to export based on filter
             const allInvoices = [...invoiceDetails.dc, ...invoiceDetails.stokis]
@@ -444,59 +425,25 @@ export default function ReportsPage() {
                 Revenue: p.totalRevenue
             }))
         } else if (activeTab === "stokis") {
-            // Enhanced export handled by the separate exportToExcel above for stokis tab
-            // This is a fallback for the generic button
+            const showMitraCol = perfFilter === "mitra"
             const wb = XLSX.utils.book_new()
-            const stokisAoa: (string | number)[][] = [
-                ["Kode", "Nama Stokis", "Telp", "Order ke Pusat", "Order dari Mitra", "Jumlah Mitra", "Produk", "SKU", "Qty", "Unit", "Revenue Produk"]
-            ]
+            const header: (string | number)[] = showMitraCol
+                ? ["Kode", "Nama Stokis", "Telp", "Order ke Pusat", "Order dari Mitra", "Jumlah Mitra", "Produk", "SKU", "Qty", "Unit", "Revenue Produk"]
+                : ["Kode", "Nama Stokis", "Telp", "Order ke Pusat", "Jumlah Mitra", "Produk", "SKU", "Qty", "Unit", "Revenue Produk"]
+            const stokisAoa: (string | number)[][] = [header]
             stokisPerf.forEach(s => {
-                const base = [s.uniqueCode || "-", s.stokisName, s.phone || "-", s.ordersToPusat, s.ordersFromMitra, s.mitraCount]
+                const base: (string | number)[] = showMitraCol
+                    ? [s.uniqueCode || "-", s.stokisName, s.phone || "-", s.ordersToPusat, s.ordersFromMitra, s.mitraCount]
+                    : [s.uniqueCode || "-", s.stokisName, s.phone || "-", s.ordersToPusat, s.mitraCount]
                 if (s.products.length > 0) {
-                    const first = s.products[0]
-                    stokisAoa.push([...base, first.productName, first.sku, first.totalQty, first.unit, first.totalRevenue])
-                    s.products.slice(1).forEach(p => {
-                        stokisAoa.push(["", "", "", "", "", "", p.productName, p.sku, p.totalQty, p.unit, p.totalRevenue])
+                    s.products.forEach(p => {
+                        stokisAoa.push([...base, p.productName, p.sku, p.totalQty, p.unit, p.totalRevenue])
                     })
                 } else {
-                    stokisAoa.push(base as (string | number)[])
+                    stokisAoa.push(base)
                 }
             })
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(stokisAoa), "Stokis")
-
-            const mitraData: Record<string, unknown>[] = []
-            mitraPerf.forEach(m => {
-                mitraData.push({
-                    "Kode": m.uniqueCode || "-", "Nama Mitra": m.mitraName, "Telp": m.phone || "-",
-                    "Stokis": m.stokisName, "Kode Stokis": m.stokisCode || "-",
-                    "Orders": m.ordersToStokis, "Revenue": m.totalRevenue,
-                    "Produk": "", "SKU": "", "Qty": "", "Unit": "", "Revenue Produk": ""
-                })
-                m.products.forEach(p => {
-                    mitraData.push({
-                        "Kode": "", "Nama Mitra": "", "Telp": "", "Stokis": "", "Kode Stokis": "", "Orders": "", "Revenue": "",
-                        "Produk": p.productName, "SKU": p.sku, "Qty": p.totalQty, "Unit": p.unit, "Revenue Produk": p.totalRevenue
-                    })
-                })
-            })
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(mitraData), "Mitra")
-
-            const dcData: Record<string, unknown>[] = []
-            dcPerf.forEach(d => {
-                dcData.push({
-                    "Kode": d.uniqueCode || "-", "Nama DC": d.dcName, "Telp": d.phone || "-",
-                    "Order ke Stokis": d.ordersToStokis, "Jumlah Stokis": d.stokisCount,
-                    "Jumlah Mitra": d.mitraCount, "Revenue": d.totalRevenue,
-                    "Produk": "", "SKU": "", "Qty": "", "Unit": "", "Revenue Produk": ""
-                })
-                d.products.forEach(p => {
-                    dcData.push({
-                        "Kode": "", "Nama DC": "", "Telp": "", "Order ke Stokis": "", "Jumlah Stokis": "", "Jumlah Mitra": "", "Revenue": "",
-                        "Produk": p.productName, "SKU": p.sku, "Qty": p.totalQty, "Unit": p.unit, "Revenue Produk": p.totalRevenue
-                    })
-                })
-            })
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dcData), "DC")
 
             XLSX.writeFile(wb, `performa-report.xlsx`)
             return

@@ -1,189 +1,189 @@
-# D'Fresto MVP - Task Tracking
+# D'Fresto MVP - Pelacakan Tugas
 
-## Phase 1: Core MVP ✅ COMPLETE
+## Fase 1: MVP Utama ✅ SELESAI
 
-### Authentication & Setup
-- [x] NextAuth.js authentication
-- [x] Role-based access control (5 roles)
-- [x] Prisma database setup
-- [x] Database seeding
-- [x] run_app.bat startup script
+### Otentikasi & Pengaturan
+- [x] Otentikasi NextAuth.js
+- [x] Kontrol akses berbasis peran (5 role)
+- [x] Pengaturan database Prisma
+- [x] Seeding database
+- [x] Skript startup run_app.bat
 
-### Mitra Features
-- [x] Dashboard with order stats
-- [x] Order creation page
-- [x] Order history page
-- [x] Order confirmation
+### Fitur Mitra
+- [x] Dashboard dengan statistik pesanan
+- [x] Halaman pembuatan pesanan
+- [x] Halaman riwayat pesanan
+- [x] Konfirmasi pesanan
 
-### Stokis Features
-- [x] Dashboard overview
-- [x] Mitra orders management
-- [x] Order to Pusat
-- [x] My Mitra page
+### Fitur Stokis
+- [x] Ikhtisar Dashboard
+- [x] Manajemen pesanan Mitra
+- [x] Pesanan ke Pusat
+- [x] Halaman Mitra Saya
 
-### Pusat Features
-- [x] Dashboard overview
-- [x] Stokis orders management
-- [x] User management (view)
-- [x] Product management (view)
-- [x] Gudang management (view)
-- [x] Analytics dashboard
+### Fitur Pusat
+- [x] Ikhtisar Dashboard
+- [x] Manajemen pesanan Stokis
+- [x] Manajemen pengguna (lihat)
+- [x] Manajemen produk (lihat)
+- [x] Manajemen Gudang (lihat)
+- [x] Dashboard analitik
 
-### Finance Features
-- [x] Dashboard overview
-- [x] Approve PO page
-- [x] Tagihan monitoring
+### Fitur Finance
+- [x] Ikhtisar Dashboard
+- [x] Halaman Approve PO
+- [x] Pemantauan Tagihan/Invoice
 
-### Gudang Features
-- [x] Dashboard overview
-- [x] PO Masuk processing
-- [x] Inventory monitoring
-
----
-
-## Phase 2: Advanced Features ✅ COMPLETE
-
-### CRUD Functional
-- [x] Users API (POST, PUT, DELETE)
-- [x] Products API (POST, PUT, DELETE)
-- [x] Gudang API (POST, PUT, DELETE)
-- [x] Inventory adjustment API (PATCH)
-
-### Notifications
-- [x] Email notification library (Nodemailer)
-- [x] Push notification library (Web Push)
-- [x] Service worker for push notifications
-
-### Report Export
-- [x] PDF generation library (jsPDF)
-- [x] Excel generation library (xlsx)
-- [x] ExportButton component with date range
-
-### PO System
-- [x] Print PO Page (/po/[type]/[id])
-- [x] PO PDF generation API
-- [x] Print PO buttons on history pages
+### Fitur Gudang
+- [x] Ikhtisar Dashboard
+- [x] Pemrosesan PO Masuk
+- [x] Pemantauan Inventaris
 
 ---
 
-## Phase 3: Invoice Automation ✅ COMPLETE
+## Fase 2: Fitur Lanjutan ✅ SELESAI
+
+### Fungsional CRUD
+- [x] API Users (POST, PUT, DELETE)
+- [x] API Products (POST, PUT, DELETE)
+- [x] API Gudang (POST, PUT, DELETE)
+- [x] API penyesuaian inventaris (PATCH)
+
+### Notifikasi
+- [x] Library notifikasi email (Nodemailer)
+- [x] Library push notification (Web Push)
+- [x] Service worker untuk push notification
+
+### Ekspor Laporan
+- [x] Library pembuatan PDF (jsPDF)
+- [x] Library pembuatan Excel (xlsx)
+- [x] Komponen ExportButton dengan rentang tanggal
+
+### Sistem PO
+- [x] Halaman Cetak PO (/po/[type]/[id])
+- [x] API pembuatan PDF PO
+- [x] Tombol Cetak PO pada halaman riwayat
+
+---
+
+## Fase 3: Otomasi Invoice (Tagihan) ✅ SELESAI
 
 ### Database
-- [x] Invoice model with InvoiceStatus enum
-- [x] Relation to StokisOrder
+- [x] Model Invoice dengan enum InvoiceStatus
+- [x] Relasi ke StokisOrder
 
-### Invoice Library
-- [x] generateInvoice() function
+### Library Invoice
+- [x] Fungsi generateInvoice()
 - [x] generateInvoiceNumber() - INV-YYYYMMDD-XXX
-- [x] markInvoiceAsPaid() function
-- [x] checkOverdueInvoices() function
-- [x] Bank details constant (BCA 123456789 a.n. Dfresto)
+- [x] Fungsi markInvoiceAsPaid()
+- [x] Fungsi checkOverdueInvoices()
+- [x] Konstanta detail bank (BCA 123456789 a.n. Dfresto)
 
-### API Endpoints
-- [x] /api/invoices - List invoices (GET)
+### Endpoint API
+- [x] /api/invoices - Daftar invoice (GET)
 - [x] /api/invoices/[id] - Detail & Update (GET, PATCH)
 - [x] /api/invoices/[id]/pdf - Download PDF
 
-### Print Invoice Page
-- [x] /invoice/[id] - Professional layout
-- [x] Print button (browser print)
-- [x] Download PDF button
-- [x] Status badge (UNPAID/PAID/OVERDUE)
-- [x] Bank payment details
+### Halaman Cetak Invoice
+- [x] /invoice/[id] - Tata letak profesional
+- [x] Tombol cetak (print browser)
+- [x] Tombol Download PDF
+- [x] Badge status (UNPAID/PAID/OVERDUE)
+- [x] Detail pembayaran bank
 
-### Invoice Dashboard
-- [x] /dashboard/invoices - Finance role
-- [x] Stats cards (Total, Unpaid, Overdue, Outstanding)
-- [x] Filter by status
-- [x] Search by invoice/order/stokis
-- [x] Mark as Paid button
-- [x] Mobile responsive cards
+### Dashboard Invoice
+- [x] /dashboard/invoices - Role Finance
+- [x] Kartu statistik (Total, Unpaid, Overdue, Outstanding)
+- [x] Filter berdasarkan status
+- [x] Cari berdasarkan invoice/order/stokis
+- [x] Tombol Tandai Lunas
+- [x] Kartu responsif mobile
 
-### Integration
-- [x] Auto-generate invoice on PO_ISSUED
-- [x] Invoices menu in Finance sidebar
+### Integrasi
+- [x] Buat invoice otomatis saat PO_ISSUED
+- [x] Menu invoices di sidebar Finance
 
 ---
 
-## API Endpoints Summary
+## Ringkasan Endpoint API
 
-| Endpoint | Methods | Description |
+| Endpoint | Metode | Deskripsi |
 |----------|---------|-------------|
-| `/api/invoices` | GET | List invoices |
-| `/api/invoices/[id]` | GET, PATCH | Invoice detail & update |
+| `/api/invoices` | GET | Daftar invoice |
+| `/api/invoices/[id]` | GET, PATCH | Detail & update invoice |
 | `/api/invoices/[id]/pdf` | GET | Download PDF |
-| `/api/po/mitra/[id]` | GET | Mitra PO data |
-| `/api/po/stokis/[id]` | GET | Stokis PO data |
-| `/api/po/[type]/[id]/pdf` | GET | Download PO PDF |
+| `/api/po/mitra/[id]` | GET | Data PO Mitra |
+| `/api/po/stokis/[id]` | GET | Data PO Stokis |
+| `/api/po/[type]/[id]/pdf` | GET | Download PDF PO |
 
 ---
 
 
-## Phase 4: Stokis Dashboard & Order Enhancements (Completed Feb 8, 2026) ✅ COMPLETE
+## Fase 4: Peningkatan Dashboard Stokis & Pesanan (Selesai 8 Feb 2026) ✅ SELESAI
 
-### Stokis Dashboard Features
-- [x] Adjust PO Logic & API Handler (Qty=0 fix) ✅
-- [x] Action Buttons (Selesai, Revisi PO/Adjust, Tolak Order) ✅
-- [x] Mitra Order Card (Total Mitra from API, Unique Order Count) ✅
-- [x] Dashboard Layout (4 Cards, Headers, Responsive) ✅
-- [x] Print PO Button (Order Mitra page only) ✅
-- [x] Finance Dashboard 4-Cards Layout (DC & Stokis sections) ✅
-- [x] Reports Page Cards Responsive (Overview & Umur Piutang) ✅
+### Fitur Dashboard Stokis
+- [x] Logika Adjust PO & Handler API (Perbaikan Qty=0) ✅
+- [x] Tombol Aksi (Selesai, Revisi PO/Adjust, Tolak Order) ✅
+- [x] Kartu Pesanan Mitra (Total Mitra dari API, Jumlah Pesanan Unik) ✅
+- [x] Layout Dashboard (4 Kartu, Header, Responsif) ✅
+- [x] Tombol Cetak PO (Halaman Order Mitra saja) ✅
+- [x] Layout Dashboard Finance 4-Kartu (Bagian DC & Stokis) ✅
+- [x] Responsivitas Kartu Halaman Laporan (Overview & Umur Piutang) ✅
 - [x] Git commit ✅ `26e1e2c`
 
 ---
 
-## Phase 5: Stokis & Lokasi Management ⏳ PLANNED
+## Fase 5: Manajemen Stokis & Lokasi ⏳ DIRENCANAKAN
 
-### Database Schema
+### Skema Database
 - [ ] Tambah enum Province (34 provinsi Indonesia)
 - [ ] Tambah enum MitraRegistrationStatus (PENDING, APPROVED, REJECTED, INACTIVE)
 - [ ] Tambah field lokasi pada User (province, city, district, postalCode)
 - [ ] Tambah field mitraStatus, mitraApprovedAt, mitraApprovedBy pada User
 - [ ] Tambah model StokisProductPrice (harga custom per stokis)
-- [ ] Migration script untuk data existing (mitra dengan stokisId → APPROVED)
+- [ ] Script Migrasi untuk data existing (mitra dengan stokisId → APPROVED)
 
-### API Endpoints
+### Endpoint API
 - [ ] /api/mitra-registration - Stokis ajukan mitra
 - [ ] /api/mitra-registration/[id] - Pusat approve/reject
-- [ ] /api/mitra-registration/pending - List pending untuk Pusat
+- [ ] /api/mitra-registration/pending - Daftar pending untuk Pusat
 - [ ] /api/stokis-prices - CRUD harga custom (Pusat set)
 - [ ] /api/stokis-prices/by-stokis/[id] - Harga per stokis
-- [ ] /api/locations/provinces - List provinsi
+- [ ] /api/locations/provinces - Daftar provinsi
 - [ ] /api/stokis/by-province - Filter stokis per provinsi
 - [ ] /api/province-coverage - Statistik coverage stokis/mitra per provinsi
 - [ ] Update /api/users - Tambah field lokasi, validasi province wajib untuk STOKIS
 - [ ] Update /api/orders/mitra - Validasi mitraStatus APPROVED, gunakan harga custom
 
-### Dashboard Pages - Stokis
+### Halaman Dashboard - Stokis
 - [ ] /dashboard/kelola-mitra - Halaman ajukan & lihat mitra (tidak bisa approve)
 - [ ] /dashboard/harga-stokis - Halaman lihat harga (VIEW ONLY)
 
-### Dashboard Pages - Pusat
+### Halaman Dashboard - Pusat
 - [ ] /dashboard/approve-mitra - Halaman approve/reject pengajuan mitra
 - [ ] /dashboard/harga-stokis - Halaman kelola harga per stokis
 - [ ] /dashboard/province-coverage - Halaman coverage provinsi (stokis/mitra per provinsi)
 - [ ] Update /dashboard/users - Tambah kolom province & filter
 
-### Dashboard Pages - Finance
+### Halaman Dashboard - Finance
 - [x] /dashboard/laporan-harga - Halaman view laporan harga + margin (VIEW ONLY)
 - [x] /dashboard/pembayaran - Halaman input pembayaran PO (Finance) - dari Component 11
 - [ ] Update /dashboard/reports - Tambah filter by province
 - [x] Update /dashboard/approve-po - Tampilkan sisa tagihan stokis, tombol Adjust PO - dari Component 10
 - [ ] Update /dashboard/tagihan - Tambah view Per Stokis, summary, export
 
-### Export Features - Mitra
-- [x] /api/export/mitra-orders - Export pesanan mitra PDF/Excel (menggunakan /api/export/orders?type=mitra)
-- [x] Update order page - Tambah ExportButton (sudah ada di /dashboard/history)
+### Fitur Ekspor - Mitra
+- [x] /api/export/mitra-orders - Ekspor pesanan mitra PDF/Excel (menggunakan /api/export/orders?type=mitra)
+- [x] Update halaman order - Tambah ExportButton (sudah ada di /dashboard/history)
 
-### Export Features - Gudang
-- [x] /api/export/gudang-po - Export PO gudang PDF/Excel
+### Fitur Ekspor - Gudang
+- [x] /api/export/gudang-po - Ekspor PO gudang PDF/Excel
 - [x] Update /dashboard/po-masuk - Tambah ExportButton
 
-### Finance Enhancements
+### Peningkatan Finance
 - [x] /api/stokis/[id]/outstanding - API cek sisa tagihan stokis
-- [x] Update /api/orders/stokis/[id] - Tambah action adjust PO
-- [x] Tampilkan warning jika stokis punya tunggakan di Approve PO
+- [x] Update /api/orders/stokis/[id] - Tambah aksi adjust PO
+- [x] Tampilkan peringatan jika stokis punya tunggakan di Approve PO
 - [x] Git commit & push ✅
 
 
@@ -192,36 +192,36 @@
 
 ### Pembayaran (Payment) - Finance
 - [x] /api/payments - API input pembayaran (list, create)
-- [x] /api/payments/[id] - API pembayaran detail/delete
-- [x] Model Payment dengan PaymentMethod enum
+- [x] /api/payments/[id] - API detail/hapus pembayaran
+- [x] Model Payment dengan enum PaymentMethod
 - [x] Support partial payment (cicilan)
-- [ ] Upload bukti transfer (placeholder ready)
-- [x] Auto-update invoice status ke PAID jika lunas
+- [ ] Upload bukti transfer (placeholder siap)
+- [x] Auto-update status invoice ke PAID jika lunas
 - [x] /dashboard/pembayaran - Halaman input pembayaran
 
 ### Adjust PO - Stokis
 - [x] Update /dashboard/history-pusat - Tambah tombol Adjust PO untuk status PENDING
-- [x] Modal edit quantity items dengan +/- buttons
+- [x] Modal edit quantity items dengan tombol +/-
 - [x] API adjust order sebelum diapprove (reuse dari Component 10)
 - [x] Tombol batalkan order untuk status PENDING
 
-### PO PDF Export
+### Ekspor PDF PO
 - [x] /api/po/stokis/[id]/pdf - Generate PO PDF (sudah ada)
-- [x] Update /dashboard/history-pusat - Tambah tombol Print PO (Stokis)
-- [x] Update /dashboard/approve-po - Tambah tombol Print PO (Finance)
-- [x] Update /dashboard/po-masuk - Tambah tombol Print PO (Gudang)
+- [x] Update /dashboard/history-pusat - Tambah tombol Cetak PO (Stokis)
+- [x] Update /dashboard/approve-po - Tambah tombol Cetak PO (Finance)
+- [x] Update /dashboard/po-masuk - Tambah tombol Cetak PO (Gudang)
 
-### Order Flow
-- [ ] Update order page - Cek mitraStatus APPROVED sebelum order
+### Alur Pesanan
+- [ ] Update halaman order - Cek mitraStatus APPROVED sebelum order
 - [ ] Tampilkan pesan jika PENDING/REJECTED
 - [ ] Gunakan harga custom stokis jika ada
 
-### UI Updates
-- [x] Update sidebar layout - Tambah menu baru per role (Stokis, Pusat, Finance, termasuk Pembayaran)
+### Pembaruan UI
+- [x] Update layout sidebar - Tambah menu baru per role (Stokis, Pusat, Finance, termasuk Pembayaran)
 
 ---
 
-## Test Accounts
+## Akun Tes
 
 | Role | Email | Password |
 |------|-------|----------|
@@ -233,178 +233,205 @@
 | DC | dc.jakarta@dfresto.com | dc123456 |
 ---
 
-## Brand Identity Implementation ✅ COMPLETE
+## Implementasi Identitas Brand ✅ SELESAI
 
 ### UI & Styling
-- [x] Analyze brand identity from logo
-- [x] Create CSS variables for D'Fresto color palette (Red, Maroon, Gold, Cream)
-- [x] Copy logo to public directory
-- [x] Update Login Page UI with brand colors and logo
-- [x] Update Sidebar UI with brand colors and logo
-- [x] Update Dashboard Layout and Stats with brand colors
-- [x] Update Quick Action Buttons with brand gradients
+- [x] Analisis identitas brand dari logo
+- [x] Buat variabel CSS untuk palet warna D'Fresto (Merah, Merah Marun, Emas, Krem)
+- [x] Salin logo ke direktori public
+- [x] Update UI Halaman Login dengan warna brand dan logo
+- [x] Update UI Sidebar dengan warna brand dan logo
+- [x] Update Layout Dashboard dan Statistik dengan warna brand
+- [x] Update Tombol Aksi Cepat dengan gradasi brand
 
 ---
 
-## UI Konsistensi Dashboard Cards (Feb 9, 2026) ✅ COMPLETE
+## Konsistensi UI Kartu Dashboard (9 Feb 2026) ✅ SELESAI
 
 ### Halaman Pembayaran (`/dashboard/pembayaran`)
-- [x] Cards redesign: 2 kolom (Lunas, Belum Lunas) dengan gradient styling
-- [x] Setiap card menampilkan nominal (Rp) dan jumlah PO
+- [x] Redesign kartu: 2 kolom (Lunas, Belum Lunas) dengan gaya gradasi
+- [x] Setiap kartu menampilkan nominal (Rp) dan jumlah PO
 - [x] Filter dropdown: Semua Status, Belum Bayar, Jatuh Tempo
 
 ### Halaman Invoices (`/dashboard/invoices`)
-- [x] Cards redesign: 3 kolom (Total, Lunas, Belum Lunas)
-- [x] Setiap card menampilkan nominal dan jumlah PO
+- [x] Redesign kartu: 3 kolom (Total, Lunas, Belum Lunas)
+- [x] Setiap kartu menampilkan nominal dan jumlah PO
 - [x] Filter dropdown diubah ke: Semua Status, Lunas, Belum Lunas
 
 ### Halaman Reports (`/dashboard/reports`)
-- [x] Perbaikan responsiveness mobile (nominal tidak terpotong)
-- [x] Font size lebih kecil pada mobile, line height compact
+- [x] Perbaikan responsivitas mobile (nominal tidak terpotong)
+- [x] Ukuran font lebih kecil pada mobile, tinggi baris lebih ringkas
 
 ---
 
-## Reports Page Tab Improvements (Feb 9, 2026) ✅ COMPLETE
+## Peningkatan Tab Halaman Laporan (9 Feb 2026) ✅ SELESAI
 
 ### Tab Overview
-- [x] Ubah warna Card Total DC (Slate) & Total Mitra (Orange) agar lebih kontras
+- [x] Ubah warna Kartu Total DC (Slate) & Total Mitra (Oranye) agar lebih kontras
 
 ### Tab Produk Terlaris
-- [x] Table menjadi scrollable horizontal di mobile
-- [x] Revenue column tidak terpotong (whitespace-nowrap)
+- [x] Tabel menjadi dapat digulir horizontal di mobile
+- [x] Kolom Revenue tidak terpotong (whitespace-nowrap)
 
 ### Tab Performa (sebelumnya "Performa Stokis")
 - [x] Ganti nama tab: "Performa Stokis" → "Performa"
 - [x] Tambah filter: Semua, DC, Stokis, Mitra
-- [x] Tambah Total card dengan nominal dan jumlah PO
-- [x] Table menjadi scrollable horizontal di mobile
-- [x] Fix filter logic: Semua/DC/Stokis/Mitra berhasil memfilter data
+- [x] Tambah kartu Total dengan nominal dan jumlah PO
+- [x] Tabel menjadi dapat digulir horizontal di mobile
+- [x] Perbaiki logika filter: Semua/DC/Stokis/Mitra berhasil memfilter data
 
 ### Tab Tagihan (sebelumnya "Umur Piutang")
 - [x] Ganti nama tab: "Umur Piutang" → "Tagihan"
 
 ---
 
-## Approve PO Page Improvements (Feb 9, 2026) ✅ COMPLETE
+## Peningkatan Halaman Approve PO (9 Feb 2026) ✅ SELESAI
 
-### Tagihan Warning Section
-- [x] Hapus SVG icon AlertTriangle
-- [x] Ubah teks warning menjadi: "⚠️ Stokis memiliki tagihan tertunggak"
+### Bagian Peringatan Tagihan
+- [x] Hapus ikon SVG AlertTriangle
+- [x] Ubah teks peringatan menjadi: "⚠️ Stokis memiliki tagihan tertunggak"
 - [x] Hapus detail Unpaid dan Overdue
 - [x] Tambah tombol "Lihat Pembayaran" → /dashboard/pembayaran
 ---
 
-## UI Adjustments (Feb 10, 2026) ✅ COMPLETE
+## Penyesuaian UI (10 Feb 2026) ✅ SELESAI
 
 ### Halaman Pembayaran (`/dashboard/pembayaran`)
 - [x] Hapus kolom "Jatuh Tempo" dari tabel invoice
 
 ### Halaman Approve PO (`/dashboard/approve-po`)
 - [x] Tambah filter Semua / DC / Stokis
-- [x] Update API `/api/orders/stokis` - include `role` di stokis select
+- [x] Update API `/api/orders/stokis` - sertakan `role` di select stokis
 - [x] Filter berdasarkan `stokis.role` (DC / STOKIS)
 
 ### Halaman Invoices (`/dashboard/invoices`)
-- [x] Fix layout mobile: 3 card → 2+1 responsive (`grid-cols-2 lg:grid-cols-3`)
-- [x] Card "Belum Lunas" span full width di mobile (`col-span-2 lg:col-span-1`)
+- [x] Perbaiki layout mobile: 3 kartu → 2+1 responsif (`grid-cols-2 lg:grid-cols-3`)
+- [x] Kartu "Belum Lunas" span lebar penuh di mobile (`col-span-2 lg:col-span-1`)
 
-### Fix Pembayaran & Finance
-- [x] Separator ribuan (dot) pada input Jumlah Bayar di modal pembayaran
-- [x] Fix Finance role tidak bisa lihat order Stokis (API filter tambah `PENDING_PUSAT`)
-- [x] Fix filter Semua Stokis: API `/api/stokis` include role DC + STOKIS
+### Perbaikan Pembayaran & Finance
+- [x] Pemisah ribuan (titik) pada input Jumlah Bayar di modal pembayaran
+- [x] Perbaiki role Finance tidak bisa lihat order Stokis (filter API tambah `PENDING_PUSAT`)
+- [x] Perbaiki filter Semua Stokis: API `/api/stokis` sertakan role DC + STOKIS
 
 ---
 
-## Phase 6: Finance DC & Order Flow (Feb 10, 2026) ✅ COMPLETE
+## Fase 13: Pembaruan Role FINANCE_ALL (13 Feb 2026) ✅ SELESAI
 
-### Role Management
+### Ikhtisar Dashboard
+- [x] Implementasi Dashboard Global untuk FINANCE_ALL (Lihat semua area: DC, Stokis, Mitra) ✅
+
+### Keamanan & Izin
+- [x] Sidebar: Hapus menu 'Approve PO' & 'Pembayaran' untuk FINANCE_ALL ✅
+- [x] API: Update `orders/mitra` untuk mengizinkan akses FINANCE_ALL (untuk statistik) ✅
+- [x] API: Tambah `stokisId` ke respons API user untuk pemetaan area ✅
+- [x] Akses Halaman: Tambah pengalihan (redirect) pada halaman `approve-po` dan `pembayaran` untuk FINANCE_ALL ✅
+- [x] Build berhasil (`next build` exit code 0) ✅
+
+---
+
+## Fase 6: Finance DC & Alur Pesanan (10 Feb 2026) ✅ SELESAI
+
+### Manajemen Role
 - [x] Tambah Role `FINANCE_DC` (Finance per Area)
-- [x] Tambah Role `FINANCE_ALL` (Finance Pusat/National)
-- [x] Update User Model: `dcId` field untuk mapping area
+- [x] Tambah Role `FINANCE_ALL` (Finance Pusat/Nasional)
+- [x] Update Model User: field `dcId` untuk pemetaan area
 - [x] Update Auth: `dcId` masuk ke session & JWT
 
-### Order & Approval Flow
-- [x] Logic Approval DC: Stokis → Pending Pusat → DC Approve → PO Issued
-- [x] Logic Isolasi Data: DC hanya lihat order stokis area-nya
-- [x] Logic Isolasi Finance: Finance DC hanya lihat invoice area-nya
-- [x] API Updates: `/api/orders`, `/api/invoices`, `/api/reports` filter by `dcId`
+### Alur Pesanan & Persetujuan
+- [x] Logika Persetujuan DC: Stokis → Pending Pusat → DC Approve → PO Issued
+- [x] Logika Isolasi Data: DC hanya lihat order stokis area-nya
+- [x] Logika Isolasi Finance: Finance DC hanya lihat invoice area-nya
+- [x] Update API: `/api/orders`, `/api/invoices`, `/api/reports` filter by `dcId`
 
 ### Data & Seeding
-- [x] Seed 7 DC Area (Palembang, Makassar, Medan, Bengkulu, Pekanbaru, Jatim, Jateng)
+- [x] Seed 7 Area DC (Palembang, Makassar, Medan, Bengkulu, Pekanbaru, Jatim, Jateng)
 - [x] Seed 7 Finance DC & 1 Finance All
-- [x] Seed 42 Dummy Orders (Distribusi merata: 6 order per DC Area)
-- [x] Seed 20 Mitra & 14 Stokis linked to DC
+- [x] Seed 42 Dummy Orders (Distribusi merata: 6 order per Area DC)
+- [x] Seed 20 Mitra & 14 Stokis tertaut ke DC
 
-### Documentation
+### Dokumentasi
 - [x] Diagram Alur Lengkap (.html) - Mitra hingga Gudang
-- [x] Testing Checklist (.md) - Skenario pengujian lengkap
+- [x] Checklist Pengujian (.md) - Skenario pengujian lengkap
 
 ---
 
-## Phase 7: Enhanced Reports & Performa (Feb 11, 2026) ✅ COMPLETE
+## Fase 7: Laporan & Performa yang Ditingkatkan (11 Feb 2026) ✅ SELESAI
 
-### Report Performa Enhancements
-- [x] Update `getStokisPerformanceReport` API - return `products` breakdown & `uniqueCode`
-- [x] UI: 3 Summary Cards (Revenue, AOV, Split) on Performa Tab
-- [x] UI: Table Column "Kode" (Link to User `uniqueCode`)
-- [x] UI: Expandable Row (Show Top 5 Products per Entity)
-- [x] Export PDF: Full product breakdown (not just top 5)
-- [x] Export Excel: Multi-sheet (DC, Stokis, Mitra) with full product rows
-- [x] Fix: Filter "Semua" logic for DC/Mitra tables
-- [x] Fix: Section Headers (DC Area, Stokis, Mitra) to separate tables
+### Peningkatan Laporan Performa
+- [x] Update API `getStokisPerformanceReport` - return rincian `products` & `uniqueCode`
+- [x] UI: 3 Kartu Ringkasan (Pendapatan, AOV, Split) pada Tab Performa
+- [x] UI: Kolom Tabel "Kode" (Tautan ke `uniqueCode` User)
+- [x] UI: Baris yang Dapat Diperluas (Tampilkan 5 Produk Teratas per Entitas)
+- [x] Ekspor PDF: Rincian produk lengkap (bukan hanya 5 teratas)
+- [x] Ekspor Excel: Multi-sheet (DC, Stokis, Mitra) dengan baris produk lengkap
+- [x] Perbaikan: Logika filter "Semua" untuk tabel DC/Mitra
+- [x] Perbaikan: Header Bagian (Area DC, Stokis, Mitra) untuk memisahkan tabel
 
-### Data Integrity
-- [x] Update `seed.ts` - Populate `uniqueCode` for DC, Stokis, Mitra
+### Integritas Data
+- [x] Update `seed.ts` - Isi `uniqueCode` untuk DC, Stokis, Mitra
 - [x] Format: `DC-PLB-001`, `STK-PLB-A01`, `MTR-001`
 
 ---
 
-## Phase 8: UI Refinements & Fixes (Feb 13, 2026) ✅ COMPLETE
+## Fase 8: Perbaikan & Pembaruan UI (13 Feb 2026) ✅ SELESAI
 
-### Reports Page Enhancements
-- [x] Tab Overview: Restructured cards (Total Stokis, Total Revenue Stokis, Total Revenue Mitra) ✅
-- [x] Tab Produk: Header '#' changed to 'No' ✅
-- [x] Tab Performa: Removed 'Semua' and 'DC' filters (only Stokis & Mitra) ✅
-- [x] Tab Performa: Hidden 'DC Area' table for FINANCE_DC role ✅
-- [x] Tab Performa: Fixed Excel Export (Removed Revenue column, eliminated empty row gap) ✅
-- [x] Tab Tagihan: Changed filter to Status (Semua / Belum Bayar / Lunas) ✅
-- [x] Removed Laporan Harga page & menu completely ✅
+### Peningkatan Halaman Laporan
+- [x] Tab Overview: Restrukturisasi kartu (Total Stokis, Total Pendapatan Stokis, Total Pendapatan Mitra) ✅
+- [x] Tab Produk: Header '#' diubah menjadi 'No' ✅
+- [x] Tab Performa: Hapus filter 'Semua' dan 'DC' (hanya Stokis & Mitra) ✅
+- [x] Tab Performa: Sembunyikan tabel 'Area DC' untuk role FINANCE_DC ✅
+- [x] Tab Performa: Perbaiki Ekspor Excel (Hapus kolom Revenue, hilangkan celah baris kosong) ✅
+- [x] Tab Tagihan: Ubah filter menjadi Status (Semua / Belum Bayar / Lunas) ✅
+- [x] Hapus halaman & menu Laporan Harga sepenuhnya ✅
 
-### Invoices Page Updates
-- [x] Removed 'Overdue' status (all non-PAID show as Belum Lunas) ✅
-- [x] Renamed 'Paid' status/button to 'Lunas' ✅
-- [x] Fixed Confirmation Message ('Tandai Lunas?') ✅
+### Pembaruan Halaman Invoice
+- [x] Hapus status 'Overdue' (semua non-PAID tampil sebagai Belum Lunas) ✅
+- [x] Ubah nama status/tombol 'Paid' menjadi 'Lunas' ✅
+- [x] Perbaiki Pesan Konfirmasi ('Tandai Lunas?') ✅
 
-### Finance DC Fixes
-- [x] Fixed 403 Forbidden on Payment Creation (Allowed FINANCE_DC/FINANCE_ALL roles) ✅
+### Perbaikan Finance DC
+- [x] Perbaiki 403 Forbidden pada Pembuatan Pembayaran (Izinkan role FINANCE_DC/FINANCE_ALL) ✅
 - [x] Git commit ✅ `95072ca`
 
 ---
 
-## Phase 9: Overview Dashboard Charts (Feb 13, 2026) ✅ COMPLETE
+## Fase 9: Grafik Dashboard Overview (13 Feb 2026) ✅ SELESAI
 
-### Pipeline Order Section Redesign
-- [x] Removed colored grid "Pipeline Order Stokis" ✅
-- [x] Implemented Revenue Comparison Chart (Stokis vs Mitra) ✅
-- [x] Implemented Total PO Comparison Chart (Stokis vs Mitra) ✅
-- [x] Use Pure CSS/Tailwind (No external chart library) ✅
-- [x] Recursive layout (Stacked on mobile, Side-by-side on desktop) ✅
+### Redesign Bagian Pipeline Order
+- [x] Hapus grid berwarna "Pipeline Order Stokis" ✅
+- [x] Implementasi Grafik Perbandingan Pendapatan (Stokis vs Mitra) ✅
+- [x] Implementasi Grafik Perbandingan Total PO (Stokis vs Mitra) ✅
+- [x] Gunakan Pure CSS/Tailwind (Tanpa library grafik eksternal) ✅
+- [x] Layout rekursif (Bertumpuk di mobile, Berdampingan di desktop) ✅
 - [x] Git commit ✅ `fc03644`
-- [x] Update Charts: Show Total Stokis/Mitra & Active Users instead of Revenue/PO ✅
-- [x] Remove 'Rasio Order' text ✅
+- [x] Update Grafik: Tampilkan Total Stokis/Mitra & User Aktif alih-alih Revenue/PO ✅
+- [x] Hapus teks 'Rasio Order' ✅
 - [x] Git commit ✅ `59ef38c`
 
 ---
 
-## Phase 10: Performa Tab Refinement (Feb 13, 2026) ✅ COMPLETE
+## Fase 10: Perbaikan Tab Performa (13 Feb 2026) ✅ SELESAI
 
-### Dynamic Summary Cards
-- [x] Purple Card: Switch between Stokis & Mitra info based on filter ✅
-- [x] Purple Card: Show Total User & Active User counts dynamically ✅
-- [x] Revenue & Avg Order Card: Filter data based on selected tab (Stokis/Mitra) ✅
-- [x] Revenue & Avg Order Card: Calculate specific totals for Stokis/Mitra ✅
+### Kartu Ringkasan Dinamis
+- [x] Kartu Ungu: Beralih antara info Stokis & Mitra berdasarkan filter ✅
+- [x] Kartu Ungu: Tampilkan jumlah Total User & User Aktif secara dinamis ✅
+- [x] Kartu Revenue & Avg Order: Filter data berdasarkan tab yang dipilih (Stokis/Mitra) ✅
+- [x] Kartu Revenue & Avg Order: Hitung total spesifik untuk Stokis/Mitra ✅
 
-### Table & UI Cleanup
-- [x] Stokis Table: Remove 'Order Mitra' & 'Mitra' columns (redundant) ✅
-- [x] Purple Card: Remove word 'Stokis'/'Mitra' from value (show number only) ✅
+### Pembersihan Tabel & UI
+- [x] Tabel Stokis: Hapus kolom 'Order Mitra' & 'Mitra' (redundan) ✅
+- [x] Kartu Ungu: Hapus kata 'Stokis'/'Mitra' dari nilai (tampilkan angka saja) ✅
 - [x] Git commit ✅ `26479b4`
+
+---
+
+## Fase 11: Peningkatan Ekspor Laporan (14 Feb 2026) ✅ SELESAI
+
+### Ekspor Tab Performa (Excel & PDF)
+- [x] Ratakan Baris Produk: Setiap baris produk mengulang info Stokis (Kode, Nama, Telp, dll.) ✅
+- [x] Kolom Kondisional: Sembunyikan 'Order dari Mitra' saat filter STOKIS dipilih, Tampilkan saat MITRA dipilih ✅
+- [x] Output Sederhana: Hapus sheet/bagian terpisah, hanya satu daftar rata berdasarkan filter aktif ✅
+
+### Ekspor Tab Tagihan (Excel & PDF)
+- [x] Perbaiki Logika Filter: `getInvoices()` sekarang memfilter berdasarkan status pembayaran (Belum Bayar/Lunas/Semua) ✅
+- [x] Terapkan Filter ke Ekspor: PDF dan Excel sekarang mengikuti tampilan terfilter yang dipilih ✅

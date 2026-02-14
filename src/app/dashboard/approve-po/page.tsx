@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Receipt, Clock, CheckCircle, ChevronRight, AlertTriangle, Printer, Edit3, Search } from "lucide-react"
 import ExportButton from "@/components/ExportButton"
 import Link from "next/link"
@@ -53,6 +54,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 
 export default function ApprovePOPage() {
     const { data: session } = useSession()
+    const router = useRouter()
     const role = session?.user?.role || ""
     const [orders, setOrders] = useState<StokisOrder[]>([])
     const [allOrders, setAllOrders] = useState<StokisOrder[]>([])
@@ -69,9 +71,16 @@ export default function ApprovePOPage() {
     const [financeAllFilter, setFinanceAllFilter] = useState<string>("all")
     const [searchQuery, setSearchQuery] = useState("")
 
+    // Redirect FINANCE_ALL — view only, no approval access
     useEffect(() => {
-        fetchOrders()
-    }, [])
+        if (role === "FINANCE_ALL") {
+            router.replace("/dashboard")
+        }
+    }, [role, router])
+
+    useEffect(() => {
+        if (role && role !== "FINANCE_ALL") fetchOrders()
+    }, [role])
 
     const fetchOrders = async () => {
         try {

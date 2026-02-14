@@ -67,6 +67,16 @@ interface MitraOrder {
 
 type PeriodFilter = "7" | "30" | "90" | "custom"
 
+interface AreaStats {
+    dcName: string
+    dcId: string
+    stokisCount: number
+    mitraCount: number
+    totalOrders: number
+    totalRevenue: number
+    pendingOrders: number
+}
+
 const mitraStatusConfig: Record<string, { label: string; color: string }> = {
     PENDING: { label: "Buat PO", color: "bg-yellow-100 text-yellow-700" },
     APPROVED: { label: "Selesai", color: "bg-green-100 text-green-700" },
@@ -112,6 +122,10 @@ export default function DashboardPage() {
     })
     const [mitraEndDate, setMitraEndDate] = useState(() => new Date().toISOString().split("T")[0])
     const [selectedMitraOrder, setSelectedMitraOrder] = useState<MitraOrder | null>(null)
+
+    // FINANCE_ALL state
+    const [areaStats, setAreaStats] = useState<AreaStats[]>([])
+    const [financeAllTotals, setFinanceAllTotals] = useState({ totalOrders: 0, totalRevenue: 0, totalStokis: 0, totalMitra: 0 })
     const [mitraUpdating, setMitraUpdating] = useState(false)
 
     // Update MITRA date range when period changes
@@ -187,6 +201,73 @@ export default function DashboardPage() {
                         { label: "Menunggu Approval", value: formatRp(dcPendingTotal), subtitle: `${dcPending.length} PO`, icon: ShoppingCart, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/approve-po" },
                         { label: "Total", value: formatRp(stokisTotal), subtitle: `${allStokisOrders.length} PO`, icon: Store, gradient: "from-[#3B82F6] to-[#1D4ED8]", href: "/dashboard/orders-stokis" },
                         { label: "Menunggu Approval", value: formatRp(stokisPendingTotal), subtitle: `${stokisPending.length} PO`, icon: ShoppingCart, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/orders-stokis" },
+                    ])
+                } else if (role === "FINANCE_ALL") {
+                    // FINANCE_ALL: Global view — fetch all orders + users, group by DC area
+                    const [stokisRes, mitraRes, usersRes] = await Promise.all([
+                        fetch(`/api/orders/stokis`),
+                        fetch(`/api/orders/mitra`),
+                        fetch(`/api/users?includeAll=true`)
+                    ])
+                    const stokisOrders = stokisRes.ok ? await stokisRes.json() : []
+                    const mitraOrders = mitraRes.ok ? await mitraRes.json() : []
+                    const allUsers = usersRes.ok ? await usersRes.json() : []
+
+                    const allStokisOrders = Array.isArray(stokisOrders) ? stokisOrders : []
+                    const allMitraOrders = Array.isArray(mitraOrders) ? mitraOrders : []
+                    const users = Array.isArray(allUsers) ? allUsers : []
+
+                    // Get all DC users
+                    const dcUsers = users.filter((u: { role: string }) => u.role === "DC")
+                    const stokisUsers = users.filter((u: { role: string }) => u.role === "STOKIS")
+                    const mitraUsers = users.filter((u: { role: string }) => u.role === "MITRA")
+
+                    // Group by DC area
+                    const areas: AreaStats[] = dcUsers.map((dc: { id: string; name: string }) => {
+                        // Stokis in this DC area
+                        const areaStokis = stokisUsers.filter((s: { dcId: string | null }) => s.dcId === dc.id)
+                        const areaStokisIds = areaStokis.map((s: { id: string }) => s.id)
+
+                        // Mitra assigned to stokis in this area
+                        const areaMitra = mitraUsers.filter((m: { stokisId: string | null }) =>
+                            m.stokisId && areaStokisIds.includes(m.stokisId)
+                        )
+
+                        // Stokis orders from this area
+                        const areaOrders = allStokisOrders.filter((o: { stokis?: { dcId?: string | null } }) =>
+                            o.stokis?.dcId === dc.id
+                        )
+                        const areaRevenue = areaOrders.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+                        const areaPending = areaOrders.filter((o: { status: string }) => o.status === "PENDING_PUSAT").length
+
+                        return {
+                            dcName: dc.name,
+                            dcId: dc.id,
+                            stokisCount: areaStokis.length,
+                            mitraCount: areaMitra.length,
+                            totalOrders: areaOrders.length,
+                            totalRevenue: areaRevenue,
+                            pendingOrders: areaPending,
+                        }
+                    })
+
+                    // Sort by revenue descending
+                    areas.sort((a, b) => b.totalRevenue - a.totalRevenue)
+                    setAreaStats(areas)
+
+                    const totalRevenue = allStokisOrders.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+                    setFinanceAllTotals({
+                        totalOrders: allStokisOrders.length,
+                        totalRevenue,
+                        totalStokis: stokisUsers.length,
+                        totalMitra: mitraUsers.length,
+                    })
+
+                    const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`
+                    setStats([
+                        { label: "Total Revenue", value: formatRp(totalRevenue), subtitle: `${allStokisOrders.length} PO`, icon: TrendingUp, gradient: "from-[#5B2B4E] to-[#3D1C34]", href: "/dashboard/reports" },
+                        { label: "Total Stokis", value: stokisUsers.length, subtitle: `${dcUsers.length} DC Area`, icon: Store, gradient: "from-[#E31E24] to-[#B91C22]" },
+                        { label: "Total Mitra", value: mitraUsers.length, icon: Users, gradient: "from-[#3B82F6] to-[#1D4ED8]" },
                     ])
                 } else if (role === "FINANCE_DC") {
                     const stokisRes = await fetch(`/api/orders/stokis`)
@@ -794,6 +875,28 @@ export default function DashboardPage() {
                                 </Link>
                             </>
                         )}
+                        {role === "FINANCE_ALL" && (
+                            <>
+                                <Link
+                                    href="/dashboard/invoices"
+                                    className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                                    style={{ background: 'linear-gradient(135deg, #5B2B4E 0%, #3D1C34 100%)' }}
+                                >
+                                    <Activity size={16} />
+                                    Invoices
+                                    <ArrowUpRight size={14} />
+                                </Link>
+                                <Link
+                                    href="/dashboard/reports"
+                                    className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                                    style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
+                                >
+                                    <TrendingUp size={16} />
+                                    Laporan
+                                    <ArrowUpRight size={14} />
+                                </Link>
+                            </>
+                        )}
                         {role === "GUDANG" && (
                             <Link
                                 href="/dashboard/po-masuk"
@@ -825,6 +928,59 @@ export default function DashboardPage() {
                                 </Link>
                             </>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* FINANCE_ALL: Area Breakdown Cards */}
+            {role === "FINANCE_ALL" && !loading && areaStats.length > 0 && (
+                <div className="space-y-4">
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <h2 className="text-sm font-semibold text-gray-900 mb-1">📊 Ringkasan Per Area</h2>
+                        <p className="text-xs text-gray-500">Data seluruh DC Area — {financeAllTotals.totalStokis} Stokis, {financeAllTotals.totalMitra} Mitra</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {areaStats.map((area) => {
+                            const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`
+                            const revenueShare = financeAllTotals.totalRevenue > 0
+                                ? ((area.totalRevenue / financeAllTotals.totalRevenue) * 100).toFixed(1)
+                                : "0"
+                            return (
+                                <div key={area.dcId} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+                                    {/* Area Header */}
+                                    <div className="bg-gradient-to-r from-[#5B2B4E] to-[#3D1C34] p-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Building2 size={16} className="text-white/80" />
+                                                <span className="text-sm font-semibold text-white">{area.dcName}</span>
+                                            </div>
+                                            <span className="text-xs text-white/60 bg-white/10 px-2 py-0.5 rounded-full">{revenueShare}%</span>
+                                        </div>
+                                    </div>
+                                    {/* Area Stats */}
+                                    <div className="p-3 space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-500">Revenue</span>
+                                            <span className="text-sm font-bold text-emerald-600">{formatRp(area.totalRevenue)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-500">Total PO</span>
+                                            <span className="text-sm font-semibold text-gray-800">{area.totalOrders}</span>
+                                        </div>
+                                        {area.pendingOrders > 0 && (
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs text-amber-600">Pending</span>
+                                                <span className="text-sm font-semibold text-amber-600">{area.pendingOrders}</span>
+                                            </div>
+                                        )}
+                                        <div className="border-t pt-2 mt-2 flex justify-between text-xs text-gray-500">
+                                            <span>🏪 {area.stokisCount} Stokis</span>
+                                            <span>👥 {area.mitraCount} Mitra</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
             )}

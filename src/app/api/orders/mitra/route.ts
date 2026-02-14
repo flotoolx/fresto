@@ -20,7 +20,7 @@ export async function GET() {
             where = { mitraId: userId }
         } else if (role === "STOKIS") {
             where = { stokisId: userId }
-        } else if (role === "PUSAT" || role === "FINANCE") {
+        } else if (role === "PUSAT" || role === "FINANCE" || role === "FINANCE_ALL") {
             // Can see all orders
         } else {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
