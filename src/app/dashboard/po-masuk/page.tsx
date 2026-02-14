@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Package, Clock, Truck, ChevronRight, Printer } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { Package, Clock, Truck, ChevronRight, Printer, Search, CheckCircle } from "lucide-react"
 import ExportButton from "@/components/ExportButton"
 import Link from "next/link"
 
@@ -20,15 +20,23 @@ interface StokisOrder {
     notes: string | null
     createdAt: string
     poIssuedAt: string | null
+    shippedAt: string | null
     stokis: { name: string; address: string | null; email: string }
     items: OrderItem[]
 }
+
+type TabType = "aktif" | "riwayat"
 
 export default function GudangPOMasukPage() {
     const [orders, setOrders] = useState<StokisOrder[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedOrder, setSelectedOrder] = useState<StokisOrder | null>(null)
     const [updating, setUpdating] = useState(false)
+
+    // Tab, filter, search
+    const [activeTab, setActiveTab] = useState<TabType>("aktif")
+    const [filterStatus, setFilterStatus] = useState("")
+    const [searchQuery, setSearchQuery] = useState("")
 
     useEffect(() => {
         fetchOrders()
@@ -38,8 +46,7 @@ export default function GudangPOMasukPage() {
         try {
             const res = await fetch("/api/orders/stokis")
             const data = await res.json()
-            // Filter PO_ISSUED and PROCESSING orders
-            setOrders(data.filter((o: StokisOrder) => ["PO_ISSUED", "PROCESSING"].includes(o.status)))
+            setOrders(Array.isArray(data) ? data : [])
         } catch (err) {
             console.error("Error fetching orders:", err)
         } finally {
@@ -81,6 +88,39 @@ export default function GudangPOMasukPage() {
         }).format(new Date(date))
     }
 
+    // Separate active vs history
+    const activeOrders = useMemo(() =>
+        orders.filter(o => ["PO_ISSUED", "PROCESSING"].includes(o.status)),
+        [orders]
+    )
+    const historyOrders = useMemo(() =>
+        orders.filter(o => o.status === "SHIPPED"),
+        [orders]
+    )
+
+    // Apply tab-specific list
+    const baseList = activeTab === "aktif" ? activeOrders : historyOrders
+
+    // Apply filters + search
+    const filteredOrders = useMemo(() => {
+        let result = baseList
+        if (filterStatus) {
+            result = result.filter(o => o.status === filterStatus)
+        }
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase()
+            result = result.filter(o =>
+                o.orderNumber.toLowerCase().includes(q) ||
+                o.stokis.name.toLowerCase().includes(q)
+            )
+        }
+        return result
+    }, [baseList, filterStatus, searchQuery])
+
+    // Summary stats
+    const poIssuedCount = activeOrders.filter(o => o.status === "PO_ISSUED").length
+    const processingCount = activeOrders.filter(o => o.status === "PROCESSING").length
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -90,7 +130,8 @@ export default function GudangPOMasukPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
+            {/* Header */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
                 <div className="flex justify-between items-start">
                     <div>
@@ -104,20 +145,105 @@ export default function GudangPOMasukPage() {
                 </div>
             </div>
 
-            {orders.length === 0 ? (
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-10 h-10 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <Clock size={14} className="opacity-80" />
+                        <span className="text-[11px] md:text-xs text-white/80">PO Baru</span>
+                    </div>
+                    <p className="text-xl md:text-2xl font-bold">{poIssuedCount}</p>
+                    <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Menunggu diproses</p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-10 h-10 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <Package size={14} className="opacity-80" />
+                        <span className="text-[11px] md:text-xs text-white/80">Sedang Diproses</span>
+                    </div>
+                    <p className="text-xl md:text-2xl font-bold">{processingCount}</p>
+                    <p className="text-[10px] md:text-xs text-white/60 mt-0.5">Siap dikirim</p>
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="flex border-b border-gray-100">
+                    <button
+                        onClick={() => { setActiveTab("aktif"); setFilterStatus("") }}
+                        className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === "aktif"
+                            ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50"
+                            : "text-gray-500 hover:text-gray-700"
+                            }`}
+                    >
+                        PO Aktif ({activeOrders.length})
+                    </button>
+                    <button
+                        onClick={() => { setActiveTab("riwayat"); setFilterStatus("") }}
+                        className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === "riwayat"
+                            ? "text-green-600 border-b-2 border-green-600 bg-green-50/50"
+                            : "text-gray-500 hover:text-gray-700"
+                            }`}
+                    >
+                        Riwayat Dikirim ({historyOrders.length})
+                    </button>
+                </div>
+
+                {/* Filters & Search */}
+                <div className="p-3 flex flex-wrap gap-2 border-b border-gray-50">
+                    {activeTab === "aktif" && (
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="appearance-none bg-gray-50 border rounded-lg px-3 py-2 text-gray-700 text-sm"
+                        >
+                            <option value="">Semua Status</option>
+                            <option value="PO_ISSUED">PO Baru</option>
+                            <option value="PROCESSING">Sedang Diproses</option>
+                        </select>
+                    )}
+                    <div className="relative flex-1 min-w-[180px]">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Cari nomor PO atau stokis..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-gray-50 border rounded-lg pl-9 pr-4 py-2 text-gray-700 text-sm"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Order List */}
+            {filteredOrders.length === 0 ? (
                 <div className="bg-white rounded-xl p-12 shadow-sm text-center">
-                    <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">Tidak ada PO yang perlu diproses</p>
+                    {activeTab === "aktif" ? (
+                        <>
+                            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                            <p className="text-gray-500">Tidak ada PO yang perlu diproses</p>
+                        </>
+                    ) : (
+                        <>
+                            <CheckCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                            <p className="text-gray-500">Belum ada PO yang dikirim</p>
+                        </>
+                    )}
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {orders.map((order) => {
+                    {filteredOrders.map((order) => {
                         const isPOIssued = order.status === "PO_ISSUED"
                         const isProcessing = order.status === "PROCESSING"
+                        const isShipped = order.status === "SHIPPED"
                         return (
                             <div
                                 key={order.id}
-                                className={`bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all border-l-4 ${isPOIssued ? "border-l-blue-500" : "border-l-purple-500"}`}
+                                className={`bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all border-l-4 ${isPOIssued ? "border-l-blue-500" :
+                                        isProcessing ? "border-l-purple-500" :
+                                            "border-l-green-500"
+                                    }`}
                                 onClick={() => setSelectedOrder(order)}
                             >
                                 <div className="flex justify-between items-start mb-3">
@@ -125,10 +251,12 @@ export default function GudangPOMasukPage() {
                                         <h3 className="font-semibold text-gray-800 text-sm">{order.orderNumber}</h3>
                                         <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
                                     </div>
-                                    <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${isPOIssued ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-purple-100 text-purple-700 border-purple-200"
+                                    <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${isPOIssued ? "bg-blue-100 text-blue-700 border-blue-200" :
+                                            isProcessing ? "bg-purple-100 text-purple-700 border-purple-200" :
+                                                "bg-green-100 text-green-700 border-green-200"
                                         }`}>
-                                        {isPOIssued ? <Clock size={12} /> : <Package size={12} />}
-                                        {isPOIssued ? "PO Baru" : "Diproses"}
+                                        {isPOIssued ? <Clock size={12} /> : isProcessing ? <Package size={12} /> : <CheckCircle size={12} />}
+                                        {isPOIssued ? "PO Baru" : isProcessing ? "Diproses" : "Dikirim"}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center">
@@ -145,6 +273,12 @@ export default function GudangPOMasukPage() {
                                         <ChevronRight size={16} className="text-gray-400" />
                                     </div>
                                 </div>
+                                {isShipped && order.shippedAt && (
+                                    <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                                        <Truck size={12} />
+                                        Dikirim {formatDate(order.shippedAt)}
+                                    </p>
+                                )}
                             </div>
                         )
                     })}
@@ -199,7 +333,7 @@ export default function GudangPOMasukPage() {
                                 </div>
 
                                 <div className="space-y-2 pt-4">
-                                    {/* Print PO Button - Opens print preview page like Stokis */}
+                                    {/* Print PO Button */}
                                     <Link
                                         href={`/po/stokis/${selectedOrder.id}`}
                                         target="_blank"
@@ -228,6 +362,18 @@ export default function GudangPOMasukPage() {
                                             <Truck size={20} />
                                             {updating ? "Memproses..." : "Tandai Sudah Dikirim"}
                                         </button>
+                                    )}
+
+                                    {selectedOrder.status === "SHIPPED" && (
+                                        <div className="w-full py-3 bg-green-50 text-green-700 rounded-lg font-semibold flex items-center justify-center gap-2 border border-green-200">
+                                            <CheckCircle size={18} />
+                                            Sudah Dikirim
+                                            {selectedOrder.shippedAt && (
+                                                <span className="font-normal text-sm ml-1">
+                                                    — {formatDate(selectedOrder.shippedAt)}
+                                                </span>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </div>

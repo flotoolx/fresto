@@ -452,3 +452,40 @@
 - [x] `236bf0f` — Hilangkan "Semua Stokis" + auto-select stokis pertama
 - [x] `caa91c3` — Hapus filter Pusat/All DC/DC di approve-po dan filter stokis di pembayaran
 
+---
+
+## Fase 13: Peningkatan UI Halaman Pembayaran (14 Feb 2026) ✅ SELESAI
+
+### Perbaikan UX
+- [x] Badge ✅ "Lunas" menggantikan tombol "Bayar" untuk invoice yang sudah lunas ✅
+- [x] Default filter FINANCE_DC ke "Belum Bayar" agar langsung lihat yang perlu diproses ✅
+- [x] Baris invoice Lunas dimmed (abu-abu) untuk visual distinction ✅
+- [x] Sorting: Invoice belum bayar di atas, Lunas di bawah ✅
+- [x] Tambah opsi "Lunas" di dropdown filter status ✅
+- [x] Git commit ✅ `d81ea90`
+
+---
+
+## Fase 14: Peningkatan Role GUDANG (14 Feb 2026) ✅ SELESAI
+
+### Dashboard GUDANG
+- [x] Tambah 4 stat cards: PO Masuk, Sedang Diproses, Terkirim Hari Ini, Stok Menipis ✅
+- [x] Tambah section "PO Terbaru" (5 PO terakhir dengan status badge) ✅
+- [x] Tambah quick link "Inventory" di samping "Proses PO" ✅
+
+### Halaman PO Masuk
+- [x] Tambah summary cards (PO Baru & Sedang Diproses) ✅
+- [x] Tambah tab "PO Aktif" dan "Riwayat Dikirim" ✅
+- [x] Tambah filter status (PO Baru / Sedang Diproses) ✅
+- [x] Tambah search berdasarkan nomor PO atau nama stokis ✅
+- [x] Tab Riwayat menampilkan PO yang sudah dikirim dengan tanggal kirim ✅
+
+### Sidebar
+- [x] Badge count jumlah PO baru (PO_ISSUED) di menu "PO Masuk" ✅
+- [x] Auto-refresh badge setiap 60 detik ✅
+
+### API
+- [x] Perluas filter GUDANG di `/api/orders/stokis` untuk include SHIPPED orders ✅
+
+### Git Commits
+- [x] Commit pending

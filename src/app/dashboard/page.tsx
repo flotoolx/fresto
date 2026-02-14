@@ -311,11 +311,43 @@ export default function DashboardPage() {
                         { label: "Total Revenue", value: formatRp(totalRevenue), subtitle: `${Array.isArray(dcOrders) ? dcOrders.length : 0} PO`, icon: TrendingUp, gradient: "from-[#3B82F6] to-[#1D4ED8]", href: "/dashboard/reports" },
                     ])
                 } else if (role === "GUDANG") {
-                    const res = await fetch("/api/orders/stokis?status=PO_ISSUED")
-                    const orders = res.ok ? await res.json() : []
-                    setStats([
-                        { label: "PO Masuk", value: Array.isArray(orders) ? orders.length : 0, icon: Package, gradient: "from-[#E31E24] to-[#B91C22]" },
+                    const [ordersRes, inventoryRes] = await Promise.all([
+                        fetch("/api/orders/stokis"),
+                        fetch("/api/inventory"),
                     ])
+                    const orders = ordersRes.ok ? await ordersRes.json() : []
+                    const inventoryData = inventoryRes.ok ? await inventoryRes.json() : []
+
+                    const poIssued = Array.isArray(orders) ? orders.filter((o: { status: string }) => o.status === "PO_ISSUED") : []
+                    const processing = Array.isArray(orders) ? orders.filter((o: { status: string }) => o.status === "PROCESSING") : []
+
+                    // Count today's shipped
+                    const today = new Date().toISOString().split("T")[0]
+                    const shippedToday = Array.isArray(orders) ? orders.filter((o: { status: string; shippedAt?: string }) =>
+                        o.status === "SHIPPED" && o.shippedAt && o.shippedAt.startsWith(today)
+                    ).length : 0
+
+                    // Low stock count
+                    const lowStock = Array.isArray(inventoryData) ? inventoryData.filter((i: { quantity: number; minStock: number }) => i.quantity <= i.minStock).length : 0
+
+                    setStats([
+                        { label: "PO Masuk", value: poIssued.length, icon: Package, gradient: "from-[#E31E24] to-[#B91C22]", href: "/dashboard/po-masuk" },
+                        { label: "Sedang Diproses", value: processing.length, icon: Activity, gradient: "from-[#8B5CF6] to-[#6D28D9]", href: "/dashboard/po-masuk" },
+                        { label: "Terkirim Hari Ini", value: shippedToday, icon: Package, gradient: "from-[#10B981] to-[#059669]" },
+                        { label: "Stok Menipis", value: lowStock, subtitle: lowStock > 0 ? "Perlu restock" : "Aman", icon: Package, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/inventory" },
+                    ])
+
+                    // Recent activity - last 5 orders
+                    if (Array.isArray(orders)) {
+                        setRecentOrders(orders.slice(0, 5).map((o: { id: string; orderNumber: string; stokis?: { name: string }; totalAmount: number; status: string; createdAt: string }) => ({
+                            id: o.id,
+                            orderNumber: o.orderNumber,
+                            stokisName: o.stokis?.name || "-",
+                            totalAmount: Number(o.totalAmount),
+                            status: o.status,
+                            createdAt: o.createdAt,
+                        })))
+                    }
                 } else if (role === "STOKIS") {
                     const [ordersRes, mitraOrdersRes] = await Promise.all([
                         fetch(`/api/orders/stokis/my-orders`),
@@ -898,15 +930,24 @@ export default function DashboardPage() {
                             </>
                         )}
                         {role === "GUDANG" && (
-                            <Link
-                                href="/dashboard/po-masuk"
-                                className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
-                                style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
-                            >
-                                <Package size={16} />
-                                Proses PO
-                                <ArrowUpRight size={14} />
-                            </Link>
+                            <>
+                                <Link
+                                    href="/dashboard/po-masuk"
+                                    className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all shadow-sm text-sm font-medium hover:shadow-lg hover:-translate-y-0.5"
+                                    style={{ background: 'linear-gradient(135deg, #E31E24 0%, #B91C22 100%)' }}
+                                >
+                                    <Package size={16} />
+                                    Proses PO
+                                    <ArrowUpRight size={14} />
+                                </Link>
+                                <Link
+                                    href="/dashboard/inventory"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all text-sm font-medium"
+                                >
+                                    <Package size={16} />
+                                    Inventory
+                                </Link>
+                            </>
                         )}
                         {role === "DC" && (
                             <>
@@ -929,6 +970,45 @@ export default function DashboardPage() {
                             </>
                         )}
                     </div>
+                </div>
+            )}
+
+            {/* GUDANG: PO Terbaru */}
+            {role === "GUDANG" && !loading && recentOrders.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div className="p-4 border-b border-gray-100">
+                        <h2 className="text-sm font-semibold text-gray-900">📋 PO Terbaru</h2>
+                        <p className="text-xs text-gray-500">5 PO terakhir di area Anda</p>
+                    </div>
+                    <div className="divide-y divide-gray-50">
+                        {recentOrders.map((order) => {
+                            const statusConfig: Record<string, { label: string; color: string }> = {
+                                PO_ISSUED: { label: "PO Baru", color: "bg-blue-100 text-blue-700" },
+                                PROCESSING: { label: "Diproses", color: "bg-purple-100 text-purple-700" },
+                                SHIPPED: { label: "Dikirim", color: "bg-green-100 text-green-700" },
+                            }
+                            const st = statusConfig[order.status] || { label: order.status, color: "bg-gray-100 text-gray-700" }
+                            return (
+                                <div key={order.id} className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-gray-900 truncate">{order.orderNumber}</p>
+                                        <p className="text-xs text-gray-500">{order.stokisName}</p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm font-semibold text-gray-800">
+                                            {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(order.totalAmount)}
+                                        </span>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${st.color}`}>
+                                            {st.label}
+                                        </span>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                    <Link href="/dashboard/po-masuk" className="block text-center py-3 text-sm text-purple-600 font-medium hover:bg-purple-50 transition-colors border-t border-gray-100">
+                        Lihat Semua PO →
+                    </Link>
                 </div>
             )}
 

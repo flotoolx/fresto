@@ -20,7 +20,7 @@ import {
     CreditCard,
     FileText
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 
 const roleMenus: Record<string, { label: string; href: string; icon: React.ReactNode }[]> = {
@@ -98,6 +98,27 @@ export default function Sidebar() {
     const menus = roleMenus[role] || roleMenus.MITRA
     const accentColor = roleAccentColors[role] || "bg-blue-500"
 
+    // Badge count for GUDANG PO Masuk
+    const [poBadgeCount, setPoBadgeCount] = useState(0)
+
+    useEffect(() => {
+        if (role !== "GUDANG") return
+        const fetchCount = async () => {
+            try {
+                const res = await fetch("/api/orders/stokis")
+                if (res.ok) {
+                    const data = await res.json()
+                    if (Array.isArray(data)) {
+                        setPoBadgeCount(data.filter((o: { status: string }) => o.status === "PO_ISSUED").length)
+                    }
+                }
+            } catch { /* ignore */ }
+        }
+        fetchCount()
+        const interval = setInterval(fetchCount, 60000)
+        return () => clearInterval(interval)
+    }, [role])
+
     const handleLogout = () => {
         signOut({ callbackUrl: "/login" })
     }
@@ -141,7 +162,13 @@ export default function Sidebar() {
                                     <span className={isActive ? "text-white" : "text-gray-400"}>
                                         {menu.icon}
                                     </span>
-                                    <span className="text-sm">{menu.label}</span>
+                                    <span className="text-sm flex-1">{menu.label}</span>
+                                    {role === "GUDANG" && menu.href === "/dashboard/po-masuk" && poBadgeCount > 0 && (
+                                        <span className={`min-w-[20px] h-5 flex items-center justify-center rounded-full text-xs font-bold px-1.5 ${isActive ? "bg-white text-red-600" : "bg-red-500 text-white"
+                                            }`}>
+                                            {poBadgeCount}
+                                        </span>
+                                    )}
                                 </Link>
                             </li>
                         )
