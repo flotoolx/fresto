@@ -488,4 +488,5 @@
 - [x] Perluas filter GUDANG di `/api/orders/stokis` untuk include SHIPPED orders ✅
 
 ### Git Commits
-- [x] Git commit ✅ `3585c93`
+- [x] Git commit ✅ `3585c93` — Peningkatan fitur utama
+- [x] Git commit ✅ `026644e` — Penyesuaian feedback (PENDING_PUSAT & stok menipis)

@@ -161,7 +161,7 @@ export default function GudangPOMasukPage() {
                     <div className="absolute top-0 right-0 w-10 h-10 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                     <div className="flex items-center gap-1 mb-1">
                         <Clock size={14} className="opacity-80" />
-                        <span className="text-[10px] md:text-xs text-white/80">PO Baru</span>
+                        <span className="text-[10px] md:text-xs text-white/80">Sudah Approve</span>
                     </div>
                     <p className="text-xl md:text-2xl font-bold">{poIssuedCount}</p>
                     <p className="text-[9px] md:text-xs text-white/60 mt-0.5">Siap diproses</p>
@@ -210,7 +210,7 @@ export default function GudangPOMasukPage() {
                         >
                             <option value="">Semua Status</option>
                             <option value="PENDING_PUSAT">Belum Disetujui</option>
-                            <option value="PO_ISSUED">PO Baru</option>
+                            <option value="PO_ISSUED">Sudah Approve</option>
                             <option value="PROCESSING">Sedang Diproses</option>
                         </select>
                     )}
@@ -270,7 +270,7 @@ export default function GudangPOMasukPage() {
                                                 "bg-green-100 text-green-700 border-green-200"
                                         }`}>
                                         {isPending ? <AlertCircle size={12} /> : isPOIssued ? <Clock size={12} /> : isProcessing ? <Package size={12} /> : <CheckCircle size={12} />}
-                                        {isPending ? "Belum Disetujui" : isPOIssued ? "PO Baru" : isProcessing ? "Diproses" : "Dikirim"}
+                                        {isPending ? "Belum Disetujui" : isPOIssued ? "Sudah Approve" : isProcessing ? "Diproses" : "Dikirim"}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center">
