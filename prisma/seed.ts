@@ -147,7 +147,7 @@ async function main() {
         const email = `stokis${i + 1}@dfresto.com`
         const user = await prisma.user.upsert({
             where: { email },
-            update: { dcId: dcId, role: Role.STOKIS, uniqueCode: stkCode },
+            update: { dcId: dcId, role: Role.STOKIS, uniqueCode: stkCode, name: `Stokis ${location} ${suffix}` },
             create: {
                 name: `Stokis ${location} ${suffix}`,
                 email,
@@ -191,7 +191,7 @@ async function main() {
         const assignedStokisId = stokisIds[i % stokisIds.length] // Round-robin: 0,1,...,13,0,1,...,5
         const user = await prisma.user.upsert({
             where: { email },
-            update: { uniqueCode: mtrCode, stokisId: assignedStokisId },
+            update: { uniqueCode: mtrCode, stokisId: assignedStokisId, name: `Mitra ${i + 1}` },
             create: {
                 name: `Mitra ${i + 1}`,
                 email,
