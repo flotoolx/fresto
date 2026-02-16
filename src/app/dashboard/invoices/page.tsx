@@ -220,7 +220,7 @@ export default function InvoicesPage() {
                     <Receipt size={48} className="mx-auto mb-3 text-gray-300" />
                     <p className="text-gray-500">Tidak ada invoice ditemukan</p>
                 </div>
-            ) : (role === "FINANCE_DC" || role === "FINANCE_ALL") ? (
+            ) : (
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-[650px]">
@@ -236,7 +236,6 @@ export default function InvoicesPage() {
                             <tbody className="divide-y divide-gray-100">
                                 {filteredInvoices.map((invoice) => {
                                     const isPaid = invoice.status === "PAID"
-                                    const isUnpaid = invoice.status === "UNPAID" || invoice.status === "OVERDUE"
                                     const statusColor = isPaid
                                         ? "bg-green-100 text-green-700"
                                         : "bg-yellow-100 text-yellow-700"
@@ -261,69 +260,6 @@ export default function InvoicesPage() {
                             </tbody>
                         </table>
                     </div>
-                </div>
-            ) : (
-                <div className="grid sm:grid-cols-2 gap-4">
-                    {filteredInvoices.map((invoice) => {
-                        const daysUntilDue = getDaysUntilDue(invoice.dueDate)
-                        const isPaid = invoice.status === "PAID"
-                        const isUnpaid = invoice.status === "UNPAID" || invoice.status === "OVERDUE"
-
-                        return (
-                            <div
-                                key={invoice.id}
-                                className={`bg-white rounded-xl p-5 shadow-sm border-l-4 ${isPaid ? "border-l-green-500" : "border-l-yellow-500"}`}
-                            >
-                                {/* Card Header */}
-                                <div className="flex items-start justify-between mb-3">
-                                    <div>
-                                        <h3 className="font-bold text-gray-900">{invoice.invoiceNumber}</h3>
-                                        <p className="text-sm text-gray-500">{invoice.order.orderNumber}</p>
-                                    </div>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isPaid ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
-                                        {isPaid ? "Lunas" : "Belum Lunas"}
-                                    </span>
-                                </div>
-
-                                {/* Stokis Info */}
-                                <div className="mb-3">
-                                    <p className="font-medium text-gray-800">{invoice.order.stokis.name}</p>
-                                    <p className="text-sm text-gray-500">{invoice.order.stokis.email}</p>
-                                </div>
-
-                                {/* Amount & Due Date */}
-                                <div className="flex items-end justify-between mb-4">
-                                    <div>
-                                        <p className="text-xs text-gray-500">Jatuh Tempo</p>
-                                        <p className="font-medium text-gray-800">{formatDate(invoice.dueDate)}</p>
-                                        {isUnpaid && daysUntilDue <= 7 && daysUntilDue > 0 && (
-                                            <p className="text-xs text-red-600 font-medium">{daysUntilDue} hari lagi</p>
-                                        )}
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-xs text-gray-500">Total</p>
-                                        <p className="text-xl font-bold text-green-600">{formatCurrency(invoice.amount)}</p>
-                                    </div>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex gap-2 pt-3 border-t">
-                                    <Link
-                                        href={`/invoice/${invoice.id}`}
-                                        target="_blank"
-                                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
-                                    >
-                                        <Printer size={16} /> Print
-                                    </Link>
-                                    {isPaid && (
-                                        <div className="flex-1 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium text-center flex items-center justify-center gap-1">
-                                            <CheckCircle size={16} /> Lunas
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    })}
                 </div>
             )}
         </div>

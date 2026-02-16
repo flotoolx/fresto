@@ -66,9 +66,7 @@ export default function ApprovePOPage() {
     const [showAdjustModal, setShowAdjustModal] = useState(false)
     const [adjustedItems, setAdjustedItems] = useState<{ id: string; quantity: number }[]>([])
     const [adjustNotes, setAdjustNotes] = useState("")
-    const [poTypeFilter, setPoTypeFilter] = useState<"all" | "dc" | "stokis">("all")
-    const [dcFilter, setDcFilter] = useState<"pusat" | "alldc" | "dc">("pusat")
-    const [financeAllFilter, setFinanceAllFilter] = useState<string>("all")
+    const [statusFilter, setStatusFilter] = useState<string>(role === "FINANCE_DC" ? "PENDING_PUSAT" : "all")
     const [searchQuery, setSearchQuery] = useState("")
 
     // Redirect FINANCE_ALL — view only, no approval access
@@ -211,66 +209,46 @@ export default function ApprovePOPage() {
 
             {/* Filter & Search */}
             <div className="bg-white rounded-xl p-4 shadow-sm">
-                {(role === "FINANCE_DC" || role === "FINANCE_ALL") ? (
-                    <div className="flex flex-col sm:flex-row gap-3">
-                        {/* FINANCE_DC: no filter dropdown, just search */}
-                        {role === "FINANCE_ALL" && (
-                            <select
-                                value={financeAllFilter}
-                                onChange={(e) => setFinanceAllFilter(e.target.value)}
-                                className="px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-all cursor-pointer"
-                            >
-                                <option value="all">Semua</option>
-                                <option value="PENDING_PUSAT">Menunggu Approval</option>
-                                <option value="PO_ISSUED">PO Issued</option>
-                                <option value="PROCESSING">Diproses</option>
-                                <option value="SHIPPED">Dikirim</option>
-                                <option value="RECEIVED">Diterima</option>
-                                <option value="CANCELLED">Dibatalkan</option>
-                            </select>
-                        )}
-                        <div className="relative flex-1">
-                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Cari nomor PO atau konsumen..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 rounded-xl text-sm border border-gray-200 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-all"
-                            />
-                        </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                    {role !== "FINANCE_DC" && (
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-all cursor-pointer"
+                        >
+                            <option value="all">Semua</option>
+                            <option value="PENDING_PUSAT">Menunggu Approval</option>
+                            <option value="PO_ISSUED">PO Issued</option>
+                            <option value="PROCESSING">Diproses</option>
+                            <option value="SHIPPED">Dikirim</option>
+                            <option value="RECEIVED">Diterima</option>
+                            <option value="CANCELLED">Dibatalkan</option>
+                        </select>
+                    )}
+                    <div className="relative flex-1">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Cari nomor PO atau konsumen..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 rounded-xl text-sm border border-gray-200 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-all"
+                        />
                     </div>
-                ) : (
-                    <div className="flex gap-2 flex-wrap items-center">
-                        {["all", "dc", "stokis"].map((f) => (
-                            <button
-                                key={f}
-                                onClick={() => setPoTypeFilter(f as "all" | "dc" | "stokis")}
-                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${poTypeFilter === f
-                                    ? "bg-purple-500 text-white shadow-md"
-                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                    }`}
-                            >
-                                {f === "all" ? "Semua" : f === "dc" ? "DC" : "Stokis"}
-                            </button>
-                        ))}
-                    </div>
-                )}
+                </div>
             </div>
 
-            {/* FINANCE_DC / FINANCE_ALL Table View */}
-            {(role === "FINANCE_DC" || role === "FINANCE_ALL") ? (() => {
+            {/* Table View */}
+            {(() => {
                 const q = searchQuery.toLowerCase()
                 let filtered: StokisOrder[]
 
                 if (role === "FINANCE_DC") {
-                    // FINANCE_DC: show only PENDING_PUSAT orders (no filter dropdown)
                     filtered = allOrders.filter(o => o.status === "PENDING_PUSAT")
                 } else {
-                    // FINANCE_ALL
-                    filtered = financeAllFilter === "all"
+                    filtered = statusFilter === "all"
                         ? allOrders
-                        : allOrders.filter(o => o.status === financeAllFilter)
+                        : allOrders.filter(o => o.status === statusFilter)
                 }
 
                 if (q) {
@@ -284,7 +262,7 @@ export default function ApprovePOPage() {
                     <div className="bg-white rounded-xl p-12 shadow-sm text-center">
                         <CheckCircle className="w-16 h-16 text-green-300 mx-auto mb-4" />
                         <p className="text-gray-500">
-                            {searchQuery ? "Tidak ditemukan hasil pencarian" : (dcFilter === "pusat" || financeAllFilter === "PENDING_PUSAT") ? "Tidak ada PO menunggu approval" : "Tidak ada data PO"}
+                            {searchQuery ? "Tidak ditemukan hasil pencarian" : statusFilter === "PENDING_PUSAT" ? "Tidak ada PO menunggu approval" : "Tidak ada data PO"}
                         </p>
                     </div>
                 ) : (
@@ -327,52 +305,6 @@ export default function ApprovePOPage() {
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                )
-            })() : (() => {
-                const filteredOrders = orders.filter(order => {
-                    if (poTypeFilter === "all") return true
-                    if (poTypeFilter === "dc") return order.stokis.role === "DC"
-                    if (poTypeFilter === "stokis") return order.stokis.role === "STOKIS"
-                    return true
-                })
-                return filteredOrders.length === 0 ? (
-                    <div className="bg-white rounded-xl p-12 shadow-sm text-center">
-                        <CheckCircle className="w-16 h-16 text-green-300 mx-auto mb-4" />
-                        <p className="text-gray-500">Tidak ada PO yang perlu diapprove</p>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {filteredOrders.map((order) => (
-                            <div
-                                key={order.id}
-                                className="bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-                                onClick={() => handleSelectOrder(order)}
-                            >
-                                <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                        <h3 className="font-semibold text-gray-800">{order.orderNumber}</h3>
-                                        <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
-                                    </div>
-                                    <span className="flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-700">
-                                        <Clock size={16} />
-                                        Menunggu Approval
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        <span className="text-sm font-medium text-gray-700">{order.stokis.name}</span>
-                                        <p className="text-xs text-gray-500">{order.stokis.email}</p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-semibold text-purple-600">
-                                            {formatCurrency(Number(order.totalAmount))}
-                                        </span>
-                                        <ChevronRight size={18} className="text-gray-400" />
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
                     </div>
                 )
             })()}

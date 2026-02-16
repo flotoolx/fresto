@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Users, Plus, Phone, MapPin, ShoppingCart, X } from "lucide-react"
+import { Users, Plus, X } from "lucide-react"
 
 interface Mitra {
     id: string
@@ -11,6 +11,11 @@ interface Mitra {
     address: string | null
     _count?: { mitraOrdersAsMitra: number }
     createdAt: string
+    mitraOrdersAsMitra?: {
+        totalAmount: number
+        createdAt: string
+        items: { quantity: number }[]
+    }[]
 }
 
 export default function MitraSayaPage() {
@@ -91,6 +96,14 @@ export default function MitraSayaPage() {
         }).format(new Date(date))
     }
 
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0,
+        }).format(amount)
+    }
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -118,7 +131,7 @@ export default function MitraSayaPage() {
                 </button>
             </div>
 
-            {/* Mitra Grid */}
+            {/* Mitra Table */}
             {mitras.length === 0 ? (
                 <div className="bg-white rounded-xl p-12 shadow-sm text-center">
                     <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -131,46 +144,47 @@ export default function MitraSayaPage() {
                     </button>
                 </div>
             ) : (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {mitras.map((mitra) => (
-                        <div key={mitra.id} className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                                    <span className="text-orange-600 font-bold text-lg">
-                                        {mitra.name.charAt(0).toUpperCase()}
-                                    </span>
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-gray-800">{mitra.name}</h3>
-                                    <p className="text-sm text-gray-500">{mitra.email}</p>
-                                </div>
-                            </div>
-
-                            {mitra.phone && (
-                                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                                    <Phone size={14} />
-                                    <span>{mitra.phone}</span>
-                                </div>
-                            )}
-
-                            {mitra.address && (
-                                <div className="flex items-start gap-2 text-sm text-gray-600 mb-4">
-                                    <MapPin size={14} className="mt-0.5 flex-shrink-0" />
-                                    <span className="line-clamp-2">{mitra.address}</span>
-                                </div>
-                            )}
-
-                            <div className="pt-4 border-t flex justify-between items-center">
-                                <div className="flex items-center gap-1 text-sm text-gray-500">
-                                    <ShoppingCart size={14} />
-                                    <span>{mitra._count?.mitraOrdersAsMitra || 0} order</span>
-                                </div>
-                                <span className="text-xs text-gray-400">
-                                    Sejak {formatDate(mitra.createdAt)}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-gray-50 border-b">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">No</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nama Mitra</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tgl Bergabung</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Qty<span className="block text-[10px] normal-case text-gray-400 font-normal">Order Terakhir</span></th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Nominal<span className="block text-[10px] normal-case text-gray-400 font-normal">Order Terakhir</span></th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tgl Order<span className="block text-[10px] normal-case text-gray-400 font-normal">Order Terakhir</span></th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {mitras.map((mitra, index) => {
+                                    const lastOrder = mitra.mitraOrdersAsMitra?.[0]
+                                    const lastOrderQty = lastOrder
+                                        ? lastOrder.items.reduce((sum, item) => sum + item.quantity, 0)
+                                        : null
+                                    return (
+                                        <tr key={mitra.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-4 py-3 text-sm text-gray-500">{index + 1}</td>
+                                            <td className="px-4 py-3">
+                                                <span className="text-sm font-medium text-gray-900">{mitra.name}</span>
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-gray-700">{formatDate(mitra.createdAt)}</td>
+                                            <td className="px-4 py-3 text-sm text-gray-700 text-center">
+                                                {lastOrderQty !== null ? lastOrderQty : <span className="text-gray-400">-</span>}
+                                            </td>
+                                            <td className="px-4 py-3 text-sm font-semibold text-emerald-600 text-right">
+                                                {lastOrder ? formatCurrency(Number(lastOrder.totalAmount)) : <span className="text-gray-400 font-normal">-</span>}
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-gray-700">
+                                                {lastOrder ? formatDate(lastOrder.createdAt) : <span className="text-gray-400">-</span>}
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 

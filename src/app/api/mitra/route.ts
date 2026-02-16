@@ -35,6 +35,17 @@ export async function GET() {
                 _count: {
                     select: { mitraOrdersAsMitra: true },
                 },
+                mitraOrdersAsMitra: {
+                    take: 1,
+                    orderBy: { createdAt: "desc" },
+                    select: {
+                        totalAmount: true,
+                        createdAt: true,
+                        items: {
+                            select: { quantity: true },
+                        },
+                    },
+                },
             },
             orderBy: { name: "asc" },
         })

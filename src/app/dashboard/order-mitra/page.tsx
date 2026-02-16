@@ -50,6 +50,9 @@ export default function StokisOrderMitraPage() {
     const [startDate, setStartDate] = useState("")
     const [endDate, setEndDate] = useState("")
 
+    // Status filter state
+    const [statusFilter, setStatusFilter] = useState<string>("ALL")
+
     useEffect(() => {
         fetchOrders()
     }, [])
@@ -82,18 +85,22 @@ export default function StokisOrderMitraPage() {
         }
     }
 
-    // Filtered orders based on date range
+    // Filtered orders based on date range and status
     const filteredOrders = useMemo(() => {
-        if (!startDate || !endDate) return orders
-        const start = new Date(startDate)
-        const end = new Date(endDate)
-        end.setHours(23, 59, 59, 999)
-
         return orders.filter(order => {
-            const orderDate = new Date(order.createdAt)
-            return orderDate >= start && orderDate <= end
+            // Date filter
+            if (startDate && endDate) {
+                const start = new Date(startDate)
+                const end = new Date(endDate)
+                end.setHours(23, 59, 59, 999)
+                const orderDate = new Date(order.createdAt)
+                if (orderDate < start || orderDate > end) return false
+            }
+            // Status filter
+            if (statusFilter !== "ALL" && order.status !== statusFilter) return false
+            return true
         })
-    }, [orders, startDate, endDate])
+    }, [orders, startDate, endDate, statusFilter])
 
     // Summary stats
     const summaryStats = useMemo(() => {
@@ -243,11 +250,28 @@ export default function StokisOrderMitraPage() {
                             />
                         </div>
                     )}
+                    <div className="h-5 w-px bg-gray-300 mx-1 hidden sm:block" />
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700">Status:</span>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="px-3 py-1.5 border rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        >
+                            <option value="ALL">Semua</option>
+                            <option value="PENDING">Menunggu</option>
+                            <option value="APPROVED">Disetujui</option>
+                            <option value="PROCESSING">Diproses</option>
+                            <option value="SHIPPED">Dikirim</option>
+                            <option value="RECEIVED">Diterima</option>
+                            <option value="CANCELLED">Dibatalkan</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-2 md:gap-3">
+            <div className="grid grid-cols-2 gap-2 md:gap-3">
                 <div className="bg-gradient-to-br from-[#E31E24] to-[#B91C22] rounded-xl p-3 md:p-4 text-white">
                     <div className="flex items-center gap-1 md:gap-2 mb-1">
                         <TrendingUp size={14} className="opacity-80 md:w-[18px] md:h-[18px]" />
@@ -264,6 +288,8 @@ export default function StokisOrderMitraPage() {
                     <p className="text-sm md:text-xl font-bold truncate">{formatCurrency(summaryStats.belumSelesaiNominal)}</p>
                     <p className="text-[10px] md:text-xs text-white/70 mt-0.5">{summaryStats.belumSelesaiCount} PO</p>
                 </div>
+            </div>
+            <div className="mt-2 md:mt-3">
                 <div className="bg-gradient-to-br from-[#5B2B4E] to-[#3D1C34] rounded-xl p-3 md:p-4 text-white">
                     <div className="flex items-center gap-1 md:gap-2 mb-1">
                         <Users size={14} className="opacity-80 md:w-[18px] md:h-[18px]" />
