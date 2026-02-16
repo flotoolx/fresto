@@ -47,3 +47,5 @@ next-env.d.ts
 
 logo_dfresto.png
 dfresto.zipdfresto_backup.dump
+dfresto.zip
+*.dump

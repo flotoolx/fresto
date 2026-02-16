@@ -82,6 +82,13 @@ async function main() {
     const dcCodes = ['PLB', 'MKS', 'MDN', 'BKL', 'PKB', 'JTM', 'JTG']
     const dcIds: string[] = []
 
+    // Migrate old email formats (dc.* → admin.*, finance.* → manager.*)
+    for (const loc of dcLocations) {
+        const slug = loc.toLowerCase().replace(/\s+/g, '')
+        await prisma.user.updateMany({ where: { email: `dc.${slug}@dfresto.com` }, data: { email: `admin.${slug}@dfresto.com` } })
+        await prisma.user.updateMany({ where: { email: `finance.${slug}@dfresto.com` }, data: { email: `manager.${slug}@dfresto.com` } })
+    }
+
     for (let i = 0; i < dcLocations.length; i++) {
         const location = dcLocations[i]
         const citySlug = location.toLowerCase().replace(/\s+/g, '')
