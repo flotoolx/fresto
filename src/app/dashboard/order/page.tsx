@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { ShoppingCart, Plus, Minus, Trash2, Check, Search } from "lucide-react"
+import { ShoppingCart, Plus, Minus, Trash2, Check, Search, Store } from "lucide-react"
 
 interface Product {
     id: string
@@ -18,6 +18,13 @@ interface CartItem {
     quantity: number
 }
 
+interface StokisOption {
+    stokisId: string
+    stokisName: string
+    stokisCode: string | null
+    isPrimary: boolean
+}
+
 export default function MitraOrderPage() {
     const router = useRouter()
     const [products, setProducts] = useState<Product[]>([])
@@ -28,10 +35,36 @@ export default function MitraOrderPage() {
     const [error, setError] = useState("")
     const [recentlyAdded, setRecentlyAdded] = useState<Set<string>>(new Set())
     const [searchQuery, setSearchQuery] = useState("")
+    const [stokisList, setStokisList] = useState<StokisOption[]>([])
+    const [selectedStokisId, setSelectedStokisId] = useState<string>("")
 
     useEffect(() => {
         fetchProducts()
+        fetchStokisList()
     }, [])
+
+    const fetchStokisList = async () => {
+        try {
+            const res = await fetch("/api/mitra/stokis-list")
+            if (res.ok) {
+                const data: StokisOption[] = await res.json()
+                setStokisList(data)
+                // Default to primary
+                const primary = data.find(s => s.isPrimary)
+                if (primary) setSelectedStokisId(primary.stokisId)
+                else if (data.length > 0) setSelectedStokisId(data[0].stokisId)
+            }
+        } catch (err) {
+            console.error("Error fetching stokis list:", err)
+        }
+    }
+
+    const handleStokisChange = (newStokisId: string) => {
+        if (newStokisId !== selectedStokisId) {
+            setSelectedStokisId(newStokisId)
+            setCart([]) // Reset cart when switching Stokis
+        }
+    }
 
     const fetchProducts = async () => {
         try {
@@ -130,16 +163,22 @@ export default function MitraOrderPage() {
         setError("")
 
         try {
+            const orderPayload: Record<string, unknown> = {
+                items: cart.map((item) => ({
+                    productId: item.product.id,
+                    quantity: item.quantity,
+                })),
+                notes,
+            }
+            // Send stokisId if multi-stokis
+            if (stokisList.length > 1 && selectedStokisId) {
+                orderPayload.stokisId = selectedStokisId
+            }
+
             const res = await fetch("/api/orders/mitra", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    items: cart.map((item) => ({
-                        productId: item.product.id,
-                        quantity: item.quantity,
-                    })),
-                    notes,
-                }),
+                body: JSON.stringify(orderPayload),
             })
 
             if (!res.ok) {
@@ -189,6 +228,30 @@ export default function MitraOrderPage() {
             <div className="grid lg:grid-cols-3 gap-6">
                 {/* Product List */}
                 <div className="lg:col-span-2 space-y-4">
+                    {/* Stokis Picker — only shown if 2+ Stokis assigned */}
+                    {stokisList.length > 1 && (
+                        <div className="bg-white rounded-xl p-4 shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <Store size={18} className="text-blue-500 flex-shrink-0" />
+                                <div className="flex-1">
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Order ke Stokis:</label>
+                                    <select
+                                        value={selectedStokisId}
+                                        onChange={(e) => handleStokisChange(e.target.value)}
+                                        className="w-full px-3 py-2 border rounded-lg text-sm text-gray-900 bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                                    >
+                                        {stokisList.map(s => (
+                                            <option key={s.stokisId} value={s.stokisId}>
+                                                {s.stokisName}{s.isPrimary ? " (Utama)" : " (Cadangan)"}
+                                                {s.stokisCode ? ` — ${s.stokisCode}` : ""}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="bg-white rounded-xl p-4 shadow-sm">
                         {/* Search Bar */}
                         <div className="relative mb-4">

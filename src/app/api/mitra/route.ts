@@ -36,6 +36,12 @@ export async function GET() {
                 _count: {
                     select: { mitraOrdersAsMitra: true },
                 },
+                mitraStokisLinks: {
+                    include: {
+                        stokis: { select: { id: true, name: true, uniqueCode: true } }
+                    },
+                    orderBy: { isPrimary: "desc" },
+                },
                 mitraOrdersAsMitra: {
                     take: 1,
                     orderBy: { createdAt: "desc" },
@@ -169,6 +175,19 @@ export async function POST(request: Request) {
                 createdAt: true,
             },
         })
+
+        // Also create primary entry in MitraStokis junction table
+        try {
+            await prisma.mitraStokis.create({
+                data: {
+                    mitraId: newMitra.id,
+                    stokisId: session.user.id,
+                    isPrimary: true,
+                },
+            })
+        } catch (e) {
+            console.error("Error creating MitraStokis entry:", e)
+        }
 
         return NextResponse.json(newMitra, { status: 201 })
     } catch (error) {

@@ -3,6 +3,11 @@
 import { useState, useEffect } from "react"
 import { Users, Plus, X, Pencil } from "lucide-react"
 
+interface StokisLink {
+    stokis: { id: string; name: string; uniqueCode: string | null }
+    isPrimary: boolean
+}
+
 interface Mitra {
     id: string
     name: string
@@ -12,11 +17,18 @@ interface Mitra {
     uniqueCode: string | null
     _count?: { mitraOrdersAsMitra: number }
     createdAt: string
+    mitraStokisLinks?: StokisLink[]
     mitraOrdersAsMitra?: {
         totalAmount: number
         createdAt: string
         items: { quantity: number }[]
     }[]
+}
+
+interface SameDCStokis {
+    id: string
+    name: string
+    uniqueCode: string | null
 }
 
 export default function MitraSayaPage() {
@@ -28,6 +40,7 @@ export default function MitraSayaPage() {
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState("")
     const [successMsg, setSuccessMsg] = useState("")
+    const [sameDCStokis, setSameDCStokis] = useState<SameDCStokis[]>([])
 
     // Form state for Add
     const [formData, setFormData] = useState({
@@ -46,10 +59,12 @@ export default function MitraSayaPage() {
         phone: "",
         address: "",
         uniqueCode: "",
+        secondaryStokisId: "",
     })
 
     useEffect(() => {
         fetchMitras()
+        fetchSameDCStokis()
     }, [])
 
     const fetchMitras = async () => {
@@ -63,6 +78,18 @@ export default function MitraSayaPage() {
             console.error("Error fetching mitra:", err)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const fetchSameDCStokis = async () => {
+        try {
+            const res = await fetch("/api/stokis/same-dc")
+            if (res.ok) {
+                const data = await res.json()
+                setSameDCStokis(data)
+            }
+        } catch (err) {
+            console.error("Error fetching same-dc stokis:", err)
         }
     }
 
@@ -106,6 +133,8 @@ export default function MitraSayaPage() {
 
     const handleEditClick = (mitra: Mitra) => {
         setEditMitra(mitra)
+        // Find secondary stokis from junction links
+        const secondaryLink = mitra.mitraStokisLinks?.find(l => !l.isPrimary)
         setEditFormData({
             name: mitra.name,
             email: mitra.email,
@@ -113,6 +142,7 @@ export default function MitraSayaPage() {
             phone: mitra.phone || "",
             address: mitra.address || "",
             uniqueCode: mitra.uniqueCode || "",
+            secondaryStokisId: secondaryLink?.stokis.id || "",
         })
         setError("")
         setShowEditModal(true)
@@ -228,10 +258,10 @@ export default function MitraSayaPage() {
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">No</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Kode</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nama Mitra</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Stokis Cadangan</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tgl Bergabung</th>
                                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Qty<span className="block text-[10px] normal-case text-gray-400 font-normal">Order Terakhir</span></th>
                                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Nominal<span className="block text-[10px] normal-case text-gray-400 font-normal">Order Terakhir</span></th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tgl Order<span className="block text-[10px] normal-case text-gray-400 font-normal">Order Terakhir</span></th>
                                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Aksi</th>
                                 </tr>
                             </thead>
@@ -241,6 +271,7 @@ export default function MitraSayaPage() {
                                     const lastOrderQty = lastOrder
                                         ? lastOrder.items.reduce((sum, item) => sum + item.quantity, 0)
                                         : null
+                                    const secondaryStokis = mitra.mitraStokisLinks?.find(l => !l.isPrimary)
                                     return (
                                         <tr key={mitra.id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-4 py-3 text-sm text-gray-500">{index + 1}</td>
@@ -254,15 +285,21 @@ export default function MitraSayaPage() {
                                             <td className="px-4 py-3">
                                                 <span className="text-sm font-medium text-gray-900">{mitra.name}</span>
                                             </td>
+                                            <td className="px-4 py-3">
+                                                {secondaryStokis ? (
+                                                    <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                                                        {secondaryStokis.stokis.name}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">-</span>
+                                                )}
+                                            </td>
                                             <td className="px-4 py-3 text-sm text-gray-700">{formatDate(mitra.createdAt)}</td>
                                             <td className="px-4 py-3 text-sm text-gray-700 text-center">
                                                 {lastOrderQty !== null ? lastOrderQty : <span className="text-gray-400">-</span>}
                                             </td>
                                             <td className="px-4 py-3 text-sm font-semibold text-emerald-600 text-right">
                                                 {lastOrder ? formatCurrency(Number(lastOrder.totalAmount)) : <span className="text-gray-400 font-normal">-</span>}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-700">
-                                                {lastOrder ? formatDate(lastOrder.createdAt) : <span className="text-gray-400">-</span>}
                                             </td>
                                             <td className="px-4 py-3 text-center">
                                                 <button
@@ -486,6 +523,32 @@ export default function MitraSayaPage() {
                                                 placeholder="Alamat lengkap"
                                             />
                                         </div>
+                                    </div>
+                                </div>
+
+                                <hr className="border-gray-100" />
+
+                                {/* Stokis Cadangan Section */}
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Stokis Cadangan</p>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Pilih Stokis Cadangan</label>
+                                        <select
+                                            value={editFormData.secondaryStokisId}
+                                            onChange={(e) => setEditFormData({ ...editFormData, secondaryStokisId: e.target.value })}
+                                            className="w-full px-4 py-2 border rounded-lg text-gray-900 bg-white"
+                                        >
+                                            <option value="">Tidak ada (hanya 1 Stokis)</option>
+                                            {sameDCStokis.map(s => (
+                                                <option key={s.id} value={s.id}>
+                                                    {s.name} {s.uniqueCode ? `(${s.uniqueCode})` : ""}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <p className="text-[10px] text-gray-400 mt-1">
+                                            Mitra bisa order ke Stokis cadangan jika produk utama kosong/overload.
+                                            {sameDCStokis.length === 0 && " Tidak ada Stokis lain di DC Area yang sama."}
+                                        </p>
                                     </div>
                                 </div>
 

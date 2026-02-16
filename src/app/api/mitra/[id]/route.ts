@@ -35,7 +35,7 @@ export async function PUT(
         }
 
         const body = await request.json()
-        const { name, email, password, phone, address, uniqueCode } = body
+        const { name, email, password, phone, address, uniqueCode, secondaryStokisId } = body
 
         if (!name || !email) {
             return NextResponse.json({ error: "Nama dan email wajib diisi" }, { status: 400 })
@@ -66,6 +66,63 @@ export async function PUT(
             return NextResponse.json({ error: "Password minimal 6 karakter" }, { status: 400 })
         }
 
+        // Handle secondary Stokis assignment
+        if (secondaryStokisId !== undefined) {
+            // Ensure primary entry exists in junction table
+            await prisma.mitraStokis.upsert({
+                where: {
+                    mitraId_stokisId: { mitraId: id, stokisId: session.user.id }
+                },
+                create: {
+                    mitraId: id,
+                    stokisId: session.user.id,
+                    isPrimary: true,
+                },
+                update: {},
+            })
+
+            if (secondaryStokisId) {
+                // Validate secondary stokis is in the same DC
+                const currentStokis = await prisma.user.findUnique({
+                    where: { id: session.user.id },
+                    select: { dcId: true },
+                })
+                const secondaryStokis = await prisma.user.findUnique({
+                    where: { id: secondaryStokisId },
+                    select: { dcId: true, role: true },
+                })
+
+                if (!secondaryStokis || secondaryStokis.role !== "STOKIS") {
+                    return NextResponse.json({ error: "Stokis cadangan tidak valid" }, { status: 400 })
+                }
+
+                if (currentStokis?.dcId !== secondaryStokis.dcId) {
+                    return NextResponse.json({ error: "Stokis cadangan harus di DC Area yang sama" }, { status: 400 })
+                }
+
+                // Upsert secondary assignment
+                await prisma.mitraStokis.upsert({
+                    where: {
+                        mitraId_stokisId: { mitraId: id, stokisId: secondaryStokisId }
+                    },
+                    create: {
+                        mitraId: id,
+                        stokisId: secondaryStokisId,
+                        isPrimary: false,
+                    },
+                    update: {},
+                })
+            } else {
+                // Remove all non-primary assignments for this mitra
+                await prisma.mitraStokis.deleteMany({
+                    where: {
+                        mitraId: id,
+                        isPrimary: false,
+                    },
+                })
+            }
+        }
+
         // Build update data
         const updateData: Record<string, unknown> = {
             name,
@@ -91,6 +148,11 @@ export async function PUT(
                 address: true,
                 uniqueCode: true,
                 createdAt: true,
+                mitraStokisLinks: {
+                    include: {
+                        stokis: { select: { id: true, name: true, uniqueCode: true } }
+                    }
+                },
             },
         })
 

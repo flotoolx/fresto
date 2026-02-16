@@ -77,6 +77,10 @@ model User {
 
   // Custom Prices
   stokisPrices      StokisPrice[]
+
+  // Multi-Stokis assignment (junction)
+  mitraStokisLinks  MitraStokis[] @relation("MitraStokisLinks")
+  stokisMitraLinks  MitraStokis[] @relation("StokisMitraLinks")
 }
 
 // Push Notification Subscriptions
@@ -265,4 +269,17 @@ model StokisPrice {
   updatedAt   DateTime @updatedAt
 
   @@unique([stokisId, productId])
+}
+
+// Junction table: Mitra can be assigned to multiple Stokis
+model MitraStokis {
+  id        String   @id @default(cuid())
+  mitraId   String
+  mitra     User     @relation("MitraStokisLinks", fields: [mitraId], references: [id])
+  stokisId  String
+  stokis    User     @relation("StokisMitraLinks", fields: [stokisId], references: [id])
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([mitraId, stokisId])
 }

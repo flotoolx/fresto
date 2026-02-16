@@ -54,24 +54,55 @@ export async function POST(request: Request) {
         const mitraId = session.user.id
         const mitraName = session.user.name || "Mitra"
 
-        // Get mitra's assigned stokis
-        const mitra = await prisma.user.findUnique({
-            where: { id: mitraId },
-            select: { stokisId: true },
-        })
-
-        if (!mitra?.stokisId) {
-            return NextResponse.json(
-                { error: "Anda belum memiliki Stokis yang ditunjuk" },
-                { status: 400 }
-            )
-        }
-
         const body = await request.json()
-        const { items, notes } = body // items: [{ productId, quantity }]
+        const { items, notes, stokisId: chosenStokisId } = body
 
         if (!items || items.length === 0) {
             return NextResponse.json({ error: "Items tidak boleh kosong" }, { status: 400 })
+        }
+
+        // Determine which Stokis to order from
+        let stokisId: string
+
+        if (chosenStokisId) {
+            // Validate the chosen stokis is assigned to this mitra
+            const assignment = await prisma.mitraStokis.findUnique({
+                where: {
+                    mitraId_stokisId: { mitraId, stokisId: chosenStokisId }
+                }
+            })
+
+            if (assignment) {
+                stokisId = chosenStokisId
+            } else {
+                // Fallback: check legacy stokisId
+                const mitra = await prisma.user.findUnique({
+                    where: { id: mitraId },
+                    select: { stokisId: true },
+                })
+                if (mitra?.stokisId === chosenStokisId) {
+                    stokisId = chosenStokisId
+                } else {
+                    return NextResponse.json(
+                        { error: "Stokis yang dipilih tidak valid" },
+                        { status: 400 }
+                    )
+                }
+            }
+        } else {
+            // No stokisId sent — use legacy primary stokis
+            const mitra = await prisma.user.findUnique({
+                where: { id: mitraId },
+                select: { stokisId: true },
+            })
+
+            if (!mitra?.stokisId) {
+                return NextResponse.json(
+                    { error: "Anda belum memiliki Stokis yang ditunjuk" },
+                    { status: 400 }
+                )
+            }
+            stokisId = mitra.stokisId
         }
 
         // Get product prices
@@ -101,7 +132,7 @@ export async function POST(request: Request) {
             data: {
                 orderNumber: generateOrderNumber("MTR"),
                 mitraId,
-                stokisId: mitra.stokisId,
+                stokisId,
                 totalAmount,
                 notes,
                 items: { create: orderItems },
@@ -115,7 +146,7 @@ export async function POST(request: Request) {
         // Send push notification to Stokis
         try {
             await sendPushToUser(
-                mitra.stokisId,
+                stokisId,
                 PushTemplates.newOrder(order.orderNumber, mitraName, formatCurrency(totalAmount))
             )
         } catch (pushError) {
