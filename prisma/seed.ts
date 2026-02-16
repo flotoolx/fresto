@@ -1,4 +1,4 @@
-import { PrismaClient, Role, StokisOrderStatus, InvoiceStatus, PaymentMethod } from '@prisma/client'
+import { PrismaClient, Role, StokisOrderStatus, InvoiceStatus, PaymentMethod, MitraOrderStatus } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -180,16 +180,18 @@ async function main() {
         }
     }
 
-    // 6. Create Mitra (20 Mitra)
-    console.log('👥 Creating 20 Mitra...')
+    // 6. Create Mitra (20 Mitra) — evenly distributed across 14 Stokis (round-robin)
+    console.log('👥 Creating 20 Mitra (round-robin across 14 Stokis)...')
     const mitraIds: string[] = []
+    const mitraToStokisMap: { mitraId: string; stokisId: string }[] = []
+
     for (let i = 0; i < 20; i++) {
         const email = `mitra${i + 1}@dfresto.com`
         const mtrCode = `MTR-${String(i + 1).padStart(3, '0')}`
-        const assignedStokisId = randomItem(stokisIds)
+        const assignedStokisId = stokisIds[i % stokisIds.length] // Round-robin: 0,1,...,13,0,1,...,5
         const user = await prisma.user.upsert({
             where: { email },
-            update: { uniqueCode: mtrCode },
+            update: { uniqueCode: mtrCode, stokisId: assignedStokisId },
             create: {
                 name: `Mitra ${i + 1}`,
                 email,
@@ -202,6 +204,62 @@ async function main() {
             }
         })
         mitraIds.push(user.id)
+        mitraToStokisMap.push({ mitraId: user.id, stokisId: assignedStokisId })
+    }
+
+    // 6b. Create MitraStokis junction entries (primary)
+    console.log('🔗 Creating MitraStokis junction entries...')
+    for (const { mitraId, stokisId } of mitraToStokisMap) {
+        await prisma.mitraStokis.upsert({
+            where: { mitraId_stokisId: { mitraId, stokisId } },
+            update: {},
+            create: { mitraId, stokisId, isPrimary: true },
+        })
+    }
+
+    // 6c. Create MitraOrder dummy data
+    console.log('🛒 Creating MitraOrder dummy data...')
+    // Clean old dummy mitra orders
+    await prisma.mitraOrderItem.deleteMany({ where: { order: { orderNumber: { startsWith: 'MTR-DUMMY-' } } } })
+    await prisma.mitraOrder.deleteMany({ where: { orderNumber: { startsWith: 'MTR-DUMMY-' } } })
+
+    const mitraOrderStatuses = Object.values(MitraOrderStatus)
+    let mitraOrderIdx = 0
+
+    for (const { mitraId, stokisId } of mitraToStokisMap) {
+        // 2 orders per mitra
+        const ordersToCreate = 2
+        for (let j = 0; j < ordersToCreate; j++) {
+            const status = mitraOrderStatuses[mitraOrderIdx % mitraOrderStatuses.length]
+            const sku1 = randomItem(Array.from(productMap.keys()))
+            const sku2 = randomItem(Array.from(productMap.keys()))
+            const price1 = productsData.find(p => p.sku === sku1)!.price
+            const price2 = productsData.find(p => p.sku === sku2)!.price
+            const qty1 = randomInt(5, 30)
+            const qty2 = randomInt(5, 30)
+            const total = (qty1 * Number(price1)) + (qty2 * Number(price2))
+
+            const orderDate = new Date()
+            orderDate.setDate(orderDate.getDate() - randomInt(0, 30))
+
+            await prisma.mitraOrder.create({
+                data: {
+                    orderNumber: `MTR-DUMMY-${String(1000 + mitraOrderIdx).padStart(4, '0')}`,
+                    mitraId,
+                    stokisId,
+                    status,
+                    totalAmount: total,
+                    createdAt: orderDate,
+                    items: {
+                        create: [
+                            { productId: productMap.get(sku1)!, quantity: qty1, price: price1 },
+                            { productId: productMap.get(sku2)!, quantity: qty2, price: price2 },
+                        ]
+                    }
+                }
+            })
+            mitraOrderIdx++
+        }
     }
 
     // 7. Generate Stokis Orders & Invoices
