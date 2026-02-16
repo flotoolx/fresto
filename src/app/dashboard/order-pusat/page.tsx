@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { ShoppingCart, Plus, Minus, Trash2, ArrowLeft, Check } from "lucide-react"
+import { ShoppingCart, Plus, Minus, Trash2, ArrowLeft, Check, Search } from "lucide-react"
 
 interface Product {
     id: string
@@ -28,6 +28,7 @@ export default function StokisOrderPusatPage() {
     const [error, setError] = useState("")
     const [success, setSuccess] = useState(false)
     const [recentlyAdded, setRecentlyAdded] = useState<Set<string>>(new Set())
+    const [searchQuery, setSearchQuery] = useState("")
 
     useEffect(() => {
         fetchProducts()
@@ -45,6 +46,22 @@ export default function StokisOrderPusatPage() {
         }
     }
 
+    // Filter products: exclude items already in cart, apply search, limit to 15 for best seller
+    const displayedProducts = useMemo(() => {
+        const cartIds = new Set(cart.map(item => item.product.id))
+        const available = products.filter(p => !cartIds.has(p.id))
+
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase()
+            return available.filter(p =>
+                p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
+            )
+        }
+
+        // No search: show top 15 as "Best Seller"
+        return available.slice(0, 15)
+    }, [products, cart, searchQuery])
+
     const addToCart = (product: Product) => {
         setCart((prev) => {
             const existing = prev.find((item) => item.product.id === product.id)
@@ -58,7 +75,7 @@ export default function StokisOrderPusatPage() {
             return [...prev, { product, quantity: 1 }]
         })
 
-        // Visual feedback for mobile
+        // Visual feedback
         setRecentlyAdded((prev) => new Set(prev).add(product.id))
         setTimeout(() => {
             setRecentlyAdded((prev) => {
@@ -198,32 +215,44 @@ export default function StokisOrderPusatPage() {
                 {/* Product List */}
                 <div className="lg:col-span-2 space-y-4">
                     <div className="bg-white rounded-xl p-4 shadow-sm">
-                        <h2 className="font-semibold text-gray-800 mb-4">Pilih Produk</h2>
-                        <div className="grid sm:grid-cols-2 gap-3">
-                            {products.map((product) => (
-                                <div
-                                    key={product.id}
-                                    className="border rounded-lg p-4 hover:border-green-300 transition-colors"
-                                >
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div>
-                                            <h3 className="font-medium text-gray-800">{product.name}</h3>
-                                            <p className="text-xs text-gray-500">{product.sku}</p>
-                                        </div>
-                                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded font-medium">
-                                            {product.gudang.name}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between items-center mt-3">
-                                        <div>
-                                            <span className="text-green-600 font-semibold">
-                                                {formatCurrency(product.price)}
+                        {/* Search Bar */}
+                        <div className="relative mb-4">
+                            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Cari produk..."
+                                className="w-full pl-10 pr-4 py-2.5 border rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400"
+                            />
+                        </div>
+
+                        {/* Section Label */}
+                        <h2 className="font-semibold text-gray-800 mb-3 text-sm">
+                            {searchQuery.trim() ? `Hasil Pencarian (${displayedProducts.length})` : "Best Seller"}
+                        </h2>
+
+                        {/* Compact Product List */}
+                        {displayedProducts.length === 0 ? (
+                            <p className="text-gray-400 text-sm text-center py-6">
+                                {searchQuery.trim() ? "Produk tidak ditemukan" : "Semua produk sudah di keranjang"}
+                            </p>
+                        ) : (
+                            <div className="space-y-2">
+                                {displayedProducts.map((product) => (
+                                    <div
+                                        key={product.id}
+                                        className="flex items-center justify-between border rounded-lg px-3 py-2.5 hover:border-green-300 transition-colors"
+                                    >
+                                        <div className="flex-1 min-w-0 mr-3">
+                                            <h3 className="font-medium text-gray-800 text-sm truncate">{product.name}</h3>
+                                            <span className="text-green-600 font-semibold text-sm">
+                                                {formatCurrency(product.price)}<span className="text-gray-400 font-normal text-xs">/{product.unit}</span>
                                             </span>
-                                            <span className="text-gray-500 text-sm">/{product.unit}</span>
                                         </div>
                                         <button
                                             onClick={() => addToCart(product)}
-                                            className={`p-2 rounded-lg transition-all duration-300 ${recentlyAdded.has(product.id)
+                                            className={`p-2 rounded-lg transition-all duration-300 flex-shrink-0 ${recentlyAdded.has(product.id)
                                                 ? "bg-emerald-500 text-white scale-110"
                                                 : "bg-green-500 text-white hover:bg-green-600"
                                                 }`}
@@ -231,9 +260,9 @@ export default function StokisOrderPusatPage() {
                                             {recentlyAdded.has(product.id) ? <Check size={18} /> : <Plus size={18} />}
                                         </button>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
