@@ -85,15 +85,15 @@ async function main() {
     for (let i = 0; i < dcLocations.length; i++) {
         const location = dcLocations[i]
         const citySlug = location.toLowerCase().replace(/\s+/g, '')
-        const email = `dc.${citySlug}@dfresto.com`
+        const email = `admin.${citySlug}@dfresto.com`
         const dcCode = `DC-${dcCodes[i]}-${String(i + 1).padStart(3, '0')}`
 
         // Create DC User
         const dc = await prisma.user.upsert({
             where: { email },
-            update: { role: Role.DC, name: `DC ${location}`, uniqueCode: dcCode },
+            update: { role: Role.DC, name: `Admin ${location}`, uniqueCode: dcCode },
             create: {
-                name: `DC ${location}`,
+                name: `Admin ${location}`,
                 email,
                 password: hashedPassword,
                 role: Role.DC,
@@ -104,13 +104,13 @@ async function main() {
         })
         dcIds.push(dc.id)
 
-        // Create Finance DC User
-        const financeEmail = `finance.${citySlug}@dfresto.com`
+        // Create Manager DC User
+        const financeEmail = `manager.${citySlug}@dfresto.com`
         await prisma.user.upsert({
             where: { email: financeEmail },
-            update: { role: Role.FINANCE_DC, dcId: dc.id },
+            update: { role: Role.FINANCE_DC, dcId: dc.id, name: `Manager ${location}` },
             create: {
-                name: `Finance ${location}`,
+                name: `Manager ${location}`,
                 email: financeEmail,
                 password: hashedPassword,
                 role: Role.FINANCE_DC,
