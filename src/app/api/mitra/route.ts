@@ -31,6 +31,7 @@ export async function GET() {
                 email: true,
                 phone: true,
                 address: true,
+                uniqueCode: true,
                 createdAt: true,
                 _count: {
                     select: { mitraOrdersAsMitra: true },
@@ -95,6 +96,57 @@ export async function POST(request: Request) {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10)
 
+        // Generate unique code for mitra
+        // Format: [3-char DC area code]M-[4-digit sequence]
+        let uniqueCode: string | null = null
+        try {
+            // Get stokis DC info to extract area code
+            const stokis = await prisma.user.findUnique({
+                where: { id: session.user.id },
+                select: {
+                    dc: {
+                        select: { uniqueCode: true }
+                    }
+                }
+            })
+
+            if (stokis?.dc?.uniqueCode) {
+                // Extract area code from DC uniqueCode (e.g., "DC-PLB-001" → "PLB")
+                const parts = stokis.dc.uniqueCode.split("-")
+                const areaCode = parts[1] || "XXX"
+                const prefix = `${areaCode}M`
+
+                // Count existing mitras with this prefix to determine next sequence
+                const existingCount = await prisma.user.count({
+                    where: {
+                        role: "MITRA",
+                        uniqueCode: { startsWith: prefix }
+                    }
+                })
+
+                const seq = String(existingCount + 1).padStart(4, "0")
+                uniqueCode = `${prefix}-${seq}`
+
+                // Ensure uniqueness
+                const exists = await prisma.user.findFirst({ where: { uniqueCode } })
+                if (exists) {
+                    // Fallback: find max sequence
+                    const allCodes = await prisma.user.findMany({
+                        where: { role: "MITRA", uniqueCode: { startsWith: prefix } },
+                        select: { uniqueCode: true },
+                        orderBy: { uniqueCode: "desc" },
+                        take: 1,
+                    })
+                    if (allCodes.length > 0 && allCodes[0].uniqueCode) {
+                        const lastSeq = parseInt(allCodes[0].uniqueCode.split("-").pop() || "0")
+                        uniqueCode = `${prefix}-${String(lastSeq + 1).padStart(4, "0")}`
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Error generating unique code:", e)
+        }
+
         // Create new mitra linked to this stokis
         const newMitra = await prisma.user.create({
             data: {
@@ -105,6 +157,7 @@ export async function POST(request: Request) {
                 address: address || null,
                 role: "MITRA",
                 stokisId: session.user.id,
+                uniqueCode,
             },
             select: {
                 id: true,
@@ -112,6 +165,7 @@ export async function POST(request: Request) {
                 email: true,
                 phone: true,
                 address: true,
+                uniqueCode: true,
                 createdAt: true,
             },
         })
