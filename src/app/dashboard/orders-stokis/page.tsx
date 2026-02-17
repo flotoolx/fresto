@@ -252,48 +252,58 @@ export default function PusatOrdersStokisPage() {
 
             {/* Period Filter */}
             <div className="bg-white rounded-xl p-4 shadow-sm">
-                <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex items-center gap-2 text-gray-600">
-                        <Calendar size={18} />
-                        <span className="text-sm font-medium">Periode:</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        {[{ value: 7, label: "7 Hari" }, { value: 30, label: "30 Hari" }, { value: 90, label: "90 Hari" }].map(p => (
-                            <button
-                                key={p.value}
-                                onClick={() => { setPeriod(p.value); setUseCustomDate(false) }}
-                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${!useCustomDate && period === p.value
-                                    ? "bg-red-500 text-white"
-                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                    }`}
+                <div className="flex items-center gap-4 flex-wrap">
+                    {/* Preset period selector */}
+                    {!useCustomDate && (
+                        <div className="flex items-center gap-2">
+                            <label className="text-sm text-gray-600">Periode:</label>
+                            <select
+                                value={period}
+                                onChange={(e) => { setPeriod(parseInt(e.target.value)); setUseCustomDate(false) }}
+                                className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
-                                {p.label}
-                            </button>
-                        ))}
-                        <button
-                            onClick={() => setUseCustomDate(!useCustomDate)}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${useCustomDate
-                                ? "bg-red-500 text-white"
-                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                }`}
-                        >
-                            Custom
-                        </button>
-                    </div>
+                                <option value={7}>7 Hari</option>
+                                <option value={30}>30 Hari</option>
+                                <option value={90}>90 Hari</option>
+                                <option value={180}>3 Bulan</option>
+                                <option value={365}>1 Tahun</option>
+                            </select>
+                        </div>
+                    )}
+
+                    {/* Custom date range toggle */}
+                    <button
+                        onClick={() => {
+                            if (useCustomDate) {
+                                setUseCustomDate(false)
+                                setPeriod(30)
+                            } else {
+                                setUseCustomDate(true)
+                            }
+                        }}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${useCustomDate
+                            ? "bg-blue-500 text-white"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            }`}
+                    >
+                        <Calendar size={14} />
+                        Custom
+                    </button>
+
                     {useCustomDate && (
-                        <div className="flex items-center gap-2 ml-auto">
+                        <div className="flex items-center gap-2">
                             <input
                                 type="date"
                                 value={customDateFrom}
                                 onChange={(e) => setCustomDateFrom(e.target.value)}
-                                className="px-3 py-1.5 border rounded-lg text-sm text-gray-700"
+                                className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
-                            <span className="text-gray-400">—</span>
+                            <span className="text-gray-400">-</span>
                             <input
                                 type="date"
                                 value={customDateTo}
                                 onChange={(e) => setCustomDateTo(e.target.value)}
-                                className="px-3 py-1.5 border rounded-lg text-sm text-gray-700"
+                                className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
                         </div>
                     )}
