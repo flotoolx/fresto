@@ -43,6 +43,7 @@ export default function DCStokisPage() {
         password: "",
         phone: "",
         address: "",
+        uniqueCode: "",
     })
 
     const fetchStokis = async () => {
@@ -111,6 +112,7 @@ export default function DCStokisPage() {
             password: "",
             phone: stokis.phone || "",
             address: stokis.address || "",
+            uniqueCode: stokis.uniqueCode || "",
         })
         setError("")
         setShowEditModal(true)
@@ -453,6 +455,16 @@ export default function DCStokisPage() {
                                 <div>
                                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Detail Stokis</p>
                                     <div className="space-y-3">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Kode Unik</label>
+                                            <input
+                                                type="text"
+                                                value={editFormData.uniqueCode}
+                                                onChange={(e) => setEditFormData({ ...editFormData, uniqueCode: e.target.value })}
+                                                className="w-full px-4 py-2 border rounded-lg text-gray-900 font-mono"
+                                                placeholder="cth: PLB-S-001"
+                                            />
+                                        </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Nama Stokis *</label>
                                             <input

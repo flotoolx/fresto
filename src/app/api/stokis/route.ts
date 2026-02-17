@@ -102,7 +102,7 @@ export async function POST(request: Request) {
         const hashedPassword = await bcrypt.hash(password, 10)
 
         // Generate unique code for stokis
-        // Format: STK-[DC area code]-[Letter][Seq] e.g. STK-PLB-A03
+        // Format: [DC area code]-S-[3-digit seq] e.g. PLB-S-003
         let uniqueCode: string | null = null
         try {
             const dcUser = await prisma.user.findUnique({
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
                 // Extract area code from DC uniqueCode (e.g., "DC-PLB-001" → "PLB")
                 const parts = dcUser.uniqueCode.split("-")
                 const areaCode = parts[1] || "XXX"
-                const prefix = `STK-${areaCode}`
+                const prefix = `${areaCode}-S`
 
                 // Count existing stokis with this prefix to determine next sequence
                 const existingCount = await prisma.user.count({
@@ -124,10 +124,8 @@ export async function POST(request: Request) {
                     }
                 })
 
-                const letterIndex = Math.floor(existingCount / 99)
-                const letter = String.fromCharCode(65 + letterIndex) // A, B, C...
-                const seq = String((existingCount % 99) + 1).padStart(2, "0")
-                uniqueCode = `${prefix}-${letter}${seq}`
+                const seq = String(existingCount + 1).padStart(3, "0")
+                uniqueCode = `${prefix}-${seq}`
 
                 // Ensure uniqueness
                 const exists = await prisma.user.findFirst({ where: { uniqueCode } })
@@ -139,16 +137,8 @@ export async function POST(request: Request) {
                         take: 1,
                     })
                     if (allCodes.length > 0 && allCodes[0].uniqueCode) {
-                        const lastCode = allCodes[0].uniqueCode
-                        const lastPart = lastCode.split("-").pop() || "A00"
-                        const lastLetter = lastPart.charAt(0)
-                        const lastNum = parseInt(lastPart.slice(1)) || 0
-                        if (lastNum >= 99) {
-                            const nextLetter = String.fromCharCode(lastLetter.charCodeAt(0) + 1)
-                            uniqueCode = `${prefix}-${nextLetter}01`
-                        } else {
-                            uniqueCode = `${prefix}-${lastLetter}${String(lastNum + 1).padStart(2, "0")}`
-                        }
+                        const lastNum = parseInt(allCodes[0].uniqueCode.split("-").pop() || "0")
+                        uniqueCode = `${prefix}-${String(lastNum + 1).padStart(3, "0")}`
                     }
                 }
             }

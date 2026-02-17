@@ -52,7 +52,7 @@ export async function PUT(
 
         const { id } = await params
         const body = await request.json()
-        const { name, email, password, role, phone, address, stokisId } = body
+        const { name, email, password, role, phone, address, stokisId, uniqueCode } = body
 
         // DC can only edit stokis under their own area
         if (session.user.role === "DC") {
@@ -71,6 +71,7 @@ export async function PUT(
         if (email) updateData.email = email
         if (phone !== undefined) updateData.phone = phone || null
         if (address !== undefined) updateData.address = address || null
+        if (uniqueCode !== undefined) updateData.uniqueCode = uniqueCode || null
         if (password) updateData.password = await bcrypt.hash(password, 10)
 
         // Only PUSAT can change role and stokisId
