@@ -511,5 +511,9 @@
 - [x] Update `fetchReport()` — kirim `period` atau `dateFrom`/`dateTo` untuk tab invoice ✅
 - [x] Update API `getInvoiceAgingReport` — filter invoice berdasarkan `order.createdAt` ✅
 
+### Dashboard FINANCE
+- [x] Hapus 2 card DC (Total & Menunggu Approval) agar fokus ke Stokis ✅
+- [x] Sederhanakan layout menjadi grid 2 kolom (Total & Menunggu Approval Stokis) ✅
+
 ### Git Commits
-- [x] Git commit ✅
+- [x] Git commit ✅ `0b473c7` — Filter & approve PO enhancements

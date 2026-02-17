@@ -197,8 +197,6 @@ export default function DashboardPage() {
                     const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`
 
                     setStats([
-                        { label: "Total", value: formatRp(dcTotal), subtitle: `${allDCOrders.length} PO`, icon: Package, gradient: "from-[#E31E24] to-[#B91C22]", href: "/dashboard/orders-stokis" },
-                        { label: "Menunggu Approval", value: formatRp(dcPendingTotal), subtitle: `${dcPending.length} PO`, icon: ShoppingCart, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/approve-po" },
                         { label: "Total", value: formatRp(stokisTotal), subtitle: `${allStokisOrders.length} PO`, icon: Store, gradient: "from-[#3B82F6] to-[#1D4ED8]", href: "/dashboard/orders-stokis" },
                         { label: "Menunggu Approval", value: formatRp(stokisPendingTotal), subtitle: `${stokisPending.length} PO`, icon: ShoppingCart, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/orders-stokis" },
                     ])
@@ -708,7 +706,7 @@ export default function DashboardPage() {
                         <div key={i} className="bg-gray-100 rounded-xl p-4 h-24 animate-pulse" />
                     ))}
                 </div>
-            ) : role === "FINANCE_DC" ? (
+            ) : (role === "FINANCE_DC" || role === "FINANCE") ? (
                 <div className="grid grid-cols-2 gap-4">
                     {stats.map((stat, index) => (
                         <Link
@@ -730,13 +728,13 @@ export default function DashboardPage() {
                         </Link>
                     ))}
                 </div>
-            ) : (role === "STOKIS" || role === "FINANCE") ? (
+            ) : role === "STOKIS" ? (
                 <div className="flex flex-col lg:flex-row gap-6">
                     {/* Left Section */}
                     <div className="flex-1">
                         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                            {role !== "FINANCE" && <Package size={16} className="text-gray-500" />}
-                            {role === "FINANCE" ? "📦 DC" : "Order ke Pusat"}
+                            <Package size={16} className="text-gray-500" />
+                            Order ke Pusat
                         </h2>
                         <div className="grid grid-cols-2 gap-4">
                             {stats.slice(0, 2).map((stat, index) => (
@@ -767,8 +765,8 @@ export default function DashboardPage() {
                     {/* Right Section */}
                     <div className="flex-1">
                         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                            {role !== "FINANCE" && <Store size={16} className="text-gray-500" />}
-                            {role === "FINANCE" ? "🏪 Stokis" : "Order dari Mitra"}
+                            <Store size={16} className="text-gray-500" />
+                            Order dari Mitra
                         </h2>
                         <div className="grid grid-cols-2 gap-4">
                             {stats.slice(2, 4).map((stat, index) => (
