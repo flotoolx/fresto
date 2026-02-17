@@ -12,11 +12,11 @@ export function generateInvoiceNumber(): string {
 }
 
 /**
- * Calculate due date (14 days from now)
+ * Calculate due date (20 days from now)
  */
 export function calculateDueDate(): Date {
     const dueDate = new Date()
-    dueDate.setDate(dueDate.getDate() + 14)
+    dueDate.setDate(dueDate.getDate() + 20)
     return dueDate
 }
 
