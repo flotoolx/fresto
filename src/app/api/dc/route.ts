@@ -11,7 +11,7 @@ export async function GET() {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        if (!["PUSAT", "FINANCE", "DC"].includes(session.user.role)) {
+        if (!["PUSAT", "FINANCE", "FINANCE_ALL", "FINANCE_DC", "DC"].includes(session.user.role)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 

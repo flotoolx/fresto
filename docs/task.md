@@ -542,3 +542,6 @@
 #### Dokumentasi:
 - [x] Update `docs/accounts.md` — tambah stokis pusat & mitra pusat ✅
 - [x] Update `docs/task.md` ✅
+
+#### Git:
+- [x] Git commit ✅ `5fcdb3b` — Isolasi data role-based
