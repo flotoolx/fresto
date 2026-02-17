@@ -492,8 +492,8 @@ export default function DashboardPage() {
                                         setEndDate(end.toISOString().split("T")[0])
                                     }}
                                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${pusatPeriod === opt.value
-                                            ? "bg-red-500 text-white"
-                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                        ? "bg-red-500 text-white"
+                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                                         }`}
                                 >
                                     {opt.label}
@@ -502,8 +502,8 @@ export default function DashboardPage() {
                             <button
                                 onClick={() => setPusatPeriod("custom")}
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${pusatPeriod === "custom"
-                                        ? "bg-red-500 text-white"
-                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    ? "bg-red-500 text-white"
+                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                                     }`}
                             >
                                 Custom
@@ -1167,7 +1167,7 @@ export default function DashboardPage() {
                                                     order.status === "PO_ISSUED" ? "bg-blue-100 text-blue-700" :
                                                         "bg-gray-100 text-gray-600"
                                                 }`}>
-                                                {order.status.replace(/_/g, " ")}
+                                                {{ PENDING_PUSAT: "Menunggu Approval", RECEIVED: "Diterima", PO_ISSUED: "PO Issued", PROCESSING: "Diproses", SHIPPED: "Dikirim", CANCELLED: "Dibatalkan" }[order.status] || order.status.replace(/_/g, " ")}
                                             </span>
                                         </div>
                                     </div>
