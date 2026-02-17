@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { ShoppingCart, Clock, CheckCircle, Truck, Package, XCircle, ChevronRight, Printer, AlertTriangle, Edit3 } from "lucide-react"
+import { ShoppingCart, Clock, CheckCircle, Truck, Package, XCircle, Printer, AlertTriangle, Edit3, Calendar } from "lucide-react"
 import ExportButton from "@/components/ExportButton"
 import Link from "next/link"
 
@@ -59,6 +59,16 @@ export default function PusatOrdersStokisPage() {
     const [updating, setUpdating] = useState(false)
     const [activeTab, setActiveTab] = useState<TabFilter>("all")
 
+    // Period filter state
+    const [period, setPeriod] = useState(30)
+    const [useCustomDate, setUseCustomDate] = useState(false)
+    const [customDateFrom, setCustomDateFrom] = useState(() => {
+        const d = new Date()
+        d.setDate(d.getDate() - 30)
+        return d.toISOString().split("T")[0]
+    })
+    const [customDateTo, setCustomDateTo] = useState(() => new Date().toISOString().split("T")[0])
+
     // Outstanding check
     const [outstanding, setOutstanding] = useState<OutstandingData | null>(null)
     const [loadingOutstanding, setLoadingOutstanding] = useState(false)
@@ -70,13 +80,30 @@ export default function PusatOrdersStokisPage() {
 
     useEffect(() => {
         fetchOrders()
-    }, [])
+    }, [period, useCustomDate, customDateFrom, customDateTo])
 
     const fetchOrders = async () => {
         try {
             const res = await fetch("/api/orders/stokis")
             const data = await res.json()
-            setOrders(data)
+            // Apply date filtering client-side
+            let filtered = Array.isArray(data) ? data : []
+            if (useCustomDate) {
+                const from = new Date(customDateFrom)
+                from.setHours(0, 0, 0, 0)
+                const to = new Date(customDateTo)
+                to.setHours(23, 59, 59, 999)
+                filtered = filtered.filter(o => {
+                    const d = new Date(o.createdAt)
+                    return d >= from && d <= to
+                })
+            } else {
+                const cutoff = new Date()
+                cutoff.setDate(cutoff.getDate() - period)
+                cutoff.setHours(0, 0, 0, 0)
+                filtered = filtered.filter(o => new Date(o.createdAt) >= cutoff)
+            }
+            setOrders(filtered)
         } catch (err) {
             console.error("Error fetching orders:", err)
         } finally {
@@ -169,10 +196,14 @@ export default function PusatOrdersStokisPage() {
     }
 
     const formatDate = (date: string) => {
-        return new Intl.DateTimeFormat("id-ID", {
-            dateStyle: "medium",
-            timeStyle: "short",
-        }).format(new Date(date))
+        const d = new Date(date)
+        const day = d.getDate()
+        const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"]
+        const month = months[d.getMonth()]
+        const year = d.getFullYear()
+        const hours = d.getHours().toString().padStart(2, "0")
+        const minutes = d.getMinutes().toString().padStart(2, "0")
+        return `${day} ${month} ${year}, ${hours}.${minutes}`
     }
 
     // Filter orders based on active tab
@@ -219,6 +250,56 @@ export default function PusatOrdersStokisPage() {
                 </div>
             </div>
 
+            {/* Period Filter */}
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2 text-gray-600">
+                        <Calendar size={18} />
+                        <span className="text-sm font-medium">Periode:</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {[{ value: 7, label: "7 Hari" }, { value: 30, label: "30 Hari" }, { value: 90, label: "90 Hari" }].map(p => (
+                            <button
+                                key={p.value}
+                                onClick={() => { setPeriod(p.value); setUseCustomDate(false) }}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${!useCustomDate && period === p.value
+                                        ? "bg-red-500 text-white"
+                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    }`}
+                            >
+                                {p.label}
+                            </button>
+                        ))}
+                        <button
+                            onClick={() => setUseCustomDate(!useCustomDate)}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${useCustomDate
+                                    ? "bg-red-500 text-white"
+                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                }`}
+                        >
+                            Custom
+                        </button>
+                    </div>
+                    {useCustomDate && (
+                        <div className="flex items-center gap-2 ml-auto">
+                            <input
+                                type="date"
+                                value={customDateFrom}
+                                onChange={(e) => setCustomDateFrom(e.target.value)}
+                                className="px-3 py-1.5 border rounded-lg text-sm text-gray-700"
+                            />
+                            <span className="text-gray-400">—</span>
+                            <input
+                                type="date"
+                                value={customDateTo}
+                                onChange={(e) => setCustomDateTo(e.target.value)}
+                                className="px-3 py-1.5 border rounded-lg text-sm text-gray-700"
+                            />
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* Tab Filter */}
             <div className="flex gap-2 overflow-x-auto pb-2">
                 {[
@@ -231,8 +312,8 @@ export default function PusatOrdersStokisPage() {
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key as TabFilter)}
                         className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeTab === tab.key
-                                ? "bg-red-500 text-white"
-                                : "bg-white text-gray-600 hover:bg-gray-100"
+                            ? "bg-red-500 text-white"
+                            : "bg-white text-gray-600 hover:bg-gray-100"
                             }`}
                     >
                         {tab.label} ({tabCounts[tab.key as TabFilter]})
@@ -246,41 +327,46 @@ export default function PusatOrdersStokisPage() {
                     <p className="text-gray-500">Tidak ada order</p>
                 </div>
             ) : (
-                <div className="space-y-3">
-                    {filteredOrders.map((order) => {
-                        const status = statusConfig[order.status] || statusConfig.PENDING_PUSAT
-                        const isPending = order.status === "PENDING_PUSAT"
-                        return (
-                            <div
-                                key={order.id}
-                                className={`bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all border-l-4 ${isPending ? "border-l-amber-500" : "border-l-blue-500"}`}
-                                onClick={() => handleSelectOrder(order)}
-                            >
-                                <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                        <h3 className="font-semibold text-gray-800 text-sm">{order.orderNumber}</h3>
-                                        <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
-                                    </div>
-                                    <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${status.color.replace('bg-', 'border-').replace('100', '200')} ${status.color}`}>
-                                        {status.icon}
-                                        {status.label}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        <span className="text-sm font-medium text-gray-700">{order.stokis.name}</span>
-                                        <p className="text-xs text-gray-500">{order.stokis.email}</p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-bold text-red-600 text-sm">
-                                            {formatCurrency(Number(order.totalAmount))}
-                                        </span>
-                                        <ChevronRight size={16} className="text-gray-400" />
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    })}
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="bg-gray-50 border-b border-gray-200">
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Tanggal/Waktu</th>
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">No Invoice</th>
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Stokis</th>
+                                    <th className="text-right px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Nominal</th>
+                                    <th className="text-center px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {filteredOrders.map((order) => {
+                                    const status = statusConfig[order.status] || statusConfig.PENDING_PUSAT
+                                    return (
+                                        <tr
+                                            key={order.id}
+                                            className="hover:bg-gray-50 cursor-pointer transition-colors"
+                                            onClick={() => handleSelectOrder(order)}
+                                        >
+                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(order.createdAt)}</td>
+                                            <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{order.orderNumber}</td>
+                                            <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{order.stokis.name}</td>
+                                            <td className="px-4 py-3 text-right font-semibold text-red-600 whitespace-nowrap">{formatCurrency(Number(order.totalAmount))}</td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                                                    {status.icon}
+                                                    {status.label}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 text-sm text-gray-500">
+                        Menampilkan {filteredOrders.length} dari {orders.length} order
+                    </div>
                 </div>
             )}
 
