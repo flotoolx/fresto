@@ -547,3 +547,8 @@
 - [x] Git commit ✅ `5fcdb3b` — Isolasi data role-based
 - [x] Git commit ✅ `32231ba` — Fix: FINANCE_ALL allowed in `/api/dc` (dropdown muncul)
 - [x] Git commit ✅ `8bb01fd` — Fix: Dropdown hanya menampilkan DC yang memiliki stokis (exclude Pusat Area)
+
+### Perbaikan Bug Data Filtering (17 Feb 2026)
+- [x] Fix `/api/orders/mitra`: Tambah filter `dcId=null` untuk PUSAT/FINANCE (hanya lihat order dari stokis pusat)
+- [x] Fix `/api/reports`: Fix `totalMitra` count di Summary Report agar mematuhi filter area
+- [x] Result: Dashboard & Halaman Laporan Overview sekarang konsisten menampilkan data Pusat

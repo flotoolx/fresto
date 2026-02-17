@@ -120,7 +120,13 @@ async function getSummaryReport(dateFrom: Date, dateTo: Date | undefined, period
     const activeStokis = new Set(stokisOrders.map(o => o.stokisId)).size
     const activeMitra = new Set(mitraOrders.map(o => o.mitraId)).size
     const totalStokis = await prisma.user.count({ where: { role: "STOKIS", isActive: true, ...userAreaFilter } })
-    const totalMitra = await prisma.user.count({ where: { role: "MITRA", isActive: true } })
+    const totalMitra = await prisma.user.count({
+        where: {
+            role: "MITRA",
+            isActive: true,
+            ...(hasAreaFilter ? { stokis: { dcId: (stokisFilter.stokis as { dcId: string })?.dcId } } : {})
+        }
+    })
     const totalDc = await prisma.user.count({ where: { role: "DC", isActive: true } })
 
     return NextResponse.json({

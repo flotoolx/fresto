@@ -20,8 +20,11 @@ export async function GET() {
             where = { mitraId: userId }
         } else if (role === "STOKIS") {
             where = { stokisId: userId }
-        } else if (role === "PUSAT" || role === "FINANCE" || role === "FINANCE_ALL") {
-            // Can see all orders
+        } else if (role === "PUSAT" || role === "FINANCE") {
+            // Pusat/Finance — only mitra orders from pusat-direct stokis (dcId = null)
+            where = { stokis: { dcId: null } }
+        } else if (role === "FINANCE_ALL") {
+            // FINANCE_ALL sees all mitra orders
         } else {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
