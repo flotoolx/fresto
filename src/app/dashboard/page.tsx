@@ -470,59 +470,70 @@ export default function DashboardPage() {
             {/* Date Range Picker for PUSAT */}
             {role === "PUSAT" && (
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                    <div className="flex flex-wrap items-center gap-3">
-                        <Calendar size={18} className="text-gray-400" />
-                        <span className="text-sm text-gray-600 font-medium">Periode:</span>
-                        <div className="flex flex-wrap gap-2">
-                            {[
-                                { value: "7", label: "7 Hari" },
-                                { value: "30", label: "30 Hari" },
-                                { value: "90", label: "90 Hari" },
-                                { value: "180", label: "3 Bulan" },
-                                { value: "365", label: "1 Tahun" },
-                            ].map((opt) => (
-                                <button
-                                    key={opt.value}
-                                    onClick={() => {
-                                        setPusatPeriod(opt.value)
+                    <div className="flex items-center gap-4 flex-wrap">
+                        {/* Preset period selector */}
+                        {pusatPeriod !== "custom" && (
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm text-gray-600">Periode:</label>
+                                <select
+                                    value={pusatPeriod}
+                                    onChange={(e) => {
+                                        const val = e.target.value
+                                        setPusatPeriod(val)
                                         const end = new Date()
                                         const start = new Date()
-                                        start.setDate(start.getDate() - parseInt(opt.value))
+                                        start.setDate(start.getDate() - parseInt(val))
                                         setStartDate(start.toISOString().split("T")[0])
                                         setEndDate(end.toISOString().split("T")[0])
                                     }}
-                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${pusatPeriod === opt.value
-                                        ? "bg-red-500 text-white"
-                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                        }`}
+                                    className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 >
-                                    {opt.label}
-                                </button>
-                            ))}
-                            <button
-                                onClick={() => setPusatPeriod("custom")}
-                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${pusatPeriod === "custom"
-                                    ? "bg-red-500 text-white"
-                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                    }`}
-                            >
-                                Custom
-                            </button>
-                        </div>
+                                    <option value="7">7 Hari</option>
+                                    <option value="30">30 Hari</option>
+                                    <option value="90">90 Hari</option>
+                                    <option value="180">3 Bulan</option>
+                                    <option value="365">1 Tahun</option>
+                                </select>
+                            </div>
+                        )}
+
+                        {/* Custom date range toggle */}
+                        <button
+                            onClick={() => {
+                                if (pusatPeriod === "custom") {
+                                    setPusatPeriod("30")
+                                    const end = new Date()
+                                    const start = new Date()
+                                    start.setDate(start.getDate() - 30)
+                                    setStartDate(start.toISOString().split("T")[0])
+                                    setEndDate(end.toISOString().split("T")[0])
+                                } else {
+                                    setPusatPeriod("custom")
+                                }
+                            }}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${pusatPeriod === "custom"
+                                ? "bg-blue-500 text-white"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                }`}
+                        >
+                            <Calendar size={14} />
+                            Custom
+                        </button>
+
                         {pusatPeriod === "custom" && (
-                            <div className="flex items-center gap-2 ml-auto">
+                            <div className="flex items-center gap-2">
                                 <input
                                     type="date"
                                     value={startDate}
                                     onChange={(e) => setStartDate(e.target.value)}
-                                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 />
-                                <span className="text-gray-400">—</span>
+                                <span className="text-gray-400">-</span>
                                 <input
                                     type="date"
                                     value={endDate}
                                     onChange={(e) => setEndDate(e.target.value)}
-                                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 />
                             </div>
                         )}
