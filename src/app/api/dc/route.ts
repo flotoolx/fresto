@@ -15,8 +15,13 @@ export async function GET() {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
+        // For FINANCE_ALL: only return DCs that have stokis assigned (exclude pusat-area DCs)
+        const dcWhere = session.user.role === "FINANCE_ALL"
+            ? { role: "DC" as const, isActive: true, dcMembers: { some: {} } }
+            : { role: "DC" as const, isActive: true }
+
         const dcUsers = await prisma.user.findMany({
-            where: { role: "DC", isActive: true },
+            where: dcWhere,
             select: {
                 id: true,
                 name: true,
