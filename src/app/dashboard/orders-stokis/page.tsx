@@ -494,7 +494,7 @@ export default function PusatOrdersStokisPage() {
                                                     className="w-full py-3 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 flex items-center justify-center gap-2"
                                                 >
                                                     <Edit3 size={18} />
-                                                    Adjust PO (Hapus Kurangi QTY)
+                                                    Adjust PO
                                                 </button>
                                             )}
 
