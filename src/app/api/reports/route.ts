@@ -53,7 +53,7 @@ export async function GET(request: Request) {
             case "stokis-performance":
                 return await getStokisPerformanceReport(dateFrom, dateTo, stokisFilter)
             case "invoice-aging":
-                return await getInvoiceAgingReport(stokisFilter)
+                return await getInvoiceAgingReport(stokisFilter, dateFrom, dateTo)
             case "summary":
             default:
                 return await getSummaryReport(dateFrom, dateTo, period, stokisFilter)
@@ -552,11 +552,20 @@ async function getStokisPerformanceReport(dateFrom: Date, dateTo?: Date, stokisF
 }
 
 // Invoice Aging Report - Categorized by DC/Stokis with aging buckets
-async function getInvoiceAgingReport(stokisFilter: Record<string, unknown> = {}) {
+async function getInvoiceAgingReport(stokisFilter: Record<string, unknown> = {}, dateFrom?: Date, dateTo?: Date) {
+    // Build date filter for order.createdAt
+    const orderDateFilter: Record<string, unknown> = {}
+    if (dateFrom || dateTo) {
+        const createdAtFilter: Record<string, Date> = {}
+        if (dateFrom) createdAtFilter.gte = dateFrom
+        if (dateTo) createdAtFilter.lte = dateTo
+        orderDateFilter.createdAt = createdAtFilter
+    }
+
     // Fetch ALL invoices (including paid) for complete reporting
     const allInvoices = await prisma.invoice.findMany({
         where: {
-            order: { ...stokisFilter }
+            order: { ...stokisFilter, ...orderDateFilter }
         },
         include: {
             order: {

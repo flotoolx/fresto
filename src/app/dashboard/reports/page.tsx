@@ -188,6 +188,16 @@ export default function ReportsPage() {
     const [invoiceSortOrder, setInvoiceSortOrder] = useState<"asc" | "desc">("desc")
     const [perfFilter, setPerfFilter] = useState<"stokis" | "mitra">("stokis")
 
+    // Date range for Invoice/Tagihan tab
+    const [invoicePeriod, setInvoicePeriod] = useState(30)
+    const [useInvoiceCustomDate, setUseInvoiceCustomDate] = useState(false)
+    const [invoiceDateFrom, setInvoiceDateFrom] = useState(() => {
+        const d = new Date()
+        d.setDate(d.getDate() - 30)
+        return d.toISOString().split("T")[0]
+    })
+    const [invoiceDateTo, setInvoiceDateTo] = useState(() => new Date().toISOString().split("T")[0])
+
     // Custom date range for Overview
     const [useCustomDate, setUseCustomDate] = useState(false)
     const [customDateFrom, setCustomDateFrom] = useState(() => {
@@ -212,7 +222,7 @@ export default function ReportsPage() {
 
     useEffect(() => {
         fetchReport()
-    }, [activeTab, year, period, useCustomDate, customDateFrom, customDateTo])
+    }, [activeTab, year, period, useCustomDate, customDateFrom, customDateTo, invoicePeriod, useInvoiceCustomDate, invoiceDateFrom, invoiceDateTo])
 
     const fetchReport = async () => {
         setLoading(true)
@@ -239,7 +249,11 @@ export default function ReportsPage() {
                     url += `type=stokis-performance&period=${period}`
                 }
             } else if (activeTab === "invoice") {
-                url += `type=invoice-aging`
+                if (useInvoiceCustomDate) {
+                    url += `type=invoice-aging&dateFrom=${invoiceDateFrom}&dateTo=${invoiceDateTo}`
+                } else {
+                    url += `type=invoice-aging&period=${invoicePeriod}`
+                }
             }
 
             const res = await fetch(url)
@@ -625,6 +639,56 @@ export default function ReportsPage() {
                                         </div>
                                     )}
                                 </>
+                            )}
+                        </>
+                    )}
+                    {activeTab === "invoice" && (
+                        <>
+                            {/* Preset period selector */}
+                            {!useInvoiceCustomDate && (
+                                <div className="flex items-center gap-2">
+                                    <label className="text-sm text-gray-600">Periode:</label>
+                                    <select
+                                        value={invoicePeriod}
+                                        onChange={e => setInvoicePeriod(parseInt(e.target.value))}
+                                        className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                        <option value={7}>7 Hari</option>
+                                        <option value={30}>30 Hari</option>
+                                        <option value={90}>90 Hari</option>
+                                        <option value={365}>1 Tahun</option>
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* Custom date range toggle */}
+                            <button
+                                onClick={() => setUseInvoiceCustomDate(!useInvoiceCustomDate)}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${useInvoiceCustomDate
+                                    ? "bg-blue-500 text-white"
+                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    }`}
+                            >
+                                <Calendar size={14} />
+                                Custom
+                            </button>
+
+                            {useInvoiceCustomDate && (
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="date"
+                                        value={invoiceDateFrom}
+                                        onChange={e => setInvoiceDateFrom(e.target.value)}
+                                        className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                    <span className="text-gray-400">-</span>
+                                    <input
+                                        type="date"
+                                        value={invoiceDateTo}
+                                        onChange={e => setInvoiceDateTo(e.target.value)}
+                                        className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
                             )}
                         </>
                     )}

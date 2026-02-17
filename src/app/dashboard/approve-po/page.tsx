@@ -66,7 +66,7 @@ export default function ApprovePOPage() {
     const [showAdjustModal, setShowAdjustModal] = useState(false)
     const [adjustedItems, setAdjustedItems] = useState<{ id: string; quantity: number }[]>([])
     const [adjustNotes, setAdjustNotes] = useState("")
-    const [statusFilter, setStatusFilter] = useState<string>(role === "FINANCE_DC" ? "PENDING_PUSAT" : "all")
+    const [statusFilter, setStatusFilter] = useState<string>("PENDING_PUSAT")
     const [searchQuery, setSearchQuery] = useState("")
 
     // Redirect FINANCE_ALL — view only, no approval access
@@ -210,21 +210,19 @@ export default function ApprovePOPage() {
             {/* Filter & Search */}
             <div className="bg-white rounded-xl p-4 shadow-sm">
                 <div className="flex flex-col sm:flex-row gap-3">
-                    {role !== "FINANCE_DC" && (
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-all cursor-pointer"
-                        >
-                            <option value="all">Semua</option>
-                            <option value="PENDING_PUSAT">Menunggu Approval</option>
-                            <option value="PO_ISSUED">PO Issued</option>
-                            <option value="PROCESSING">Diproses</option>
-                            <option value="SHIPPED">Dikirim</option>
-                            <option value="RECEIVED">Diterima</option>
-                            <option value="CANCELLED">Dibatalkan</option>
-                        </select>
-                    )}
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-all cursor-pointer"
+                    >
+                        <option value="all">Semua</option>
+                        <option value="PENDING_PUSAT">Menunggu Approval</option>
+                        <option value="PO_ISSUED">PO Issued</option>
+                        <option value="PROCESSING">Diproses</option>
+                        <option value="SHIPPED">Dikirim</option>
+                        <option value="RECEIVED">Diterima</option>
+                        <option value="CANCELLED">Dibatalkan</option>
+                    </select>
                     <div className="relative flex-1">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
@@ -243,13 +241,9 @@ export default function ApprovePOPage() {
                 const q = searchQuery.toLowerCase()
                 let filtered: StokisOrder[]
 
-                if (role === "FINANCE_DC") {
-                    filtered = allOrders.filter(o => o.status === "PENDING_PUSAT")
-                } else {
-                    filtered = statusFilter === "all"
-                        ? allOrders
-                        : allOrders.filter(o => o.status === statusFilter)
-                }
+                filtered = statusFilter === "all"
+                    ? allOrders
+                    : allOrders.filter(o => o.status === statusFilter)
 
                 if (q) {
                     filtered = filtered.filter(o =>
@@ -281,7 +275,7 @@ export default function ApprovePOPage() {
                                 <tbody className="divide-y divide-gray-100">
                                     {filtered.map((order) => {
                                         const st = statusConfig[order.status] || statusConfig.PENDING_PUSAT
-                                        const clickable = order.status === "PENDING_PUSAT"
+                                        const clickable = order.status === "PENDING_PUSAT" || role === "FINANCE_DC"
                                         return (
                                             <tr
                                                 key={order.id}
@@ -385,34 +379,39 @@ export default function ApprovePOPage() {
                                         Print PO Preview
                                     </Link>
 
-                                    {/* Approve Button */}
-                                    <button
-                                        onClick={() => updateStatus(selectedOrder.id, "PO_ISSUED")}
-                                        disabled={updating}
-                                        className="w-full py-3 bg-purple-500 text-white rounded-lg font-semibold hover:bg-purple-600 disabled:opacity-50"
-                                    >
-                                        {updating ? "Memproses..." : "Approve & Issue PO → Gudang"}
-                                    </button>
+                                    {/* Action buttons - only for PENDING_PUSAT */}
+                                    {selectedOrder.status === "PENDING_PUSAT" && (
+                                        <>
+                                            {/* Approve Button */}
+                                            <button
+                                                onClick={() => updateStatus(selectedOrder.id, "PO_ISSUED")}
+                                                disabled={updating}
+                                                className="w-full py-3 bg-purple-500 text-white rounded-lg font-semibold hover:bg-purple-600 disabled:opacity-50"
+                                            >
+                                                {updating ? "Memproses..." : "Approve & Issue PO → Gudang"}
+                                            </button>
 
-                                    {/* Adjust PO Button - show when has outstanding */}
-                                    {outstanding?.hasOutstanding && (
-                                        <button
-                                            onClick={handleAdjustPO}
-                                            className="w-full py-3 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 flex items-center justify-center gap-2"
-                                        >
-                                            <Edit3 size={18} />
-                                            Adjust PO (Kurangi Qty)
-                                        </button>
+                                            {/* Adjust PO Button - show when has outstanding */}
+                                            {outstanding?.hasOutstanding && (
+                                                <button
+                                                    onClick={handleAdjustPO}
+                                                    className="w-full py-3 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 flex items-center justify-center gap-2"
+                                                >
+                                                    <Edit3 size={18} />
+                                                    Adjust PO (Kurangi/Tambah Qty)
+                                                </button>
+                                            )}
+
+                                            {/* Reject Button */}
+                                            <button
+                                                onClick={() => updateStatus(selectedOrder.id, "CANCELLED")}
+                                                disabled={updating}
+                                                className="w-full py-3 bg-gray-100 text-gray-600 rounded-lg font-semibold hover:bg-gray-200 disabled:opacity-50"
+                                            >
+                                                Tolak PO
+                                            </button>
+                                        </>
                                     )}
-
-                                    {/* Reject Button */}
-                                    <button
-                                        onClick={() => updateStatus(selectedOrder.id, "CANCELLED")}
-                                        disabled={updating}
-                                        className="w-full py-3 bg-gray-100 text-gray-600 rounded-lg font-semibold hover:bg-gray-200 disabled:opacity-50"
-                                    >
-                                        Tolak PO
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -465,7 +464,7 @@ export default function ApprovePOPage() {
                                                     <button
                                                         onClick={() => {
                                                             const newItems = [...adjustedItems]
-                                                            newItems[idx] = { ...newItems[idx], quantity: Math.min(item.quantity, qty + 1) }
+                                                            newItems[idx] = { ...newItems[idx], quantity: qty + 1 }
                                                             setAdjustedItems(newItems)
                                                         }}
                                                         className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center"

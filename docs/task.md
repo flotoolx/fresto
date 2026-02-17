@@ -490,3 +490,26 @@
 ### Git Commits
 - [x] Git commit ✅ `3585c93` — Peningkatan fitur utama
 - [x] Git commit ✅ `026644e` — Penyesuaian feedback (PENDING_PUSAT & stok menipis)
+
+---
+
+## Fase 15: Filter & Approve PO Enhancements (17 Feb 2026) ✅ SELESAI
+
+### Halaman Approve PO (`/dashboard/approve-po`)
+- [x] Tampilkan dropdown filter Status untuk role FINANCE_DC (sebelumnya tersembunyi) ✅
+- [x] Hapus hard-coded filter PENDING_PUSAT untuk FINANCE_DC ✅
+- [x] Default filter = "Menunggu Approval" untuk semua role ✅
+- [x] Fungsi Adjust PO: Hapus batas atas qty (sekarang bisa tambah & kurangi) ✅
+- [x] FINANCE_DC bisa klik semua baris PO (tidak hanya PENDING_PUSAT) untuk cek detail ✅
+- [x] Tombol aksi (Approve/Adjust/Tolak) hanya muncul untuk PO berstatus PENDING_PUSAT ✅
+- [x] Label tombol Adjust diubah: "Kurangi Qty" → "Kurangi/Tambah Qty" ✅
+
+### Halaman Reports (`/dashboard/reports`) — Tab Tagihan
+- [x] Tambah filter Periode Tanggal pada tab Tagihan (UI sama dengan tab Performa) ✅
+- [x] Dropdown periode preset (7 Hari / 30 Hari / 90 Hari / 1 Tahun) ✅
+- [x] Tombol toggle Custom dengan date pickers ✅
+- [x] Update `fetchReport()` — kirim `period` atau `dateFrom`/`dateTo` untuk tab invoice ✅
+- [x] Update API `getInvoiceAgingReport` — filter invoice berdasarkan `order.createdAt` ✅
+
+### Git Commits
+- [x] Git commit ✅
