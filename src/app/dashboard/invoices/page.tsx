@@ -268,12 +268,16 @@ export default function InvoicesPage() {
                             <tbody className="divide-y divide-gray-100">
                                 {filteredInvoices.map((invoice) => {
                                     const isPaid = invoice.status === "PAID"
+                                    const daysSinceCreated = Math.floor((new Date().getTime() - new Date(invoice.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+                                    const isOverdue = !isPaid && daysSinceCreated > 20
                                     const statusColor = isPaid
                                         ? "bg-green-100 text-green-700"
-                                        : "bg-yellow-100 text-yellow-700"
-                                    const statusLabel = isPaid ? "Lunas" : "Belum Lunas"
+                                        : isOverdue
+                                            ? "bg-red-100 text-red-700"
+                                            : "bg-yellow-100 text-yellow-700"
+                                    const statusLabel = isPaid ? "Lunas" : isOverdue ? `Jatuh Tempo` : "Belum Lunas"
                                     return (
-                                        <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
+                                        <tr key={invoice.id} className={`transition-colors ${isOverdue ? "bg-red-50 hover:bg-red-100/70" : "hover:bg-gray-50"}`}>
                                             <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{formatDate(invoice.createdAt)}</td>
                                             <td className="px-4 py-3 whitespace-nowrap">
                                                 <p className="text-sm font-medium text-gray-900">{invoice.invoiceNumber}</p>
@@ -282,9 +286,13 @@ export default function InvoicesPage() {
                                             <td className="px-4 py-3 text-sm text-gray-700">{invoice.order.stokis.name}</td>
                                             <td className="px-4 py-3 text-sm font-semibold text-green-600 text-right whitespace-nowrap">{formatCurrency(invoice.amount)}</td>
                                             <td className="px-4 py-3 whitespace-nowrap">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+                                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+                                                    {isOverdue && <AlertTriangle size={12} />}
                                                     {statusLabel}
                                                 </span>
+                                                {isOverdue && (
+                                                    <p className="text-[10px] text-red-500 mt-0.5">{daysSinceCreated} hari sejak terbit</p>
+                                                )}
                                             </td>
                                         </tr>
                                     )
