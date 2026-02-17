@@ -59,7 +59,11 @@ export default function InvoicesPage() {
     const fetchInvoices = async () => {
         try {
             const params = new URLSearchParams()
-            if (filter !== "ALL") params.set("status", filter)
+            if (filter !== "ALL") {
+                // "Belum Lunas" should include both UNPAID and OVERDUE
+                const statusValue = filter === "UNPAID" ? "UNPAID,OVERDUE" : filter
+                params.set("status", statusValue)
+            }
             if (dcFilter) params.set("dcFilter", dcFilter)
             const url = `/api/invoices${params.toString() ? `?${params}` : ""}`
             const res = await fetch(url)
