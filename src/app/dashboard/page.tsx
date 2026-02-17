@@ -99,16 +99,14 @@ export default function DashboardPage() {
     const role = session?.user?.role || "MITRA"
     const userId = session?.user?.id || ""
 
-    // Dashboard period filter
-    const [dashPeriod, setDashPeriod] = useState(30)
-
-    // Compute start/end dates from dashPeriod
-    const startDate = useMemo(() => {
+    // Date range state for PUSAT
+    const [pusatPeriod, setPusatPeriod] = useState<string>("30")
+    const [startDate, setStartDate] = useState(() => {
         const d = new Date()
-        d.setDate(d.getDate() - dashPeriod)
+        d.setDate(d.getDate() - 30)
         return d.toISOString().split("T")[0]
-    }, [dashPeriod])
-    const endDate = useMemo(() => new Date().toISOString().split("T")[0], [])
+    })
+    const [endDate, setEndDate] = useState(() => new Date().toISOString().split("T")[0])
 
     const [stats, setStats] = useState<StatCard[]>([])
     const [loading, setLoading] = useState(true)
@@ -166,7 +164,16 @@ export default function DashboardPage() {
                     if (ordersRes.ok) {
                         const orders = await ordersRes.json()
                         if (Array.isArray(orders)) {
-                            setRecentOrders(orders.slice(0, 5).map((o: { id: string; orderNumber: string; stokis?: { name: string }; totalAmount: number; status: string; createdAt: string }) => ({
+                            // Filter orders by date range
+                            const from = new Date(startDate)
+                            from.setHours(0, 0, 0, 0)
+                            const to = new Date(endDate)
+                            to.setHours(23, 59, 59, 999)
+                            const filtered = orders.filter((o: { createdAt: string }) => {
+                                const d = new Date(o.createdAt)
+                                return d >= from && d <= to
+                            })
+                            setRecentOrders(filtered.slice(0, 5).map((o: { id: string; orderNumber: string; stokis?: { name: string }; totalAmount: number; status: string; createdAt: string }) => ({
                                 id: o.id,
                                 orderNumber: o.orderNumber,
                                 stokisName: o.stokis?.name || "-",
@@ -181,13 +188,7 @@ export default function DashboardPage() {
                     const stokisRes = await fetch(`/api/orders/stokis`)
                     const stokisOrders = stokisRes.ok ? await stokisRes.json() : []
 
-                    // Filter by period client-side
-                    const cutoff = new Date()
-                    cutoff.setDate(cutoff.getDate() - dashPeriod)
-                    cutoff.setHours(0, 0, 0, 0)
-                    const allOrders = (Array.isArray(stokisOrders) ? stokisOrders : []).filter(
-                        (o: { createdAt: string }) => new Date(o.createdAt) >= cutoff
-                    )
+                    const allOrders = Array.isArray(stokisOrders) ? stokisOrders : []
                     const totalAmount = allOrders.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
                     const pending = allOrders.filter((o: { status: string }) => o.status === "PENDING_PUSAT")
                     const pendingTotal = pending.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
@@ -395,7 +396,7 @@ export default function DashboardPage() {
         if (session?.user) {
             fetchStats()
         }
-    }, [role, userId, startDate, endDate, dashPeriod, session])
+    }, [role, userId, startDate, endDate, session])
 
     // MITRA filtered orders and stats
     const mitraFilteredOrders = useMemo(() => {
@@ -466,23 +467,65 @@ export default function DashboardPage() {
                 <p className="text-gray-500 text-sm">Selamat datang, {session?.user?.name}</p>
             </div>
 
-            {/* Period Filter for PUSAT and FINANCE */}
-            {(role === "PUSAT" || role === "FINANCE") && (
+            {/* Date Range Picker for PUSAT */}
+            {role === "PUSAT" && (
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                     <div className="flex flex-wrap items-center gap-3">
                         <Calendar size={18} className="text-gray-400" />
                         <span className="text-sm text-gray-600 font-medium">Periode:</span>
-                        <select
-                            value={dashPeriod}
-                            onChange={(e) => setDashPeriod(Number(e.target.value))}
-                            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:ring-2 focus:ring-red-500 focus:border-red-500 cursor-pointer"
-                        >
-                            <option value={7}>7 Hari</option>
-                            <option value={30}>30 Hari</option>
-                            <option value={90}>90 Hari</option>
-                            <option value={90}>3 Bulan</option>
-                            <option value={365}>1 Tahun</option>
-                        </select>
+                        <div className="flex flex-wrap gap-2">
+                            {[
+                                { value: "7", label: "7 Hari" },
+                                { value: "30", label: "30 Hari" },
+                                { value: "90", label: "90 Hari" },
+                                { value: "180", label: "3 Bulan" },
+                                { value: "365", label: "1 Tahun" },
+                            ].map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => {
+                                        setPusatPeriod(opt.value)
+                                        const end = new Date()
+                                        const start = new Date()
+                                        start.setDate(start.getDate() - parseInt(opt.value))
+                                        setStartDate(start.toISOString().split("T")[0])
+                                        setEndDate(end.toISOString().split("T")[0])
+                                    }}
+                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${pusatPeriod === opt.value
+                                            ? "bg-red-500 text-white"
+                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                        }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => setPusatPeriod("custom")}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${pusatPeriod === "custom"
+                                        ? "bg-red-500 text-white"
+                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    }`}
+                            >
+                                Custom
+                            </button>
+                        </div>
+                        {pusatPeriod === "custom" && (
+                            <div className="flex items-center gap-2 ml-auto">
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <span className="text-gray-400">—</span>
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
