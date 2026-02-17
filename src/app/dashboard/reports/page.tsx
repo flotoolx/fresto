@@ -14,7 +14,8 @@ import {
     ShoppingCart,
     Store,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    MapPin
 } from "lucide-react"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
@@ -219,10 +220,21 @@ export default function ReportsPage() {
     const [invoiceAging, setInvoiceAging] = useState<InvoiceAgingSummary | null>(null)
     const [agingSummary, setAgingSummary] = useState<AgingSummary | null>(null)
     const [invoiceDetails, setInvoiceDetails] = useState<{ dc: InvoiceDetail[]; stokis: InvoiceDetail[] }>({ dc: [], stokis: [] })
+    const [dcFilter, setDcFilter] = useState("")
+    const [dcList, setDcList] = useState<{ id: string; name: string }[]>([])
+
+    // Fetch DC list for FINANCE_ALL filter
+    useEffect(() => {
+        if (role === "FINANCE_ALL") {
+            fetch("/api/dc").then(r => r.json()).then(data => {
+                if (Array.isArray(data)) setDcList(data)
+            }).catch(() => { })
+        }
+    }, [role])
 
     useEffect(() => {
         fetchReport()
-    }, [activeTab, year, period, useCustomDate, customDateFrom, customDateTo, invoicePeriod, useInvoiceCustomDate, invoiceDateFrom, invoiceDateTo])
+    }, [activeTab, year, period, useCustomDate, customDateFrom, customDateTo, invoicePeriod, useInvoiceCustomDate, invoiceDateFrom, invoiceDateTo, dcFilter])
 
     const fetchReport = async () => {
         setLoading(true)
@@ -254,6 +266,11 @@ export default function ReportsPage() {
                 } else {
                     url += `type=invoice-aging&period=${invoicePeriod}`
                 }
+            }
+
+            // Append dcFilter if FINANCE_ALL
+            if (dcFilter) {
+                url += `&dcFilter=${dcFilter}`
             }
 
             const res = await fetch(url)
@@ -542,12 +559,29 @@ export default function ReportsPage() {
     return (
         <div className="space-y-4">
             {/* Page Title */}
-            <div>
-                <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <BarChart3 className="text-blue-500" size={22} />
-                    Laporan & Analisis
-                </h1>
-                <p className="text-gray-500 text-sm">Laporan lengkap performa bisnis</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                        <BarChart3 className="text-blue-500" size={22} />
+                        Laporan & Analisis
+                    </h1>
+                    <p className="text-gray-500 text-sm">Laporan lengkap performa bisnis</p>
+                </div>
+                {role === "FINANCE_ALL" && dcList.length > 0 && (
+                    <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <select
+                            value={dcFilter}
+                            onChange={(e) => setDcFilter(e.target.value)}
+                            className="pl-9 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 bg-white text-sm"
+                        >
+                            <option value="">Semua Area DC</option>
+                            {dcList.map(dc => (
+                                <option key={dc.id} value={dc.id}>{dc.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
             </div>
 
             {/* Tabs Card */}

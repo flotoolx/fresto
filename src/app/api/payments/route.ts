@@ -20,6 +20,8 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url)
         const invoiceId = searchParams.get("invoiceId")
         const stokisId = searchParams.get("stokisId")
+        const dcFilter = searchParams.get("dcFilter")
+        const { role, dcId } = session.user
 
         const where: Record<string, unknown> = {}
 
@@ -32,6 +34,20 @@ export async function GET(request: Request) {
                 order: {
                     stokisId
                 }
+            }
+        }
+
+        // Role-based area isolation
+        if (role === "PUSAT" || role === "FINANCE") {
+            // Pusat-direct stokis only (dcId = null)
+            where.invoice = { ...(where.invoice as object || {}), order: { stokis: { dcId: null } } }
+        } else if (role === "FINANCE_DC") {
+            where.invoice = { ...(where.invoice as object || {}), order: { stokis: { dcId: dcId } } }
+        } else if (role === "FINANCE_ALL") {
+            if (dcFilter) {
+                where.invoice = { ...(where.invoice as object || {}), order: { stokis: { dcId: dcFilter } } }
+            } else {
+                where.invoice = { ...(where.invoice as object || {}), order: { stokis: { dcId: { not: null } } } }
             }
         }
 

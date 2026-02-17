@@ -7,7 +7,7 @@ import { sendPushToRole } from "@/lib/push"
 import { Role } from "@prisma/client"
 
 // GET stokis orders
-export async function GET() {
+export async function GET(request: Request) {
     try {
         const session = await getServerSession(authOptions)
         if (!session) {
@@ -15,20 +15,31 @@ export async function GET() {
         }
 
         const { role, id: userId, dcId } = session.user
+        const { searchParams } = new URL(request.url)
+        const dcFilter = searchParams.get("dcFilter")
 
         let where: Record<string, unknown> = {}
         if (role === "STOKIS") {
             where = { stokisId: userId }
-        } else if (role === "PUSAT" || role === "FINANCE_ALL") {
-            // PUSAT and FINANCE_ALL can see all orders
+        } else if (role === "PUSAT") {
+            // Pusat handles stokis without DC area (dcId = null)
+            where = { stokis: { dcId: null } }
+        } else if (role === "FINANCE") {
+            // Finance pusat — only pusat-direct stokis
+            where = { stokis: { dcId: null } }
+        } else if (role === "FINANCE_ALL") {
+            // FINANCE_ALL sees all DC branches (dcId != null), with optional dcFilter
+            if (dcFilter) {
+                where = { stokis: { dcId: dcFilter } }
+            } else {
+                where = { stokis: { dcId: { not: null } } }
+            }
         } else if (role === "DC") {
             // DC sees orders from Stokis in their area
             where = { stokis: { dcId: userId } }
         } else if (role === "FINANCE_DC") {
             // FINANCE_DC sees orders from Stokis in their DC area
             where = { stokis: { dcId: dcId } }
-        } else if (role === "FINANCE") {
-            where = { status: "PENDING_PUSAT" }
         } else if (role === "GUDANG") {
             where = { status: { in: ["PENDING_PUSAT", "PO_ISSUED", "PROCESSING", "SHIPPED"] } }
         } else {

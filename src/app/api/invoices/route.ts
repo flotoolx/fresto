@@ -15,6 +15,7 @@ export async function GET(request: Request) {
         const { role, id: userId, dcId } = session.user
         const { searchParams } = new URL(request.url)
         const status = searchParams.get("status")
+        const dcFilter = searchParams.get("dcFilter")
 
         let where: Record<string, unknown> = {}
 
@@ -27,7 +28,19 @@ export async function GET(request: Request) {
             where = {
                 order: { stokis: { dcId: dcId } }
             }
-        } else if (!["PUSAT", "FINANCE", "FINANCE_ALL"].includes(role)) {
+        } else if (role === "PUSAT" || role === "FINANCE") {
+            // Pusat/Finance — only pusat-direct stokis (dcId = null)
+            where = {
+                order: { stokis: { dcId: null } }
+            }
+        } else if (role === "FINANCE_ALL") {
+            // FINANCE_ALL sees all DC branches, with optional dcFilter
+            if (dcFilter) {
+                where = { order: { stokis: { dcId: dcFilter } } }
+            } else {
+                where = { order: { stokis: { dcId: { not: null } } } }
+            }
+        } else {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 

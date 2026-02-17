@@ -31,6 +31,9 @@ export async function GET(request: Request) {
             }
         }
 
+        // Pusat sees only pusat-direct stokis (dcId = null)
+        const pusatStokisFilter = { dcId: null as string | null, role: "STOKIS" as const }
+
         // Fetch all stats in parallel
         const [
             totalMitra,
@@ -43,46 +46,51 @@ export async function GET(request: Request) {
             dcOutstanding,
             stokisOutstanding,
         ] = await Promise.all([
-            // User counts (not filtered by date - total active)
-            prisma.user.count({ where: { role: "MITRA", isActive: true } }),
-            prisma.user.count({ where: { role: "STOKIS", isActive: true } }),
+            // User counts — only pusat-direct
+            prisma.user.count({ where: { role: "MITRA", isActive: true, stokis: { dcId: null } } }),
+            prisma.user.count({ where: { ...pusatStokisFilter, isActive: true } }),
             prisma.user.count({ where: { role: "DC", isActive: true } }),
             prisma.gudang.count({ where: { isActive: true } }),
 
-            // Pending orders (status filter, optionally date)
+            // Pending orders — pusat-direct stokis only
             prisma.stokisOrder.count({
                 where: {
                     status: "PENDING_PUSAT",
+                    stokis: { dcId: null },
                     ...dateFilter,
                 }
             }),
 
             // Invoice counts by type - DC (future: when DC has invoices)
-            // For now, return 0 as DC invoices are not implemented yet
             Promise.resolve(0),
 
-            // Stokis invoices
+            // Stokis invoices — pusat-direct only
             prisma.invoice.count({
-                where: dateFilter
+                where: {
+                    ...dateFilter,
+                    order: { stokis: { dcId: null } }
+                }
             }),
 
             // Outstanding DC (placeholder for future)
             Promise.resolve({ count: 0, amount: 0 }),
 
-            // Outstanding Stokis
+            // Outstanding Stokis — pusat-direct only
             prisma.invoice.aggregate({
                 where: {
                     status: { in: ["UNPAID", "OVERDUE"] },
+                    order: { stokis: { dcId: null } }
                 },
                 _count: true,
                 _sum: { amount: true }
             }),
         ])
 
-        // Calculate revenue (simplified - based on completed orders)
+        // Calculate revenue — pusat-direct stokis only
         const completedOrders = await prisma.stokisOrder.findMany({
             where: {
                 status: "RECEIVED",
+                stokis: { dcId: null },
                 ...dateFilter,
             },
             select: { totalAmount: true }

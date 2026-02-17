@@ -187,15 +187,56 @@ async function main() {
         }
     }
 
-    // 6. Create Mitra (20 Mitra) — evenly distributed across 14 Stokis (round-robin)
-    console.log('👥 Creating 20 Mitra (round-robin across 14 Stokis)...')
+    // 5b. Create Pusat-Direct Stokis (4 Stokis without dcId)
+    console.log('🏪 Creating 4 Pusat Stokis (tanpa DC area)...')
+    for (let i = 0; i < 4; i++) {
+        const suffix = String.fromCharCode(65 + i) // A, B, C, D
+        const stkCode = `STK-PST-${suffix}${String(i + 1).padStart(2, '0')}`
+        const email = `stokis${15 + i}@dfresto.com`
+        const user = await prisma.user.upsert({
+            where: { email },
+            update: { dcId: null, role: Role.STOKIS, uniqueCode: stkCode, name: `Stokis Pusat ${suffix}` },
+            create: {
+                name: `Stokis Pusat ${suffix}`,
+                email,
+                password: hashedPassword,
+                role: Role.STOKIS,
+                address: `Jl. Pusat No. ${i + 20}`,
+                phone: `086666666${i}`,
+                province: 'Jakarta',
+                // No dcId — direct to pusat
+                uniqueCode: stkCode
+            }
+        })
+        stokisIds.push(user.id)
+
+        // Create Custom Prices for Pusat Stokis
+        const productsList = Array.from(productMap.keys())
+        for (const sku of productsList) {
+            const basePrice = productsData.find(p => p.sku === sku)?.price || 0
+            const margin = randomInt(-5000, 5000)
+            await prisma.stokisPrice.upsert({
+                where: { stokisId_productId: { stokisId: user.id, productId: productMap.get(sku)! } },
+                update: {},
+                create: {
+                    stokisId: user.id,
+                    productId: productMap.get(sku)!,
+                    customPrice: Number(basePrice) + margin
+                }
+            })
+        }
+    }
+
+    // 6. Create Mitra (24 Mitra) — 20 DC + 4 Pusat
+    console.log('👥 Creating 24 Mitra...')
     const mitraIds: string[] = []
     const mitraToStokisMap: { mitraId: string; stokisId: string }[] = []
 
+    // First 20 mitra — distributed among 14 DC stokis (round-robin)
     for (let i = 0; i < 20; i++) {
         const email = `mitra${i + 1}@dfresto.com`
         const mtrCode = `MTR-${String(i + 1).padStart(3, '0')}`
-        const assignedStokisId = stokisIds[i % stokisIds.length] // Round-robin: 0,1,...,13,0,1,...,5
+        const assignedStokisId = stokisIds[i % 14] // Only DC stokis (index 0-13)
         const user = await prisma.user.upsert({
             where: { email },
             update: { uniqueCode: mtrCode, stokisId: assignedStokisId, name: `Mitra ${i + 1}` },
@@ -206,6 +247,29 @@ async function main() {
                 role: Role.MITRA,
                 address: `Jl. Mitra No. ${i + 1}`,
                 phone: `085555555${i}`,
+                stokisId: assignedStokisId,
+                uniqueCode: mtrCode
+            }
+        })
+        mitraIds.push(user.id)
+        mitraToStokisMap.push({ mitraId: user.id, stokisId: assignedStokisId })
+    }
+
+    // 4 pusat mitra — linked to pusat stokis (index 14-17)
+    for (let i = 0; i < 4; i++) {
+        const email = `mitra${21 + i}@dfresto.com`
+        const mtrCode = `MTR-${String(21 + i).padStart(3, '0')}`
+        const assignedStokisId = stokisIds[14 + i] // Pusat stokis
+        const user = await prisma.user.upsert({
+            where: { email },
+            update: { uniqueCode: mtrCode, stokisId: assignedStokisId, name: `Mitra Pusat ${i + 1}` },
+            create: {
+                name: `Mitra Pusat ${i + 1}`,
+                email,
+                password: hashedPassword,
+                role: Role.MITRA,
+                address: `Jl. Mitra Pusat No. ${i + 1}`,
+                phone: `087777777${i}`,
                 stokisId: assignedStokisId,
                 uniqueCode: mtrCode
             }
@@ -369,9 +433,10 @@ async function main() {
     console.log('   - 7 DCs (Palembang, Makassar, Medan, Bengkulu, Pekanbaru, Jatim, Jateng)')
     console.log('   - 7 Finance DC (1 per area)')
     console.log('   - 1 Finance All Area')
-    console.log('   - 14 Stokis (2 per DC: stokis1@dfresto.com ... stokis14@dfresto.com)')
-    console.log('   - 20 Mitra (mitra1@dfresto.com ... mitra20@dfresto.com)')
-    console.log('   - 42 Orders (3 per Stokis, 6 per DC area)')
+    console.log('   - 14 Stokis DC (2 per DC: stokis1-14)')
+    console.log('   - 4 Stokis Pusat (tanpa DC: stokis15-18)')
+    console.log('   - 24 Mitra (mitra1-20 DC, mitra21-24 Pusat)')
+    console.log('   - 54 Orders (3 per Stokis, 42 DC + 12 Pusat)')
     console.log('   - Password all users: password123')
 }
 

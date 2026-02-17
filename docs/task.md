@@ -517,3 +517,28 @@
 
 ### Git Commits
 - [x] Git commit ✅ `0b473c7` — Filter & approve PO enhancements
+- [x] Git commit ✅ `7593d5b` — Update FINANCE dashboard (remove DC cards)
+
+### Isolasi Data Berdasarkan Role & Area DC
+
+#### Backend API (6 endpoint diupdate):
+- [x] `/api/orders/stokis` — PUSAT/FINANCE → dcId null, FINANCE_ALL → dcId not null + dcFilter ✅
+- [x] `/api/invoices` — filter serupa ✅
+- [x] `/api/payments` — filter serupa ✅
+- [x] `/api/reports` — filter stokisFilter berdasarkan role ✅
+- [x] `/api/stokis` — PUSAT/FINANCE → dcId null, FINANCE_ALL → dcId not null + dcFilter ✅
+- [x] `/api/analytics/dashboard` — semua query pusat-direct only ✅
+
+#### Seed Data:
+- [x] Tambah 4 Stokis Pusat (stokis15-18, dcId=null) + custom prices ✅
+- [x] Tambah 4 Mitra Pusat (mitra21-24, linked ke stokis pusat) ✅
+
+#### Frontend DC Filter (FINANCE_ALL):
+- [x] Invoices — dropdown Filter Area DC ✅
+- [x] Reports — dropdown Filter Area DC ✅
+- [x] Dashboard — area breakdown view (bawaan, tanpa dropdown) ✅
+- [x] Approve PO & Pembayaran — redirect (view-only, tidak perlu dropdown) ✅
+
+#### Dokumentasi:
+- [x] Update `docs/accounts.md` — tambah stokis pusat & mitra pusat ✅
+- [x] Update `docs/task.md` ✅

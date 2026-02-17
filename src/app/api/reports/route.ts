@@ -37,12 +37,23 @@ export async function GET(request: Request) {
         const userRole = session.user.role
         const userId = session.user.id
         const dcId = session.user.dcId
+        const dcFilterParam = searchParams.get("dcFilter")
         let stokisFilter: Record<string, unknown> = {}
 
         if (userRole === "DC") {
             stokisFilter = { stokis: { dcId: userId } }
         } else if (userRole === "FINANCE_DC" && dcId) {
             stokisFilter = { stokis: { dcId: dcId } }
+        } else if (userRole === "PUSAT" || userRole === "FINANCE") {
+            // Pusat/Finance — only pusat-direct stokis (dcId = null)
+            stokisFilter = { stokis: { dcId: null } }
+        } else if (userRole === "FINANCE_ALL") {
+            // FINANCE_ALL — all DC branches, with optional dcFilter
+            if (dcFilterParam) {
+                stokisFilter = { stokis: { dcId: dcFilterParam } }
+            } else {
+                stokisFilter = { stokis: { dcId: { not: null } } }
+            }
         }
 
         switch (reportType) {

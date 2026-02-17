@@ -10,7 +10,8 @@ import {
     AlertTriangle,
     Printer,
     Search,
-    ArrowLeft
+    ArrowLeft,
+    MapPin
 } from "lucide-react"
 
 interface Invoice {
@@ -39,16 +40,28 @@ export default function InvoicesPage() {
     const [filter, setFilter] = useState("ALL")
     const [search, setSearch] = useState("")
     const [updatingId, setUpdatingId] = useState<string | null>(null)
+    const [dcFilter, setDcFilter] = useState("")
+    const [dcList, setDcList] = useState<{ id: string; name: string }[]>([])
+
+    // Fetch DC list for FINANCE_ALL filter
+    useEffect(() => {
+        if (role === "FINANCE_ALL") {
+            fetch("/api/dc").then(r => r.json()).then(data => {
+                if (Array.isArray(data)) setDcList(data)
+            }).catch(() => { })
+        }
+    }, [role])
 
     useEffect(() => {
         fetchInvoices()
-    }, [filter])
+    }, [filter, dcFilter])
 
     const fetchInvoices = async () => {
         try {
-            const url = filter === "ALL"
-                ? "/api/invoices"
-                : `/api/invoices?status=${filter}`
+            const params = new URLSearchParams()
+            if (filter !== "ALL") params.set("status", filter)
+            if (dcFilter) params.set("dcFilter", dcFilter)
+            const url = `/api/invoices${params.toString() ? `?${params}` : ""}`
             const res = await fetch(url)
             if (res.ok) {
                 const data = await res.json()
@@ -201,6 +214,21 @@ export default function InvoicesPage() {
                                 className="pl-9 pr-4 py-2 border rounded-lg w-full sm:w-64 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                             />
                         </div>
+                        {role === "FINANCE_ALL" && dcList.length > 0 && (
+                            <div className="relative">
+                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                <select
+                                    value={dcFilter}
+                                    onChange={(e) => setDcFilter(e.target.value)}
+                                    className="pl-9 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 bg-white text-sm"
+                                >
+                                    <option value="">Semua Area DC</option>
+                                    {dcList.map(dc => (
+                                        <option key={dc.id} value={dc.id}>{dc.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                         <select
                             value={filter}
                             onChange={(e) => setFilter(e.target.value)}
