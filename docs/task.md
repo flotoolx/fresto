@@ -545,3 +545,5 @@
 
 #### Git:
 - [x] Git commit ✅ `5fcdb3b` — Isolasi data role-based
+- [x] Git commit ✅ `32231ba` — Fix: FINANCE_ALL allowed in `/api/dc` (dropdown muncul)
+- [x] Git commit ✅ `8bb01fd` — Fix: Dropdown hanya menampilkan DC yang memiliki stokis (exclude Pusat Area)

@@ -46,7 +46,7 @@ export async function PUT(
 ) {
     try {
         const session = await getServerSession(authOptions)
-        if (!session?.user || session.user.role !== "PUSAT") {
+        if (!session?.user || !["PUSAT", "DC"].includes(session.user.role)) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
         }
 
@@ -54,15 +54,30 @@ export async function PUT(
         const body = await request.json()
         const { name, email, password, role, phone, address, stokisId } = body
 
+        // DC can only edit stokis under their own area
+        if (session.user.role === "DC") {
+            const targetUser = await prisma.user.findUnique({
+                where: { id },
+                select: { role: true, dcId: true }
+            })
+            if (!targetUser || targetUser.role !== "STOKIS" || targetUser.dcId !== session.user.id) {
+                return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+            }
+        }
+
         // Build update data
         const updateData: Record<string, unknown> = {}
         if (name) updateData.name = name
         if (email) updateData.email = email
-        if (role) updateData.role = role
         if (phone !== undefined) updateData.phone = phone || null
         if (address !== undefined) updateData.address = address || null
-        if (stokisId !== undefined) updateData.stokisId = stokisId || null
         if (password) updateData.password = await bcrypt.hash(password, 10)
+
+        // Only PUSAT can change role and stokisId
+        if (session.user.role === "PUSAT") {
+            if (role) updateData.role = role
+            if (stokisId !== undefined) updateData.stokisId = stokisId || null
+        }
 
         const user = await prisma.user.update({
             where: { id },
