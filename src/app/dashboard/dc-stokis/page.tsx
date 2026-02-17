@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { Store, MapPin, Phone, Mail, Search, Plus, X, Pencil } from "lucide-react"
+import { Store, Search, Plus, X, Pencil } from "lucide-react"
 
 interface Stokis {
     id: string
@@ -245,54 +245,56 @@ export default function DCStokisPage() {
                         )}
                     </div>
                 ) : (
-                    <ul className="divide-y divide-gray-100">
-                        {filteredStokis.map((stokis) => (
-                            <li key={stokis.id} className="p-4 hover:bg-gray-50 transition-colors">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="font-medium text-gray-900">{stokis.name}</h3>
-                                            {stokis.uniqueCode && (
-                                                <span className="px-2 py-0.5 text-xs font-mono font-medium text-purple-600 bg-purple-50 rounded">
-                                                    {stokis.uniqueCode}
-                                                </span>
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-gray-50 border-b">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">No</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Kode</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nama Stokis</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Email</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">No. Telp</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Status</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {filteredStokis.map((stokis, index) => (
+                                    <tr key={stokis.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-4 py-3 text-sm text-gray-500">{index + 1}</td>
+                                        <td className="px-4 py-3">
+                                            {stokis.uniqueCode ? (
+                                                <span className="text-xs font-mono font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded">{stokis.uniqueCode}</span>
+                                            ) : (
+                                                <span className="text-xs text-gray-400">-</span>
                                             )}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className="text-sm font-medium text-gray-900">{stokis.name}</span>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-gray-500">{stokis.email}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-500">{stokis.phone || "-"}</td>
+                                        <td className="px-4 py-3 text-center">
                                             {stokis.isActive ? (
                                                 <span className="px-2 py-0.5 text-xs bg-emerald-100 text-emerald-700 rounded-full">Aktif</span>
                                             ) : (
                                                 <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-500 rounded-full">Nonaktif</span>
                                             )}
-                                        </div>
-                                        <div className="mt-1 space-y-0.5">
-                                            <p className="text-sm text-gray-500 flex items-center gap-1.5">
-                                                <Mail size={14} />
-                                                {stokis.email}
-                                            </p>
-                                            {stokis.phone && (
-                                                <p className="text-sm text-gray-500 flex items-center gap-1.5">
-                                                    <Phone size={14} />
-                                                    {stokis.phone}
-                                                </p>
-                                            )}
-                                            {stokis.address && (
-                                                <p className="text-sm text-gray-500 flex items-center gap-1.5">
-                                                    <MapPin size={14} />
-                                                    {stokis.address}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => handleEditClick(stokis)}
-                                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                                    >
-                                        <Pencil size={12} />
-                                        Edit
-                                    </button>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <button
+                                                onClick={() => handleEditClick(stokis)}
+                                                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                                            >
+                                                <Pencil size={12} />
+                                                Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
             </div>
 
