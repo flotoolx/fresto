@@ -552,3 +552,5 @@
 - [x] Fix `/api/orders/mitra`: Tambah filter `dcId=null` untuk PUSAT/FINANCE (hanya lihat order dari stokis pusat)
 - [x] Fix `/api/reports`: Fix `totalMitra` count di Summary Report agar mematuhi filter area
 - [x] Result: Dashboard & Halaman Laporan Overview sekarang konsisten menampilkan data Pusat
+- [x] Fix dashboard FINANCE: Stat cards pakai stokis orders (bukan mitra orders), filter PENDING_PUSAT
+- [x] Generate 20 mitra dummy orders untuk pusat area (Mitra 21-24 → Stokis 15-18)

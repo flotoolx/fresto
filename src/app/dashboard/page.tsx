@@ -174,31 +174,20 @@ export default function DashboardPage() {
                         }
                     }
                 } else if (role === "FINANCE") {
-                    // Fetch stokis orders and mitra orders for Finance dashboard
-                    const [stokisRes, mitraRes] = await Promise.all([
-                        fetch(`/api/orders/stokis`),
-                        fetch(`/api/orders/mitra`)
-                    ])
+                    // Fetch stokis orders for Finance dashboard
+                    const stokisRes = await fetch(`/api/orders/stokis`)
                     const stokisOrders = stokisRes.ok ? await stokisRes.json() : []
-                    const mitraOrders = mitraRes.ok ? await mitraRes.json() : []
 
-                    // DC Orders (stokis orders to pusat)
-                    const allDCOrders = Array.isArray(stokisOrders) ? stokisOrders : []
-                    const dcTotal = allDCOrders.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
-                    const dcPending = allDCOrders.filter((o: { status: string }) => o.status === "PENDING_PUSAT")
-                    const dcPendingTotal = dcPending.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
-
-                    // Stokis Orders (mitra orders to stokis)
-                    const allStokisOrders = Array.isArray(mitraOrders) ? mitraOrders : []
-                    const stokisTotal = allStokisOrders.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
-                    const stokisPending = allStokisOrders.filter((o: { status: string }) => o.status === "PENDING")
-                    const stokisPendingTotal = stokisPending.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+                    const allOrders = Array.isArray(stokisOrders) ? stokisOrders : []
+                    const totalAmount = allOrders.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
+                    const pending = allOrders.filter((o: { status: string }) => o.status === "PENDING_PUSAT")
+                    const pendingTotal = pending.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
 
                     const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`
 
                     setStats([
-                        { label: "Total", value: formatRp(stokisTotal), subtitle: `${allStokisOrders.length} PO`, icon: Store, gradient: "from-[#3B82F6] to-[#1D4ED8]", href: "/dashboard/orders-stokis" },
-                        { label: "Menunggu Approval", value: formatRp(stokisPendingTotal), subtitle: `${stokisPending.length} PO`, icon: ShoppingCart, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/orders-stokis" },
+                        { label: "Total", value: formatRp(totalAmount), subtitle: `${allOrders.length} PO`, icon: Store, gradient: "from-[#3B82F6] to-[#1D4ED8]", href: "/dashboard/orders-stokis" },
+                        { label: "Menunggu Approval", value: formatRp(pendingTotal), subtitle: `${pending.length} PO`, icon: ShoppingCart, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/approve-po" },
                     ])
                 } else if (role === "FINANCE_ALL") {
                     // FINANCE_ALL: Global view — fetch all orders + users, group by DC area
