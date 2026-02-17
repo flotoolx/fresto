@@ -263,8 +263,8 @@ export default function PusatOrdersStokisPage() {
                                 key={p.value}
                                 onClick={() => { setPeriod(p.value); setUseCustomDate(false) }}
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${!useCustomDate && period === p.value
-                                        ? "bg-red-500 text-white"
-                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    ? "bg-red-500 text-white"
+                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                                     }`}
                             >
                                 {p.label}
@@ -273,8 +273,8 @@ export default function PusatOrdersStokisPage() {
                         <button
                             onClick={() => setUseCustomDate(!useCustomDate)}
                             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${useCustomDate
-                                    ? "bg-red-500 text-white"
-                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                ? "bg-red-500 text-white"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                                 }`}
                         >
                             Custom
@@ -494,7 +494,7 @@ export default function PusatOrdersStokisPage() {
                                                     className="w-full py-3 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 flex items-center justify-center gap-2"
                                                 >
                                                     <Edit3 size={18} />
-                                                    Adjust PO (Kurangi Qty)
+                                                    Adjust PO (Hapus Kurangi QTY)
                                                 </button>
                                             )}
 
@@ -572,7 +572,7 @@ export default function PusatOrdersStokisPage() {
                                                     <button
                                                         onClick={() => {
                                                             const newItems = [...adjustedItems]
-                                                            newItems[idx] = { ...newItems[idx], quantity: Math.min(item.quantity, qty + 1) }
+                                                            newItems[idx] = { ...newItems[idx], quantity: qty + 1 }
                                                             setAdjustedItems(newItems)
                                                         }}
                                                         className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center"
