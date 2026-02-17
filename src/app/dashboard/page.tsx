@@ -186,7 +186,7 @@ export default function DashboardPage() {
                     const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`
 
                     setStats([
-                        { label: "Total", value: formatRp(totalAmount), subtitle: `${allOrders.length} PO`, icon: Store, gradient: "from-[#3B82F6] to-[#1D4ED8]", href: "/dashboard/orders-stokis" },
+                        { label: "Total", value: formatRp(totalAmount), subtitle: `${allOrders.length} PO`, icon: Store, gradient: "from-[#3B82F6] to-[#1D4ED8]", href: "/dashboard/approve-po" },
                         { label: "Menunggu Approval", value: formatRp(pendingTotal), subtitle: `${pending.length} PO`, icon: ShoppingCart, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/approve-po" },
                     ])
                 } else if (role === "FINANCE_ALL") {

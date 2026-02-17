@@ -65,8 +65,8 @@ async function main() {
     })
     await prisma.user.upsert({
         where: { email: 'finance@dfresto.com' },
-        update: {},
-        create: { name: 'Tim Finance', email: 'finance@dfresto.com', password: hashedPassword, role: Role.FINANCE, phone: '0822222222' }
+        update: { name: 'Manager Pusat' },
+        create: { name: 'Manager Pusat', email: 'finance@dfresto.com', password: hashedPassword, role: Role.FINANCE, phone: '0822222222' }
     })
 
     // Gudang Staff
