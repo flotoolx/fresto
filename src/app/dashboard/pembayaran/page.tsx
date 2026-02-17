@@ -229,7 +229,7 @@ export default function PembayaranPage() {
                             className="appearance-none bg-gray-50 border rounded-lg px-4 py-2 pr-8 text-gray-700 text-sm"
                         >
                             <option value="">Semua Status</option>
-                            <option value="UNPAID">Belum Bayar</option>
+                            <option value="UNPAID">Belum Lunas</option>
                             <option value="OVERDUE">Jatuh Tempo</option>
                             <option value="PAID">Lunas</option>
                         </select>

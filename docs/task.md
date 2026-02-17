@@ -1,5 +1,15 @@
 # D'Fresto MVP - Pelacakan Tugas
 
+
+## Aturan Isolasi Data
+Role	Melihat Data	Filter Key
+PUSAT	Order dari Stokis tanpa DC (dcId = null)	stokis.dcId == null
+FINANCE	Sama dengan PUSAT — stokis tanpa DC	stokis.dcId == null
+FINANCE_DC	Hanya stokis di DC area-nya	stokis.dcId == session.dcId ✅ sudah jalan
+FINANCE_ALL	Semua stokis dari DC area (dcId != null), kecuali pusat	stokis.dcId != null + dropdown filter DC
+DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
+
+
 ## Fase 1: MVP Utama ✅ SELESAI
 
 ### Otentikasi & Pengaturan
@@ -554,3 +564,15 @@
 - [x] Result: Dashboard & Halaman Laporan Overview sekarang konsisten menampilkan data Pusat
 - [x] Fix dashboard FINANCE: Stat cards pakai stokis orders (bukan mitra orders), filter PENDING_PUSAT
 - [x] Generate 20 mitra dummy orders untuk pusat area (Mitra 21-24 → Stokis 15-18)
+
+
+
+
+
+
+
+
+
+
+
+
