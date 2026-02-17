@@ -99,13 +99,16 @@ export default function DashboardPage() {
     const role = session?.user?.role || "MITRA"
     const userId = session?.user?.id || ""
 
-    // Date range state for PUSAT
-    const [startDate, setStartDate] = useState(() => {
+    // Dashboard period filter
+    const [dashPeriod, setDashPeriod] = useState(30)
+
+    // Compute start/end dates from dashPeriod
+    const startDate = useMemo(() => {
         const d = new Date()
-        d.setDate(d.getDate() - 30)
+        d.setDate(d.getDate() - dashPeriod)
         return d.toISOString().split("T")[0]
-    })
-    const [endDate, setEndDate] = useState(() => new Date().toISOString().split("T")[0])
+    }, [dashPeriod])
+    const endDate = useMemo(() => new Date().toISOString().split("T")[0], [])
 
     const [stats, setStats] = useState<StatCard[]>([])
     const [loading, setLoading] = useState(true)
@@ -178,7 +181,13 @@ export default function DashboardPage() {
                     const stokisRes = await fetch(`/api/orders/stokis`)
                     const stokisOrders = stokisRes.ok ? await stokisRes.json() : []
 
-                    const allOrders = Array.isArray(stokisOrders) ? stokisOrders : []
+                    // Filter by period client-side
+                    const cutoff = new Date()
+                    cutoff.setDate(cutoff.getDate() - dashPeriod)
+                    cutoff.setHours(0, 0, 0, 0)
+                    const allOrders = (Array.isArray(stokisOrders) ? stokisOrders : []).filter(
+                        (o: { createdAt: string }) => new Date(o.createdAt) >= cutoff
+                    )
                     const totalAmount = allOrders.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
                     const pending = allOrders.filter((o: { status: string }) => o.status === "PENDING_PUSAT")
                     const pendingTotal = pending.reduce((sum: number, o: { totalAmount: number }) => sum + Number(o.totalAmount), 0)
@@ -386,7 +395,7 @@ export default function DashboardPage() {
         if (session?.user) {
             fetchStats()
         }
-    }, [role, userId, startDate, endDate, session])
+    }, [role, userId, startDate, endDate, dashPeriod, session])
 
     // MITRA filtered orders and stats
     const mitraFilteredOrders = useMemo(() => {
@@ -457,25 +466,23 @@ export default function DashboardPage() {
                 <p className="text-gray-500 text-sm">Selamat datang, {session?.user?.name}</p>
             </div>
 
-            {/* Date Range Picker for PUSAT */}
-            {role === "PUSAT" && (
+            {/* Period Filter for PUSAT and FINANCE */}
+            {(role === "PUSAT" || role === "FINANCE") && (
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                     <div className="flex flex-wrap items-center gap-3">
                         <Calendar size={18} className="text-gray-400" />
                         <span className="text-sm text-gray-600 font-medium">Periode:</span>
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        <span className="text-gray-400">-</span>
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
+                        <select
+                            value={dashPeriod}
+                            onChange={(e) => setDashPeriod(Number(e.target.value))}
+                            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:ring-2 focus:ring-red-500 focus:border-red-500 cursor-pointer"
+                        >
+                            <option value={7}>7 Hari</option>
+                            <option value={30}>30 Hari</option>
+                            <option value={90}>90 Hari</option>
+                            <option value={90}>3 Bulan</option>
+                            <option value={365}>1 Tahun</option>
+                        </select>
                     </div>
                 </div>
             )}
