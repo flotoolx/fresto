@@ -360,19 +360,17 @@ export default function PrintPOPage() {
                     {/* Info Section */}
                     <div className="grid grid-cols-2 gap-8 mb-6">
                         <div>
-                            <h3 className="font-bold text-gray-800 mb-2">DARI:</h3>
-                            <div className="bg-gray-50 p-3 rounded border border-gray-200">
-                                <p className="font-semibold text-gray-900">{po.from.name}</p>
-                                {po.from.address && <p className="text-sm text-gray-700">{po.from.address}</p>}
-                                {po.from.phone && <p className="text-sm text-gray-700">Tel: {po.from.phone}</p>}
-                            </div>
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-gray-800 mb-2">KEPADA:</h3>
                             <div className="bg-gray-50 p-3 rounded border border-gray-200">
                                 <p className="font-semibold text-gray-900">{po.to.name}</p>
                                 {po.to.address && <p className="text-sm text-gray-700">{po.to.address}</p>}
                                 {po.to.phone && <p className="text-sm text-gray-700">Tel: {po.to.phone}</p>}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="bg-gray-50 p-3 rounded border border-gray-200">
+                                <p className="font-semibold text-gray-900">{po.from.name}</p>
+                                {po.from.address && <p className="text-sm text-gray-700">{po.from.address}</p>}
+                                {po.from.phone && <p className="text-sm text-gray-700">Tel: {po.from.phone}</p>}
                             </div>
                         </div>
                     </div>
