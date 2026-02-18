@@ -253,7 +253,7 @@ export default function PembayaranPage() {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                 {/* Lunas Card */}
                 <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-10 md:w-12 h-10 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -277,7 +277,7 @@ export default function PembayaranPage() {
                 </div>
 
                 {/* Jatuh Tempo Card */}
-                <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
+                <div className="col-span-2 lg:col-span-1 bg-gradient-to-br from-red-500 to-rose-600 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-10 md:w-12 h-10 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                     <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
                         <Clock size={14} className="opacity-80 md:w-[16px] md:h-[16px]" />
