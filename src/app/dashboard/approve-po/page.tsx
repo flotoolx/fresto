@@ -275,7 +275,7 @@ export default function ApprovePOPage() {
                                 <tbody className="divide-y divide-gray-100">
                                     {filtered.map((order) => {
                                         const st = statusConfig[order.status] || statusConfig.PENDING_PUSAT
-                                        const clickable = order.status === "PENDING_PUSAT" || role === "FINANCE_DC"
+                                        const clickable = order.status === "PENDING_PUSAT" || role === "FINANCE_DC" || role === "FINANCE"
                                         return (
                                             <tr
                                                 key={order.id}
