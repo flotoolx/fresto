@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { CreditCard, Search, ChevronDown, AlertTriangle, CheckCircle, X, Upload } from "lucide-react"
+import { CreditCard, Search, ChevronDown, AlertTriangle, CheckCircle, X, Upload, Clock } from "lucide-react"
 
 interface Invoice {
     id: string
@@ -189,12 +189,16 @@ export default function PembayaranPage() {
     // Calculate summary
     const paidInvoices = filteredInvoices.filter(inv => inv.status === "PAID")
     const unpaidInvoices = filteredInvoices.filter(inv => inv.status === "UNPAID" || inv.status === "OVERDUE")
+    const overdueInvoices = filteredInvoices.filter(inv => inv.status === "OVERDUE")
 
     const totalLunas = paidInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0)
     const poLunas = paidInvoices.length
 
     const totalBelumLunas = unpaidInvoices.reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
     const poBelumLunas = unpaidInvoices.length
+
+    const totalJatuhTempo = overdueInvoices.reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.paidAmount)), 0)
+    const poJatuhTempo = overdueInvoices.length
 
     if (loading) {
         return (
@@ -249,7 +253,7 @@ export default function PembayaranPage() {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
                 {/* Lunas Card */}
                 <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-10 md:w-12 h-10 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -270,6 +274,17 @@ export default function PembayaranPage() {
                     </div>
                     <p className="text-base md:text-xl font-bold truncate">{formatCurrency(totalBelumLunas)}</p>
                     <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">{poBelumLunas} PO</p>
+                </div>
+
+                {/* Jatuh Tempo Card */}
+                <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl p-3 md:p-4 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-10 md:w-12 h-10 md:h-12 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                        <Clock size={14} className="opacity-80 md:w-[16px] md:h-[16px]" />
+                        <span className="text-[11px] md:text-xs text-white/80">Jatuh Tempo</span>
+                    </div>
+                    <p className="text-base md:text-xl font-bold truncate">{formatCurrency(totalJatuhTempo)}</p>
+                    <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">{poJatuhTempo} PO</p>
                 </div>
             </div>
 
