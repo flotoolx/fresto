@@ -450,26 +450,21 @@ export default function PrintPOPage() {
                     )}
 
                     {/* Signature Section */}
-                    <div className="grid grid-cols-3 gap-8 mt-12 pt-6 border-t border-gray-300">
+                    <div className="grid grid-cols-2 gap-16 mt-12 pt-6 border-t border-gray-300">
                         <div className="text-center">
-                            <p className="text-sm text-gray-800 font-medium mb-16">Dibuat oleh:</p>
-                            <div className="border-t-2 border-gray-800 pt-2">
-                                <p className="font-bold text-gray-900">{po.from.name}</p>
-                                <p className="text-sm text-gray-700">{po.type === "mitra" ? "Mitra" : "Stokis"}</p>
+                            <p className="text-sm text-gray-800 font-bold mb-1">[ {po.from.name} ]</p>
+                            <div className="mt-16 pt-2">
+                                <div className="border-t-2 border-gray-800 mx-auto w-48" />
+                                <p className="text-sm text-gray-700 mt-1">Ttd</p>
+                                <p className="text-sm text-gray-700">Nama</p>
                             </div>
                         </div>
                         <div className="text-center">
-                            <p className="text-sm text-gray-800 font-medium mb-16">Disetujui oleh:</p>
-                            <div className="border-t-2 border-gray-800 pt-2">
-                                <p className="font-bold text-gray-900">_________________</p>
-                                <p className="text-sm text-gray-700">{po.type === "mitra" ? "Stokis" : "Pusat"}</p>
-                            </div>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-sm text-gray-800 font-medium mb-16">Diterima oleh:</p>
-                            <div className="border-t-2 border-gray-800 pt-2">
-                                <p className="font-bold text-gray-900">_________________</p>
-                                <p className="text-sm text-gray-700">Gudang</p>
+                            <p className="text-sm text-gray-800 font-bold mb-1">[ D&apos;Fresto ]</p>
+                            <div className="mt-16 pt-2">
+                                <div className="border-t-2 border-gray-800 mx-auto w-48" />
+                                <p className="text-sm text-gray-700 mt-1">Ttd</p>
+                                <p className="text-sm text-gray-700">Nama</p>
                             </div>
                         </div>
                     </div>
