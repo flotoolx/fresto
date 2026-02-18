@@ -199,7 +199,6 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 
 
 
-
 ### Pembayaran (Payment) - Finance
 - [x] /api/payments - API input pembayaran (list, create)
 - [x] /api/payments/[id] - API detail/hapus pembayaran
@@ -525,9 +524,23 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 - [x] Hapus 2 card DC (Total & Menunggu Approval) agar fokus ke Stokis ✅
 - [x] Sederhanakan layout menjadi grid 2 kolom (Total & Menunggu Approval Stokis) ✅
 
+### Standardisasi Filter & Peningkatan Invoice
+- [x] Redesign Filter `/dashboard` (PUSAT) sesuai style Reports (Dropdown + Custom) ✅
+- [x] Redesign Filter `/dashboard/orders-stokis` sesuai style Reports (Dropdown + Custom) ✅
+- [x] Halaman `/dashboard/pembayaran` — Rename filter "Belum Bayar" → "Belum Lunas" ✅
+- [x] Halaman `/dashboard/invoices` — Fix filter "Belum Lunas" (Include `OVERDUE`) ✅
+- [x] Halaman `/dashboard/invoices` — Highlight overdue > 20 hari (merah muda + badge Jatuh Tempo) ✅
+- [x] Update Global — Ubah batas jatuh tempo invoice dari 14 hari menjadi 20 hari ✅
+
 ### Git Commits
 - [x] Git commit ✅ `0b473c7` — Filter & approve PO enhancements
 - [x] Git commit ✅ `7593d5b` — Update FINANCE dashboard (remove DC cards)
+- [x] Git commit ✅ `c69e82e` — Standardisasi filter Dashboard
+- [x] Git commit ✅ `4d8d2be` — Standardisasi filter Orders Stokis
+- [x] Git commit ✅ `02012d6` — Rename filter Belum Lunas
+- [x] Git commit ✅ `c76df07` — Fix filter invoice overdue
+- [x] Git commit ✅ `8fd472a` — Highlight overdue 20 hari
+- [x] Git commit ✅ `44e96e4` — Update global due date 20 hari
 
 ### Isolasi Data Berdasarkan Role & Area DC
 
@@ -565,14 +578,26 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 - [x] Fix dashboard FINANCE: Stat cards pakai stokis orders (bukan mitra orders), filter PENDING_PUSAT
 - [x] Generate 20 mitra dummy orders untuk pusat area (Mitra 21-24 → Stokis 15-18)
 
+---
 
+## Fase 16: Peningkatan Pembayaran & Approve PO (18 Feb 2026) ✅ SELESAI
 
+### Halaman Pembayaran (`/dashboard/pembayaran`)
+- [x] Tambah 1 Card "Jatuh Tempo" (Nominal & x PO) dengan gradien merah ✅
+- [x] Ubah Layout Grid Summary Cards menjadi 3 Kolom ✅
+- [x] Fix: Layout responsif mobile 2+1 grid (Jatuh Tempo full-width di bawah) ✅
+- [x] Git commit ✅ `74304e4`
+- [x] Git commit ✅ `3658914`
 
+### Halaman Approve PO (`/dashboard/approve-po`)
+- [x] Fix: Role FINANCE (Manager Pusat) bisa klik semua baris PO di semua status ✅
+- [x] Git commit ✅ `b732ba8`
 
-
-
-
-
-
-
+### Print Preview PO (`/po/[type]/[id]`)
+- [x] Redesign bagian tanda tangan: 3 kolom → 2 kolom ([Nama Stokis] & [D'Fresto]) ✅
+- [x] Setiap kolom: garis tanda tangan, Ttd, Nama ✅
+- [x] Swap info section: Kiri = Info Pusat, Kanan = Stokis/Pemesan ✅
+- [x] Hapus label "DARI:" dan "KEPADA:" ✅
+- [x] Git commit ✅ `abffc50`
+- [x] Git commit ✅ `1af6e2b`
 

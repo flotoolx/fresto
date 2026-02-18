@@ -58,7 +58,7 @@ export async function GET(
             to: {
                 name: "D'Fresto Pusat",
                 address: "Jl. Pusat No. 1, Jakarta",
-                phone: null
+                phone: "021-88714564"
             },
             items: order.items.map(item => ({
                 id: item.id,
