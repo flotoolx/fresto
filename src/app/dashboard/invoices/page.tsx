@@ -18,6 +18,7 @@ interface Invoice {
     id: string
     invoiceNumber: string
     amount: number
+    paidAmount: number
     dueDate: string
     paidAt: string | null
     status: "UNPAID" | "PAID" | "OVERDUE" | "CANCELLED"
@@ -143,7 +144,7 @@ export default function InvoicesPage() {
         lunasAmount: paidInvoices.reduce((sum, i) => sum + Number(i.amount), 0),
         // Belum Lunas
         belumLunasCount: unpaidInvoices.length,
-        belumLunasAmount: unpaidInvoices.reduce((sum, i) => sum + Number(i.amount), 0)
+        belumLunasAmount: unpaidInvoices.reduce((sum, i) => sum + (Number(i.amount) - Number(i.paidAmount)), 0)
     }
 
     if (loading) {
