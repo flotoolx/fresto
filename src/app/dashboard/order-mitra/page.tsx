@@ -104,9 +104,10 @@ export default function StokisOrderMitraPage() {
 
     // Summary stats
     const summaryStats = useMemo(() => {
-        const totalRevenue = filteredOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0)
+        const activeOrders = filteredOrders.filter(o => o.status !== "CANCELLED")
+        const totalRevenue = activeOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0)
         const uniqueMitra = new Set(filteredOrders.map(o => o.mitra.id)).size
-        const totalOrders = filteredOrders.length
+        const totalOrders = activeOrders.length
 
         // Belum Selesai: PENDING, APPROVED, PROCESSING (not yet SHIPPED/RECEIVED)
         const belumSelesaiOrders = filteredOrders.filter(o => ["PENDING", "APPROVED", "PROCESSING"].includes(o.status))
