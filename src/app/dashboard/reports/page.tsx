@@ -577,7 +577,7 @@ export default function ReportsPage() {
                         >
                             <option value="">Semua Area DC</option>
                             {dcList.map(dc => (
-                                <option key={dc.id} value={dc.id}>{dc.name}</option>
+                                <option key={dc.id} value={dc.id}>{dc.name.replace(/^Admin\s*/i, "DC ")}</option>
                             ))}
                         </select>
                     </div>
