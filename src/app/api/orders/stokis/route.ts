@@ -48,7 +48,8 @@ export async function GET(request: Request) {
             // FINANCE_DC sees orders from Stokis in their DC area
             where = { stokis: { dcId: dcId } }
         } else if (role === "GUDANG") {
-            where = { status: { in: ["PENDING_PUSAT", "PO_ISSUED", "PROCESSING", "SHIPPED"] } }
+            // GUDANG only sees orders from Stokis Area Pusat (dcId = null)
+            where = { stokis: { dcId: null }, status: { in: ["PENDING_PUSAT", "PO_ISSUED", "PROCESSING", "SHIPPED"] } }
         } else {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
