@@ -44,6 +44,7 @@ export default function PembayaranPage() {
     const { data: session } = useSession()
     const router = useRouter()
     const role = session?.user?.role || ""
+    const isViewOnly = role === "MANAGER_PUSAT"
     const [invoices, setInvoices] = useState<Invoice[]>([])
     const [stokisList, setStokisList] = useState<Stokis[]>([])
     const [loading, setLoading] = useState(true)
@@ -340,7 +341,7 @@ export default function PembayaranPage() {
                                     <th className="px-4 py-3 text-left">Stokis</th>
                                     <th className="px-4 py-3 text-right">Total</th>
                                     <th className="px-4 py-3 text-right">Sisa</th>
-                                    <th className="px-4 py-3 text-center">Action</th>
+                                    {!isViewOnly && <th className="px-4 py-3 text-center">Action</th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
@@ -362,21 +363,23 @@ export default function PembayaranPage() {
                                                 {formatCurrency(remaining)}
                                             </td>
 
-                                            <td className="px-4 py-3 text-center">
-                                                {isPaid ? (
-                                                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">
-                                                        <CheckCircle size={12} />
-                                                        Lunas
-                                                    </span>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => openPaymentModal(inv)}
-                                                        className="px-3 py-1.5 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600"
-                                                    >
-                                                        Bayar
-                                                    </button>
-                                                )}
-                                            </td>
+                                            {!isViewOnly && (
+                                                <td className="px-4 py-3 text-center">
+                                                    {isPaid ? (
+                                                        <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">
+                                                            <CheckCircle size={12} />
+                                                            Lunas
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => openPaymentModal(inv)}
+                                                            className="px-3 py-1.5 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600"
+                                                        >
+                                                            Bayar
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            )}
                                         </tr>
                                     )
                                 })}
@@ -386,8 +389,8 @@ export default function PembayaranPage() {
                 </div>
             )}
 
-            {/* Payment Modal */}
-            {showPaymentModal && selectedInvoice && (
+            {/* Payment Modal — not shown for view-only roles */}
+            {!isViewOnly && showPaymentModal && selectedInvoice && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
                         <div className="p-6">
