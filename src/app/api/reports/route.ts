@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma"
 export async function GET(request: Request) {
     try {
         const session = await getServerSession(authOptions)
-        if (!session || !["PUSAT", "FINANCE", "DC", "FINANCE_DC", "FINANCE_ALL"].includes(session.user.role)) {
+        if (!session || !["PUSAT", "FINANCE", "DC", "FINANCE_DC", "FINANCE_ALL", "MANAGER_PUSAT"].includes(session.user.role)) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
@@ -54,6 +54,12 @@ export async function GET(request: Request) {
             } else {
                 stokisFilter = { stokis: { dcId: { not: null } } }
             }
+        } else if (userRole === "MANAGER_PUSAT") {
+            // MANAGER_PUSAT — ALL areas (DC + pusat), with optional dcFilter
+            if (dcFilterParam) {
+                stokisFilter = { stokis: { dcId: dcFilterParam } }
+            }
+            // no else — sees everything without filter
         }
 
         switch (reportType) {

@@ -199,7 +199,7 @@ export default function DashboardPage() {
                         { label: "Total", value: formatRp(totalAmount), subtitle: `${allOrders.length} PO`, icon: Store, gradient: "from-[#3B82F6] to-[#1D4ED8]", href: "/dashboard/approve-po" },
                         { label: "Menunggu Approval", value: formatRp(pendingTotal), subtitle: `${pending.length} PO`, icon: ShoppingCart, gradient: "from-[#F59E0B] to-[#D97706]", href: "/dashboard/approve-po" },
                     ])
-                } else if (role === "FINANCE_ALL") {
+                } else if (role === "FINANCE_ALL" || role === "MANAGER_PUSAT") {
                     // FINANCE_ALL: Global view — fetch all orders + users, group by DC area
                     const [stokisRes, mitraRes, usersRes] = await Promise.all([
                         fetch(`/api/orders/stokis`),
@@ -949,7 +949,7 @@ export default function DashboardPage() {
                                 </Link>
                             </>
                         )}
-                        {role === "FINANCE_ALL" && (
+                        {(role === "FINANCE_ALL" || role === "MANAGER_PUSAT") && (
                             <>
                                 <Link
                                     href="/dashboard/invoices"
@@ -1055,8 +1055,8 @@ export default function DashboardPage() {
                 </div>
             )}
 
-            {/* FINANCE_ALL: Area Breakdown Cards */}
-            {role === "FINANCE_ALL" && !loading && areaStats.length > 0 && (
+            {/* FINANCE_ALL / MANAGER_PUSAT: Area Breakdown Cards */}
+            {(role === "FINANCE_ALL" || role === "MANAGER_PUSAT") && !loading && areaStats.length > 0 && (
                 <div className="space-y-4">
                     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                         <h2 className="text-sm font-semibold text-gray-900 mb-1">📊 Ringkasan Per Area</h2>

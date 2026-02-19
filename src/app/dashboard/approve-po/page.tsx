@@ -69,7 +69,7 @@ export default function ApprovePOPage() {
     const [statusFilter, setStatusFilter] = useState<string>("PENDING_PUSAT")
     const [searchQuery, setSearchQuery] = useState("")
 
-    // Redirect FINANCE_ALL — view only, no approval access
+    // Redirect FINANCE_ALL — view only, no approval access (MANAGER_PUSAT is allowed)
     useEffect(() => {
         if (role === "FINANCE_ALL") {
             router.replace("/dashboard")
@@ -275,7 +275,7 @@ export default function ApprovePOPage() {
                                 <tbody className="divide-y divide-gray-100">
                                     {filtered.map((order) => {
                                         const st = statusConfig[order.status] || statusConfig.PENDING_PUSAT
-                                        const clickable = order.status === "PENDING_PUSAT" || role === "FINANCE_DC" || role === "FINANCE"
+                                        const clickable = order.status === "PENDING_PUSAT" || role === "FINANCE_DC" || role === "FINANCE" || role === "MANAGER_PUSAT"
                                         return (
                                             <tr
                                                 key={order.id}

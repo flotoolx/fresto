@@ -23,8 +23,8 @@ export async function GET() {
         } else if (role === "PUSAT" || role === "FINANCE") {
             // Pusat/Finance — only mitra orders from pusat-direct stokis (dcId = null)
             where = { stokis: { dcId: null } }
-        } else if (role === "FINANCE_ALL") {
-            // FINANCE_ALL sees all mitra orders
+        } else if (role === "FINANCE_ALL" || role === "MANAGER_PUSAT") {
+            // FINANCE_ALL / MANAGER_PUSAT sees all mitra orders (no filter)
         } else {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }

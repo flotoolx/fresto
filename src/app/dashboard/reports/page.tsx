@@ -223,9 +223,9 @@ export default function ReportsPage() {
     const [dcFilter, setDcFilter] = useState("")
     const [dcList, setDcList] = useState<{ id: string; name: string }[]>([])
 
-    // Fetch DC list for FINANCE_ALL filter
+    // Fetch DC list for FINANCE_ALL / MANAGER_PUSAT filter
     useEffect(() => {
-        if (role === "FINANCE_ALL") {
+        if (role === "FINANCE_ALL" || role === "MANAGER_PUSAT") {
             fetch("/api/dc").then(r => r.json()).then(data => {
                 if (Array.isArray(data)) setDcList(data)
             }).catch(() => { })
@@ -567,7 +567,7 @@ export default function ReportsPage() {
                     </h1>
                     <p className="text-gray-500 text-sm">Laporan lengkap performa bisnis</p>
                 </div>
-                {role === "FINANCE_ALL" && dcList.length > 0 && (
+                {(role === "FINANCE_ALL" || role === "MANAGER_PUSAT") && dcList.length > 0 && (
                     <div className="relative">
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                         <select

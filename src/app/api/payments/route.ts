@@ -12,8 +12,8 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        // Only FINANCE, FINANCE_DC, FINANCE_ALL, and PUSAT can view payments
-        if (!["FINANCE", "FINANCE_DC", "FINANCE_ALL", "PUSAT"].includes(session.user.role)) {
+        // Only FINANCE, FINANCE_DC, FINANCE_ALL, MANAGER_PUSAT, and PUSAT can view payments
+        if (!["FINANCE", "FINANCE_DC", "FINANCE_ALL", "MANAGER_PUSAT", "PUSAT"].includes(session.user.role)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
@@ -49,6 +49,12 @@ export async function GET(request: Request) {
             } else {
                 where.invoice = { ...(where.invoice as object || {}), order: { stokis: { dcId: { not: null } } } }
             }
+        } else if (role === "MANAGER_PUSAT") {
+            // MANAGER_PUSAT sees ALL payments (DC + pusat)
+            if (dcFilter) {
+                where.invoice = { ...(where.invoice as object || {}), order: { stokis: { dcId: dcFilter } } }
+            }
+            // no else — sees everything without filter
         }
 
         const payments = await prisma.payment.findMany({
@@ -82,8 +88,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        // FINANCE, FINANCE_DC, and FINANCE_ALL can create payments
-        if (!["FINANCE", "FINANCE_DC", "FINANCE_ALL"].includes(session.user.role)) {
+        // FINANCE, FINANCE_DC, FINANCE_ALL, and MANAGER_PUSAT can create payments
+        if (!["FINANCE", "FINANCE_DC", "FINANCE_ALL", "MANAGER_PUSAT"].includes(session.user.role)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 

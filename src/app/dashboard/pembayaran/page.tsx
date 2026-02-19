@@ -66,7 +66,7 @@ export default function PembayaranPage() {
         notes: ""
     })
 
-    // Redirect FINANCE_ALL — view only, no payment access
+    // Redirect FINANCE_ALL — view only, no payment access (MANAGER_PUSAT is allowed)
     useEffect(() => {
         if (role === "FINANCE_ALL") {
             router.replace("/dashboard")

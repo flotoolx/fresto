@@ -28,8 +28,8 @@ export async function PATCH(
 
         // Handle adjust action
         if (body.action === "adjust") {
-            // FINANCE, PUSAT, DC, FINANCE_DC, and STOKIS can adjust (FINANCE_ALL is view-only)
-            if (!["FINANCE", "PUSAT", "DC", "FINANCE_DC", "STOKIS"].includes(role)) {
+            // FINANCE, PUSAT, DC, FINANCE_DC, MANAGER_PUSAT, and STOKIS can adjust (FINANCE_ALL is view-only)
+            if (!["FINANCE", "PUSAT", "DC", "FINANCE_DC", "MANAGER_PUSAT", "STOKIS"].includes(role)) {
                 return NextResponse.json({ error: "Forbidden" }, { status: 403 })
             }
 
@@ -99,8 +99,8 @@ export async function PATCH(
                     : `[ADJUSTED] ${notes}`
             }
 
-            // If Finance, PUSAT, or DC adjusts, also approve the PO
-            if (["FINANCE", "PUSAT", "DC", "FINANCE_DC"].includes(role)) {
+            // If Finance, PUSAT, DC, or MANAGER_PUSAT adjusts, also approve the PO
+            if (["FINANCE", "PUSAT", "DC", "FINANCE_DC", "MANAGER_PUSAT"].includes(role)) {
                 updateData.status = "PO_ISSUED" as StokisOrderStatus
                 updateData.financeApproveAt = new Date()
                 updateData.poIssuedAt = new Date()
@@ -148,11 +148,11 @@ export async function PATCH(
 
         // Permission check - PUSAT, FINANCE, DC, FINANCE_DC can approve PO from PENDING_PUSAT
         const allowedTransitions: Record<string, { roles: string[]; from: string[] }> = {
-            PO_ISSUED: { roles: ["FINANCE", "PUSAT", "DC", "FINANCE_DC"], from: ["PENDING_PUSAT"] },
+            PO_ISSUED: { roles: ["FINANCE", "PUSAT", "DC", "FINANCE_DC", "MANAGER_PUSAT"], from: ["PENDING_PUSAT"] },
             PROCESSING: { roles: ["GUDANG"], from: ["PO_ISSUED"] },
             SHIPPED: { roles: ["GUDANG"], from: ["PROCESSING"] },
             RECEIVED: { roles: ["STOKIS"], from: ["SHIPPED"] },
-            CANCELLED: { roles: ["PUSAT", "FINANCE", "DC", "FINANCE_DC", "STOKIS"], from: ["PENDING_PUSAT"] },
+            CANCELLED: { roles: ["PUSAT", "FINANCE", "DC", "FINANCE_DC", "MANAGER_PUSAT", "STOKIS"], from: ["PENDING_PUSAT"] },
         }
 
         const transition = allowedTransitions[status]

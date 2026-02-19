@@ -40,6 +40,13 @@ export async function GET(request: Request) {
             } else {
                 where = { order: { stokis: { dcId: { not: null } } } }
             }
+        } else if (role === "MANAGER_PUSAT") {
+            // MANAGER_PUSAT sees ALL invoices (DC + pusat), with optional dcFilter
+            if (dcFilter) {
+                where = { order: { stokis: { dcId: dcFilter } } }
+            } else {
+                where = {} // no filter — sees everything
+            }
         } else {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
@@ -79,7 +86,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        if (!["PUSAT", "FINANCE", "FINANCE_DC", "FINANCE_ALL"].includes(session.user.role)) {
+        if (!["PUSAT", "FINANCE", "FINANCE_DC", "FINANCE_ALL", "MANAGER_PUSAT"].includes(session.user.role)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 

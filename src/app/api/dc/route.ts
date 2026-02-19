@@ -11,12 +11,12 @@ export async function GET() {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        if (!["PUSAT", "FINANCE", "FINANCE_ALL", "FINANCE_DC", "DC"].includes(session.user.role)) {
+        if (!["PUSAT", "FINANCE", "FINANCE_ALL", "MANAGER_PUSAT", "FINANCE_DC", "DC"].includes(session.user.role)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
-        // For FINANCE_ALL: only return DCs that have stokis assigned (exclude pusat-area DCs)
-        const dcWhere = session.user.role === "FINANCE_ALL"
+        // For FINANCE_ALL / MANAGER_PUSAT: only return DCs that have stokis assigned (exclude pusat-area DCs)
+        const dcWhere = (session.user.role === "FINANCE_ALL" || session.user.role === "MANAGER_PUSAT")
             ? { role: "DC" as const, isActive: true, dcMembers: { some: {} } }
             : { role: "DC" as const, isActive: true }
 

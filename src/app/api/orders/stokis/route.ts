@@ -34,6 +34,13 @@ export async function GET(request: Request) {
             } else {
                 where = { stokis: { dcId: { not: null } } }
             }
+        } else if (role === "MANAGER_PUSAT") {
+            // MANAGER_PUSAT sees ALL orders (DC + pusat), with optional dcFilter
+            if (dcFilter) {
+                where = { stokis: { dcId: dcFilter } }
+            } else {
+                where = {} // no filter — sees everything
+            }
         } else if (role === "DC") {
             // DC sees orders from Stokis in their area
             where = { stokis: { dcId: userId } }

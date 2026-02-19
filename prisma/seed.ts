@@ -140,6 +140,19 @@ async function main() {
         }
     })
 
+    // Create Manager Pusat (FINANCE_ALL + Approve PO)
+    await prisma.user.upsert({
+        where: { email: 'manager.pusat@dfresto.com' },
+        update: { role: Role.MANAGER_PUSAT },
+        create: {
+            name: 'Manager Pusat',
+            email: 'manager.pusat@dfresto.com',
+            password: hashedPassword,
+            role: Role.MANAGER_PUSAT,
+            phone: '0822222224'
+        }
+    })
+
     // 5. Create Stokis (14 Stokis - 2 per DC)
     console.log('🏪 Creating 14 Stokis (2 per DC)...')
     const stokisIds: string[] = []

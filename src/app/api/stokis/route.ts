@@ -45,6 +45,18 @@ export async function GET(request: Request) {
                     ]
                 }
             }
+        } else if (role === "MANAGER_PUSAT") {
+            // MANAGER_PUSAT — ALL stokis (DC + pusat), with optional dcFilter
+            if (dcFilter) {
+                where = {
+                    OR: [
+                        { role: "STOKIS", dcId: dcFilter },
+                        { role: "DC", id: dcFilter },
+                    ]
+                }
+            } else {
+                where = { role: { in: ["STOKIS", "DC"] } }
+            }
         }
 
         const stokis = await prisma.user.findMany({

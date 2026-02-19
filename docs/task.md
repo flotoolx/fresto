@@ -601,3 +601,11 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 - [x] Git commit ✅ `abffc50`
 - [x] Git commit ✅ `1af6e2b`
 
+### Perbaikan Data Card Belum Lunas
+- [x] Fix: Halaman `/dashboard/invoices` — Belum Lunas sekarang pakai sisa tagihan (`amount - paidAmount`) ✅
+- [x] Tambah field `paidAmount` ke interface Invoice di invoices page ✅
+- [x] Git commit ✅ `1c9daa7`
+
+### Perbaikan Total Revenue Order Mitra
+- [x] Fix: Halaman `/dashboard/order-mitra` — Exclude order CANCELLED dari perhitungan Total Revenue & Total PO ✅
+- [x] Git commit ✅ `ae593b1`

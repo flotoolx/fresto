@@ -76,6 +76,13 @@ const roleMenus: Record<string, { label: string; href: string; icon: React.React
         { label: "Invoices", href: "/dashboard/invoices", icon: <Receipt size={20} /> },
         { label: "Laporan", href: "/dashboard/reports", icon: <BarChart3 size={20} /> },
     ],
+    MANAGER_PUSAT: [
+        { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
+        { label: "Approve PO", href: "/dashboard/approve-po", icon: <ShoppingCart size={20} /> },
+        { label: "Pembayaran", href: "/dashboard/pembayaran", icon: <CreditCard size={20} /> },
+        { label: "Invoices", href: "/dashboard/invoices", icon: <Receipt size={20} /> },
+        { label: "Laporan", href: "/dashboard/reports", icon: <BarChart3 size={20} /> },
+    ],
 }
 
 const roleAccentColors: Record<string, string> = {
@@ -83,6 +90,7 @@ const roleAccentColors: Record<string, string> = {
     FINANCE: "bg-[#5B2B4E]",
     FINANCE_DC: "bg-[#5B2B4E]",
     FINANCE_ALL: "bg-[#5B2B4E]",
+    MANAGER_PUSAT: "bg-[#5B2B4E]",
     GUDANG: "bg-[#E31E24]",
     STOKIS: "bg-[#E31E24]",
     MITRA: "bg-[#E31E24]",
