@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect, FormEvent } from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Users, Plus, Edit, Trash2, Search, X, Download } from "lucide-react"
 import ExportButton from "@/components/ExportButton"
 
@@ -29,6 +31,17 @@ const roleLabels: Record<string, { label: string; color: string }> = {
 }
 
 export default function UsersPage() {
+    const { data: session } = useSession()
+    const router = useRouter()
+    const role = session?.user?.role || ""
+
+    // Only FINANCE can access this page
+    useEffect(() => {
+        if (role && role !== "FINANCE") {
+            router.replace("/dashboard")
+        }
+    }, [role, router])
+
     const [users, setUsers] = useState<User[]>([])
     const [stokisList, setStokisList] = useState<Stokis[]>([])
     const [loading, setLoading] = useState(true)

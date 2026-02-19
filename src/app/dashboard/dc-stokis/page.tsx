@@ -164,7 +164,7 @@ export default function DCStokisPage() {
         s.email.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
-    if (session?.user?.role !== "DC") {
+    if (session?.user?.role !== "DC" && session?.user?.role !== "FINANCE_DC") {
         return (
             <div className="p-6 text-center">
                 <p className="text-red-500">Anda tidak memiliki akses ke halaman ini</p>

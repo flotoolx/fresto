@@ -38,6 +38,7 @@ const roleMenus: Record<string, { label: string; href: string; icon: React.React
         { label: "Pembayaran", href: "/dashboard/pembayaran", icon: <CreditCard size={20} /> },
         // { label: "Tagihan", href: "/dashboard/tagihan", icon: <FileText size={20} /> }, // HIDDEN - Phase 7
         { label: "Invoices", href: "/dashboard/invoices", icon: <Receipt size={20} /> },
+        { label: "Users", href: "/dashboard/users", icon: <Users size={20} /> },
         { label: "Laporan", href: "/dashboard/reports", icon: <BarChart3 size={20} /> },
     ],
     GUDANG: [
@@ -69,6 +70,7 @@ const roleMenus: Record<string, { label: string; href: string; icon: React.React
         { label: "Approve PO", href: "/dashboard/approve-po", icon: <ShoppingCart size={20} /> },
         { label: "Pembayaran", href: "/dashboard/pembayaran", icon: <CreditCard size={20} /> },
         { label: "Invoices", href: "/dashboard/invoices", icon: <Receipt size={20} /> },
+        { label: "Kelola Stokis", href: "/dashboard/dc-stokis", icon: <Store size={20} /> },
         { label: "Laporan", href: "/dashboard/reports", icon: <BarChart3 size={20} /> },
     ],
     FINANCE_ALL: [
