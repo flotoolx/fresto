@@ -460,7 +460,17 @@ export default function ApprovePOPage() {
                                                     >
                                                         -
                                                     </button>
-                                                    <span className="w-12 text-center font-medium text-gray-900">{qty}</span>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={qty}
+                                                        onChange={(e) => {
+                                                            const newItems = [...adjustedItems]
+                                                            newItems[idx] = { ...newItems[idx], quantity: Math.max(0, parseInt(e.target.value) || 0) }
+                                                            setAdjustedItems(newItems)
+                                                        }}
+                                                        className="w-16 text-center font-medium text-gray-900 border border-gray-300 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                                    />
                                                     <button
                                                         onClick={() => {
                                                             const newItems = [...adjustedItems]
