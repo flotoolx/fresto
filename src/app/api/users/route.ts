@@ -14,7 +14,7 @@ export async function GET(request: Request) {
         }
 
         const { role: userRole, id: userId, dcId } = session.user
-        const allowedRoles = ["PUSAT", "DC", "FINANCE_DC", "FINANCE_ALL", "MANAGER_PUSAT"]
+        const allowedRoles = ["PUSAT", "FINANCE", "DC", "FINANCE_DC", "FINANCE_ALL", "MANAGER_PUSAT"]
 
         if (!allowedRoles.includes(userRole)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
