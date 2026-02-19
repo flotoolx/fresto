@@ -35,9 +35,9 @@ export default function UsersPage() {
     const router = useRouter()
     const role = session?.user?.role || ""
 
-    // Only FINANCE can access this page
+    // Only PUSAT and FINANCE can access this page
     useEffect(() => {
-        if (role && role !== "FINANCE") {
+        if (role && role !== "FINANCE" && role !== "PUSAT") {
             router.replace("/dashboard")
         }
     }, [role, router])
