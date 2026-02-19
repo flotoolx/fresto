@@ -27,7 +27,6 @@ const roleMenus: Record<string, { label: string; href: string; icon: React.React
     PUSAT: [
         { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
         { label: "Order Stokis", href: "/dashboard/orders-stokis", icon: <ShoppingCart size={20} /> },
-        { label: "Users", href: "/dashboard/users", icon: <Users size={20} /> },
         { label: "Produk", href: "/dashboard/products", icon: <Package size={20} /> },
         { label: "Gudang", href: "/dashboard/gudang", icon: <Warehouse size={20} /> },
         { label: "Laporan", href: "/dashboard/reports", icon: <BarChart3 size={20} /> },
@@ -61,7 +60,6 @@ const roleMenus: Record<string, { label: string; href: string; icon: React.React
     DC: [
         { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
         { label: "Approve PO", href: "/dashboard/approve-po", icon: <ShoppingCart size={20} /> },
-        { label: "Kelola Stokis", href: "/dashboard/dc-stokis", icon: <Store size={20} /> },
         { label: "Monitoring Order", href: "/dashboard/dc-orders", icon: <ShoppingCart size={20} /> },
         { label: "Laporan", href: "/dashboard/reports", icon: <BarChart3 size={20} /> },
     ],
