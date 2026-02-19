@@ -37,8 +37,14 @@ export default function GudangPOMasukPage() {
     const [activeTab, setActiveTab] = useState<TabType>("aktif")
     const [filterStatus, setFilterStatus] = useState("")
     const [searchQuery, setSearchQuery] = useState("")
-    const [dateStart, setDateStart] = useState("")
-    const [dateEnd, setDateEnd] = useState("")
+    const [period, setPeriod] = useState(30)
+    const [useCustomDate, setUseCustomDate] = useState(false)
+    const [customDateFrom, setCustomDateFrom] = useState(() => {
+        const d = new Date()
+        d.setDate(d.getDate() - 30)
+        return d.toISOString().split("T")[0]
+    })
+    const [customDateTo, setCustomDateTo] = useState(() => new Date().toISOString().split("T")[0])
 
     useEffect(() => {
         fetchOrders()
@@ -116,18 +122,24 @@ export default function GudangPOMasukPage() {
                 o.stokis.name.toLowerCase().includes(q)
             )
         }
-        if (dateStart) {
-            const from = new Date(dateStart)
+        // Date filtering
+        if (useCustomDate) {
+            const from = new Date(customDateFrom)
+            from.setHours(0, 0, 0, 0)
+            const to = new Date(customDateTo)
+            to.setHours(23, 59, 59, 999)
+            result = result.filter(o => {
+                const d = new Date(o.createdAt)
+                return d >= from && d <= to
+            })
+        } else {
+            const from = new Date()
+            from.setDate(from.getDate() - period)
             from.setHours(0, 0, 0, 0)
             result = result.filter(o => new Date(o.createdAt) >= from)
         }
-        if (dateEnd) {
-            const to = new Date(dateEnd)
-            to.setHours(23, 59, 59, 999)
-            result = result.filter(o => new Date(o.createdAt) <= to)
-        }
         return result
-    }, [baseList, filterStatus, searchQuery, dateStart, dateEnd])
+    }, [baseList, filterStatus, searchQuery, period, useCustomDate, customDateFrom, customDateTo])
 
     // Summary stats
     const pendingCount = activeOrders.filter(o => o.status === "PENDING_PUSAT").length
@@ -237,20 +249,48 @@ export default function GudangPOMasukPage() {
                         />
                     </div>
                     <div className="flex items-center gap-2">
-                        <Calendar size={16} className="text-gray-400" />
-                        <input
-                            type="date"
-                            value={dateStart}
-                            onChange={(e) => setDateStart(e.target.value)}
-                            className="bg-gray-50 border rounded-lg px-3 py-2 text-gray-700 text-sm"
-                        />
-                        <span className="text-gray-400">-</span>
-                        <input
-                            type="date"
-                            value={dateEnd}
-                            onChange={(e) => setDateEnd(e.target.value)}
-                            className="bg-gray-50 border rounded-lg px-3 py-2 text-gray-700 text-sm"
-                        />
+                        {!useCustomDate && (
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm text-gray-600">Periode:</label>
+                                <select
+                                    value={period}
+                                    onChange={e => setPeriod(parseInt(e.target.value))}
+                                    className="appearance-none bg-white border border-gray-200 rounded-xl px-3 py-2 text-gray-700 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value={7}>7 Hari</option>
+                                    <option value={30}>30 Hari</option>
+                                    <option value={90}>90 Hari</option>
+                                    <option value={365}>1 Tahun</option>
+                                </select>
+                            </div>
+                        )}
+                        <button
+                            onClick={() => setUseCustomDate(!useCustomDate)}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${useCustomDate
+                                ? "bg-blue-500 text-white"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                }`}
+                        >
+                            <Calendar size={14} />
+                            Custom
+                        </button>
+                        {useCustomDate && (
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="date"
+                                    value={customDateFrom}
+                                    onChange={e => setCustomDateFrom(e.target.value)}
+                                    className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-gray-700 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <span className="text-gray-400">-</span>
+                                <input
+                                    type="date"
+                                    value={customDateTo}
+                                    onChange={e => setCustomDateTo(e.target.value)}
+                                    className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-gray-700 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

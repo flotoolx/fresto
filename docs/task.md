@@ -656,3 +656,4 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 - [x] PO Masuk: fix status label inkonsisten — "Belum Disetujui" → "Belum Approve", "Diproses" → "Sedang Diproses" ✅
 - [x] PO Masuk: tambah filter tanggal (date range picker) ✅
 - [x] PO Masuk: konversi card list ke table view (Tanggal, Nama Stokis, Status) ✅
+- [x] PO Masuk: ganti filter tanggal raw ke periode style reports (7/30/90/365 Hari + Custom toggle) ✅
