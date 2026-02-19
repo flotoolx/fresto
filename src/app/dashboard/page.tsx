@@ -1075,7 +1075,7 @@ export default function DashboardPage() {
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <Building2 size={16} className="text-white/80" />
-                                                <span className="text-sm font-semibold text-white">{area.dcName}</span>
+                                                <span className="text-sm font-semibold text-white">{area.dcName.replace(/^Admin\s*/i, "DC ")}</span>
                                             </div>
                                             <span className="text-xs text-white/60 bg-white/10 px-2 py-0.5 rounded-full">{revenueShare}%</span>
                                         </div>

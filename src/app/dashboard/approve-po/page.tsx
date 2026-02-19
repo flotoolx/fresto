@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { Receipt, Clock, CheckCircle, ChevronRight, AlertTriangle, Printer, Edit3, Search } from "lucide-react"
+import { Receipt, Clock, CheckCircle, ChevronRight, AlertTriangle, Printer, Edit3, Search, MapPin } from "lucide-react"
 import ExportButton from "@/components/ExportButton"
 import Link from "next/link"
 
@@ -68,6 +68,8 @@ export default function ApprovePOPage() {
     const [adjustNotes, setAdjustNotes] = useState("")
     const [statusFilter, setStatusFilter] = useState<string>("PENDING_PUSAT")
     const [searchQuery, setSearchQuery] = useState("")
+    const [dcFilter, setDcFilter] = useState("")
+    const [dcList, setDcList] = useState<{ id: string; name: string }[]>([])
 
     // Redirect FINANCE_ALL — view only, no approval access (MANAGER_PUSAT is allowed)
     useEffect(() => {
@@ -78,6 +80,15 @@ export default function ApprovePOPage() {
 
     useEffect(() => {
         if (role && role !== "FINANCE_ALL") fetchOrders()
+    }, [role])
+
+    // Fetch DC list for MANAGER_PUSAT filter
+    useEffect(() => {
+        if (role === "MANAGER_PUSAT") {
+            fetch("/api/dc").then(r => r.json()).then(data => {
+                if (Array.isArray(data)) setDcList(data)
+            }).catch(() => { })
+        }
     }, [role])
 
     const fetchOrders = async () => {
@@ -223,6 +234,22 @@ export default function ApprovePOPage() {
                         <option value="RECEIVED">Diterima</option>
                         <option value="CANCELLED">Dibatalkan</option>
                     </select>
+                    {role === "MANAGER_PUSAT" && dcList.length > 0 && (
+                        <div className="relative">
+                            <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <select
+                                value={dcFilter}
+                                onChange={(e) => setDcFilter(e.target.value)}
+                                className="pl-9 pr-4 py-2 rounded-xl text-sm font-medium border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-all cursor-pointer"
+                            >
+                                <option value="">Semua Area DC</option>
+                                <option value="pusat">Pusat (Tanpa DC)</option>
+                                {dcList.map(dc => (
+                                    <option key={dc.id} value={dc.id}>{dc.name.replace(/^Admin\s*/i, "DC ")}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                     <div className="relative flex-1">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
@@ -244,6 +271,15 @@ export default function ApprovePOPage() {
                 filtered = statusFilter === "all"
                     ? allOrders
                     : allOrders.filter(o => o.status === statusFilter)
+
+                // Apply DC area filter for MANAGER_PUSAT
+                if (dcFilter) {
+                    if (dcFilter === "pusat") {
+                        filtered = filtered.filter(o => !o.stokis?.dcId)
+                    } else {
+                        filtered = filtered.filter(o => o.stokis?.dcId === dcFilter)
+                    }
+                }
 
                 if (q) {
                     filtered = filtered.filter(o =>

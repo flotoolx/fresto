@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { CreditCard, Search, ChevronDown, AlertTriangle, CheckCircle, X, Upload, Clock } from "lucide-react"
+import { CreditCard, Search, ChevronDown, AlertTriangle, CheckCircle, X, Upload, Clock, MapPin } from "lucide-react"
 
 interface Invoice {
     id: string
@@ -14,7 +14,7 @@ interface Invoice {
     status: string
     order: {
         orderNumber: string
-        stokis: { id: string; name: string }
+        stokis: { id: string; name: string; dcId: string | null }
     }
 }
 
@@ -55,6 +55,8 @@ export default function PembayaranPage() {
     const [filterStokis, setFilterStokis] = useState("")
     const [filterStatus, setFilterStatus] = useState("")
     const [searchQuery, setSearchQuery] = useState("")
+    const [dcFilter, setDcFilter] = useState("")
+    const [dcList, setDcList] = useState<{ id: string; name: string }[]>([])
 
     // Payment form
     const [paymentForm, setPaymentForm] = useState<PaymentForm>({
@@ -81,6 +83,15 @@ export default function PembayaranPage() {
         if (role && role !== "FINANCE_ALL") {
             fetchInvoices()
             fetchStokisList()
+        }
+    }, [role])
+
+    // Fetch DC list for MANAGER_PUSAT filter
+    useEffect(() => {
+        if (role === "MANAGER_PUSAT") {
+            fetch("/api/dc").then(r => r.json()).then(data => {
+                if (Array.isArray(data)) setDcList(data)
+            }).catch(() => { })
         }
     }, [role])
 
@@ -170,6 +181,14 @@ export default function PembayaranPage() {
             if (filterStatus === "UNPAID" && inv.status === "PAID") return false
             if (filterStatus === "OVERDUE" && inv.status !== "OVERDUE") return false
         }
+        // DC Area filter for MANAGER_PUSAT
+        if (dcFilter) {
+            if (dcFilter === "pusat") {
+                if (inv.order.stokis.dcId) return false
+            } else {
+                if (inv.order.stokis.dcId !== dcFilter) return false
+            }
+        }
         if (searchQuery) {
             const query = searchQuery.toLowerCase()
             if (!inv.invoiceNumber.toLowerCase().includes(query) &&
@@ -239,6 +258,23 @@ export default function PembayaranPage() {
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     </div>
+                    {role === "MANAGER_PUSAT" && dcList.length > 0 && (
+                        <div className="relative">
+                            <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <select
+                                value={dcFilter}
+                                onChange={(e) => setDcFilter(e.target.value)}
+                                className="appearance-none bg-gray-50 border rounded-lg pl-9 pr-8 py-2 text-gray-700 text-sm"
+                            >
+                                <option value="">Semua Area DC</option>
+                                <option value="pusat">Pusat (Tanpa DC)</option>
+                                {dcList.map(dc => (
+                                    <option key={dc.id} value={dc.id}>{dc.name.replace(/^Admin\s*/i, "DC ")}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        </div>
+                    )}
                     <div className="relative flex-1 min-w-[200px]">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                         <input

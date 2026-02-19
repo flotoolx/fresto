@@ -194,7 +194,7 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 - [x] /api/stokis/[id]/outstanding - API cek sisa tagihan stokis
 - [x] Update /api/orders/stokis/[id] - Tambah aksi adjust PO
 - [x] Tampilkan peringatan jika stokis punya tunggakan di Approve PO
-- [x] Git commit & push ✅
+- [x] Git commit + deploy (19 Feb 2026)
 
 
 
@@ -609,3 +609,46 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 ### Perbaikan Total Revenue Order Mitra
 - [x] Fix: Halaman `/dashboard/order-mitra` — Exclude order CANCELLED dari perhitungan Total Revenue & Total PO ✅
 - [x] Git commit ✅ `ae593b1`
+
+### Implementasi Role MANAGER_PUSAT
+- [x] Tambah MANAGER_PUSAT ke schema & seed ✅
+- [x] Update Sidebar & Navigation ✅
+- [x] Update Frontend Pages (Approve PO, Pembayaran, Invoices, Reports) ✅
+- [x] Update Backend API Routes (Global View + Approval) ✅
+- [x] Fix: Filter data MANAGER_PUSAT (DC + Pusat) ✅
+- [x] Git commit + deploy (19 Feb 2026) ✅
+
+### Inline Qty Edit pada Adjust PO (19 Feb 2026)
+- [x] Ganti span qty menjadi input[type=number] pada modal Adjust PO ✅
+- [x] User bisa langsung ketik angka qty tanpa harus klik tombol +/- ✅
+- [x] Tombol +/- tetap berfungsi sebagai alternatif ✅
+- [x] Git commit ✅ `4bff10f`
+
+### Pembatasan Akses Halaman per Role (19 Feb 2026)
+- [x] Halaman `/dashboard/users` hanya bisa diakses oleh FINANCE (redirect jika role lain) ✅
+- [x] Halaman `/dashboard/dc-stokis` hanya bisa diakses oleh FINANCE_DC ✅
+- [x] Tambah menu "Users" di sidebar FINANCE ✅
+- [x] Tambah menu "Kelola Stokis" di sidebar FINANCE_DC ✅
+- [x] Git commit ✅ `b61c37c`
+- [x] Fix: Hapus akses DC dari dc-stokis (hanya FINANCE_DC) ✅
+- [x] Git commit ✅ `8d07a38`
+- [x] Hapus menu "Users" dari sidebar PUSAT ✅
+- [x] Hapus menu "Kelola Stokis" dari sidebar DC ✅
+- [x] Git commit ✅ `24cdc25`
+- [x] Fix: Tambah FINANCE ke allowedRoles di `/api/users` (data user sekarang muncul) ✅
+- [x] Git commit ✅ `e78a94e`
+- [x] PUSAT bisa akses /dashboard/users untuk membuat user FINANCE & GUDANG ✅
+- [x] Tambah kembali menu "Users" di sidebar PUSAT ✅
+- [x] Git commit ✅ `70611df`
+- [x] FINANCE di /dashboard/users: hanya bisa lihat/tambah user STOKIS area Pusat (dcId=null) ✅
+- [x] API GET filter FINANCE → STOKIS dcId=null, API POST izinkan FINANCE buat STOKIS saja ✅
+- [x] Frontend: role dropdown terkunci ke Stokis, filter role disembunyikan untuk FINANCE ✅
+- [x] Git commit ✅ `254f753`
+- [x] PUSAT di /dashboard/users: hanya bisa lihat/tambah user FINANCE & GUDANG ✅
+- [x] API GET filter PUSAT → role in [FINANCE, GUDANG], API POST blok selain FINANCE/GUDANG ✅
+- [x] Frontend: role dropdown hanya Finance/Gudang, filter role disembunyikan untuk PUSAT ✅
+- [x] Git commit ✅ `fd21911`
+- [x] MANAGER_PUSAT dashboard: rename header area "Admin X" → "DC X" (Admin Pekanbaru → DC Pekanbaru, dll) ✅
+- [x] Tambah filter by DC Area di /dashboard/approve-po untuk MANAGER_PUSAT ✅
+- [x] Tambah filter by DC Area di /dashboard/pembayaran untuk MANAGER_PUSAT ✅
+- [x] Opsi filter: Semua Area DC, Pusat (Tanpa DC), dan semua DC area ✅
