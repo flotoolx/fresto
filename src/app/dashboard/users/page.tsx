@@ -164,7 +164,7 @@ export default function UsersPage() {
             name: "",
             email: "",
             password: "",
-            role: "MITRA",
+            role: role === "FINANCE" ? "STOKIS" : "MITRA",
             phone: "",
             address: "",
             stokisId: "",
@@ -218,7 +218,7 @@ export default function UsersPage() {
                         <Users className="text-red-600" size={20} />
                         Manajemen User
                     </h1>
-                    <p className="text-gray-500 text-sm mt-1">Kelola semua user dalam sistem</p>
+                    <p className="text-gray-500 text-sm mt-1">{role === "FINANCE" ? "Kelola Stokis area Pusat" : "Kelola semua user dalam sistem"}</p>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
                     <button
@@ -246,18 +246,20 @@ export default function UsersPage() {
                         className="w-full pl-10 pr-4 py-2.5 border rounded-lg text-gray-900 placeholder-gray-500 text-sm"
                     />
                 </div>
-                <select
-                    value={filterRole}
-                    onChange={(e) => setFilterRole(e.target.value)}
-                    className="px-4 py-2.5 border rounded-lg text-gray-900 text-sm"
-                >
-                    <option value="">Semua Role</option>
-                    <option value="PUSAT">Pusat</option>
-                    <option value="FINANCE">Finance</option>
-                    <option value="GUDANG">Gudang</option>
-                    <option value="STOKIS">Stokis</option>
-                    <option value="MITRA">Mitra</option>
-                </select>
+                {role !== "FINANCE" && (
+                    <select
+                        value={filterRole}
+                        onChange={(e) => setFilterRole(e.target.value)}
+                        className="px-4 py-2.5 border rounded-lg text-gray-900 text-sm"
+                    >
+                        <option value="">Semua Role</option>
+                        <option value="PUSAT">Pusat</option>
+                        <option value="FINANCE">Finance</option>
+                        <option value="GUDANG">Gudang</option>
+                        <option value="STOKIS">Stokis</option>
+                        <option value="MITRA">Mitra</option>
+                    </select>
+                )}
             </div>
 
             {/* Users - Mobile Cards / Desktop Table */}
@@ -416,17 +418,26 @@ export default function UsersPage() {
                                 )}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                                    <select
-                                        value={formData.role}
-                                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                        className="w-full px-4 py-2.5 border rounded-lg text-gray-900"
-                                    >
-                                        <option value="PUSAT">Pusat</option>
-                                        <option value="FINANCE">Finance</option>
-                                        <option value="GUDANG">Gudang</option>
-                                        <option value="STOKIS">Stokis</option>
-                                        <option value="MITRA">Mitra</option>
-                                    </select>
+                                    {role === "FINANCE" ? (
+                                        <input
+                                            type="text"
+                                            value="Stokis"
+                                            disabled
+                                            className="w-full px-4 py-2.5 border rounded-lg text-gray-900 bg-gray-100 cursor-not-allowed"
+                                        />
+                                    ) : (
+                                        <select
+                                            value={formData.role}
+                                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                            className="w-full px-4 py-2.5 border rounded-lg text-gray-900"
+                                        >
+                                            <option value="PUSAT">Pusat</option>
+                                            <option value="FINANCE">Finance</option>
+                                            <option value="GUDANG">Gudang</option>
+                                            <option value="STOKIS">Stokis</option>
+                                            <option value="MITRA">Mitra</option>
+                                        </select>
+                                    )}
                                 </div>
                                 {formData.role === "MITRA" && (
                                     <div>

@@ -34,6 +34,9 @@ export async function GET(request: Request) {
         } else if (userRole === "FINANCE_DC") {
             // Finance DC can only see users in their DC area
             where = { dcId: dcId }
+        } else if (userRole === "FINANCE") {
+            // Finance Pusat can only see Stokis in Pusat area (dcId = null)
+            where = { role: "STOKIS", dcId: null }
         }
         // PUSAT and FINANCE_ALL see all users (no where filter)
 
@@ -75,12 +78,17 @@ export async function POST(request: Request) {
     try {
         const session = await getServerSession(authOptions)
 
-        if (!session?.user || session.user.role !== "PUSAT") {
+        if (!session?.user || (session.user.role !== "PUSAT" && session.user.role !== "FINANCE")) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
         }
 
+        // FINANCE can only create STOKIS users
         const body = await request.json()
         const { name, email, password, role, phone, address, province, stokisId } = body
+
+        if (session.user.role === "FINANCE" && role !== "STOKIS") {
+            return NextResponse.json({ error: "Finance hanya bisa membuat user Stokis" }, { status: 403 })
+        }
 
         // Validation
         if (!name || !email || !password || !role) {
