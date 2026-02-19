@@ -653,3 +653,6 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 - [x] Tambah filter by DC Area di /dashboard/pembayaran untuk MANAGER_PUSAT ✅
 - [x] Opsi filter: Semua Area DC, Pusat (Tanpa DC), dan semua DC area ✅
 - [x] Git commit ✅ `50da33b`
+- [x] PO Masuk: fix status label inkonsisten — "Belum Disetujui" → "Belum Approve", "Diproses" → "Sedang Diproses" ✅
+- [x] PO Masuk: tambah filter tanggal (date range picker) ✅
+- [x] PO Masuk: konversi card list ke table view (Tanggal, Nama Stokis, Status) ✅

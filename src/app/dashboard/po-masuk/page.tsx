@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Package, Clock, Truck, ChevronRight, Printer, Search, CheckCircle, AlertCircle } from "lucide-react"
+import { Package, Clock, Truck, ChevronRight, Printer, Search, CheckCircle, AlertCircle, Calendar } from "lucide-react"
 import ExportButton from "@/components/ExportButton"
 import Link from "next/link"
 
@@ -37,6 +37,8 @@ export default function GudangPOMasukPage() {
     const [activeTab, setActiveTab] = useState<TabType>("aktif")
     const [filterStatus, setFilterStatus] = useState("")
     const [searchQuery, setSearchQuery] = useState("")
+    const [dateStart, setDateStart] = useState("")
+    const [dateEnd, setDateEnd] = useState("")
 
     useEffect(() => {
         fetchOrders()
@@ -101,7 +103,7 @@ export default function GudangPOMasukPage() {
     // Apply tab-specific list
     const baseList = activeTab === "aktif" ? activeOrders : historyOrders
 
-    // Apply filters + search
+    // Apply filters + search + date
     const filteredOrders = useMemo(() => {
         let result = baseList
         if (filterStatus) {
@@ -114,8 +116,18 @@ export default function GudangPOMasukPage() {
                 o.stokis.name.toLowerCase().includes(q)
             )
         }
+        if (dateStart) {
+            const from = new Date(dateStart)
+            from.setHours(0, 0, 0, 0)
+            result = result.filter(o => new Date(o.createdAt) >= from)
+        }
+        if (dateEnd) {
+            const to = new Date(dateEnd)
+            to.setHours(23, 59, 59, 999)
+            result = result.filter(o => new Date(o.createdAt) <= to)
+        }
         return result
-    }, [baseList, filterStatus, searchQuery])
+    }, [baseList, filterStatus, searchQuery, dateStart, dateEnd])
 
     // Summary stats
     const pendingCount = activeOrders.filter(o => o.status === "PENDING_PUSAT").length
@@ -170,7 +182,7 @@ export default function GudangPOMasukPage() {
                     <div className="absolute top-0 right-0 w-10 h-10 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                     <div className="flex items-center gap-1 mb-1">
                         <Package size={14} className="opacity-80" />
-                        <span className="text-[10px] md:text-xs text-white/80">Diproses</span>
+                        <span className="text-[10px] md:text-xs text-white/80">Sedang Diproses</span>
                     </div>
                     <p className="text-xl md:text-2xl font-bold">{processingCount}</p>
                     <p className="text-[9px] md:text-xs text-white/60 mt-0.5">Siap dikirim</p>
@@ -209,7 +221,7 @@ export default function GudangPOMasukPage() {
                             className="appearance-none bg-gray-50 border rounded-lg px-3 py-2 text-gray-700 text-sm"
                         >
                             <option value="">Semua Status</option>
-                            <option value="PENDING_PUSAT">Belum Disetujui</option>
+                            <option value="PENDING_PUSAT">Belum Approve</option>
                             <option value="PO_ISSUED">Sudah Approve</option>
                             <option value="PROCESSING">Sedang Diproses</option>
                         </select>
@@ -222,6 +234,22 @@ export default function GudangPOMasukPage() {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full bg-gray-50 border rounded-lg pl-9 pr-4 py-2 text-gray-700 text-sm"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Calendar size={16} className="text-gray-400" />
+                        <input
+                            type="date"
+                            value={dateStart}
+                            onChange={(e) => setDateStart(e.target.value)}
+                            className="bg-gray-50 border rounded-lg px-3 py-2 text-gray-700 text-sm"
+                        />
+                        <span className="text-gray-400">-</span>
+                        <input
+                            type="date"
+                            value={dateEnd}
+                            onChange={(e) => setDateEnd(e.target.value)}
+                            className="bg-gray-50 border rounded-lg px-3 py-2 text-gray-700 text-sm"
                         />
                     </div>
                 </div>
@@ -243,59 +271,52 @@ export default function GudangPOMasukPage() {
                     )}
                 </div>
             ) : (
-                <div className="space-y-3">
-                    {filteredOrders.map((order) => {
-                        const isPending = order.status === "PENDING_PUSAT"
-                        const isPOIssued = order.status === "PO_ISSUED"
-                        const isProcessing = order.status === "PROCESSING"
-                        const isShipped = order.status === "SHIPPED"
-                        return (
-                            <div
-                                key={order.id}
-                                className={`bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-all border-l-4 ${isPending ? "border-l-amber-400 opacity-80" :
-                                    isPOIssued ? "border-l-blue-500" :
-                                        isProcessing ? "border-l-purple-500" :
-                                            "border-l-green-500"
-                                    }`}
-                                onClick={() => setSelectedOrder(order)}
-                            >
-                                <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                        <h3 className="font-semibold text-gray-800 text-sm">{order.orderNumber}</h3>
-                                        <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
-                                    </div>
-                                    <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${isPending ? "bg-amber-100 text-amber-700 border-amber-200" :
-                                        isPOIssued ? "bg-blue-100 text-blue-700 border-blue-200" :
-                                            isProcessing ? "bg-purple-100 text-purple-700 border-purple-200" :
-                                                "bg-green-100 text-green-700 border-green-200"
-                                        }`}>
-                                        {isPending ? <AlertCircle size={12} /> : isPOIssued ? <Clock size={12} /> : isProcessing ? <Package size={12} /> : <CheckCircle size={12} />}
-                                        {isPending ? "Belum Disetujui" : isPOIssued ? "Sudah Approve" : isProcessing ? "Diproses" : "Dikirim"}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        <span className="text-sm font-medium text-gray-700">{order.stokis.name}</span>
-                                        {order.stokis.address && (
-                                            <p className="text-xs text-gray-500 truncate max-w-[150px]">{order.stokis.address}</p>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-bold text-blue-600 text-sm">
-                                            {formatCurrency(Number(order.totalAmount))}
-                                        </span>
-                                        <ChevronRight size={16} className="text-gray-400" />
-                                    </div>
-                                </div>
-                                {isShipped && order.shippedAt && (
-                                    <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
-                                        <Truck size={12} />
-                                        Dikirim {formatDate(order.shippedAt)}
-                                    </p>
-                                )}
-                            </div>
-                        )
-                    })}
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-gray-50 border-b">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tanggal</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nama Stokis</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {filteredOrders.map((order) => {
+                                    const isPending = order.status === "PENDING_PUSAT"
+                                    const isPOIssued = order.status === "PO_ISSUED"
+                                    const isProcessing = order.status === "PROCESSING"
+                                    const isShipped = order.status === "SHIPPED"
+                                    const statusLabel = isPending ? "Belum Approve" : isPOIssued ? "Sudah Approve" : isProcessing ? "Sedang Diproses" : "Dikirim"
+                                    const statusColor = isPending ? "bg-amber-100 text-amber-700" :
+                                        isPOIssued ? "bg-blue-100 text-blue-700" :
+                                            isProcessing ? "bg-purple-100 text-purple-700" :
+                                                "bg-green-100 text-green-700"
+                                    return (
+                                        <tr
+                                            key={order.id}
+                                            onClick={() => setSelectedOrder(order)}
+                                            className="hover:bg-gray-50 transition-colors cursor-pointer"
+                                        >
+                                            <td className="px-4 py-3">
+                                                <p className="text-sm text-gray-700">{formatDate(order.createdAt)}</p>
+                                                <p className="text-xs text-gray-400">{order.orderNumber}</p>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <p className="text-sm font-medium text-gray-900">{order.stokis.name}</p>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+                                                    {isPending ? <AlertCircle size={12} /> : isPOIssued ? <Clock size={12} /> : isProcessing ? <Package size={12} /> : <CheckCircle size={12} />}
+                                                    {statusLabel}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
@@ -328,7 +349,7 @@ export default function GudangPOMasukPage() {
                                 <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
                                     <AlertCircle size={18} className="text-amber-600 flex-shrink-0" />
                                     <div>
-                                        <p className="text-sm font-medium text-amber-800">Belum Disetujui</p>
+                                        <p className="text-sm font-medium text-amber-800">Belum Approve</p>
                                         <p className="text-xs text-amber-600">PO ini masih menunggu persetujuan dari Pusat/Finance</p>
                                     </div>
                                 </div>
