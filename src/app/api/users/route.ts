@@ -37,8 +37,10 @@ export async function GET(request: Request) {
         } else if (userRole === "FINANCE") {
             // Finance Pusat can only see Stokis in Pusat area (dcId = null)
             where = { role: "STOKIS", dcId: null }
+        } else if (userRole === "PUSAT") {
+            // PUSAT can only see FINANCE and GUDANG users
+            where = { role: { in: ["FINANCE", "GUDANG"] } }
         }
-        // PUSAT and FINANCE_ALL see all users (no where filter)
 
         // Apply role filter from query param
         if (filterRole) {
@@ -88,6 +90,10 @@ export async function POST(request: Request) {
 
         if (session.user.role === "FINANCE" && role !== "STOKIS") {
             return NextResponse.json({ error: "Finance hanya bisa membuat user Stokis" }, { status: 403 })
+        }
+
+        if (session.user.role === "PUSAT" && !["FINANCE", "GUDANG"].includes(role)) {
+            return NextResponse.json({ error: "Pusat hanya bisa membuat user Finance & Gudang" }, { status: 403 })
         }
 
         // Validation
