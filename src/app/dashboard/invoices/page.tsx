@@ -210,13 +210,13 @@ export default function InvoicesPage() {
                     <h2 className="font-semibold text-gray-800">Daftar Invoice</h2>
                     <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                             <input
                                 type="text"
                                 placeholder="Cari invoice..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="pl-9 pr-4 py-2 border rounded-lg w-full sm:w-64 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                className="h-10 pl-9 pr-4 border rounded-lg w-full sm:w-64 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                             />
                         </div>
                         {role === "FINANCE_ALL" && dcList.length > 0 && (
@@ -225,7 +225,7 @@ export default function InvoicesPage() {
                                 <select
                                     value={dcFilter}
                                     onChange={(e) => setDcFilter(e.target.value)}
-                                    className="pl-9 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 bg-white text-sm"
+                                    className="h-10 pl-9 pr-4 border rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
                                 >
                                     <option value="">Semua Area DC</option>
                                     {dcList.map(dc => (
@@ -237,7 +237,7 @@ export default function InvoicesPage() {
                         <select
                             value={filter}
                             onChange={(e) => setFilter(e.target.value)}
-                            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
+                            className="h-10 px-4 border rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
                         >
                             <option value="ALL">Semua Status</option>
                             <option value="PAID">Lunas</option>
