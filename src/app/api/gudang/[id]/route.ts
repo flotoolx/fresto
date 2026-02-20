@@ -3,6 +3,33 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
+export async function GET(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const session = await getServerSession(authOptions)
+        if (!session?.user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        const { id } = await params
+        const gudang = await prisma.gudang.findUnique({
+            where: { id },
+            select: { id: true, name: true, code: true, address: true, isActive: true },
+        })
+
+        if (!gudang) {
+            return NextResponse.json({ error: "Gudang tidak ditemukan" }, { status: 404 })
+        }
+
+        return NextResponse.json(gudang)
+    } catch (error) {
+        console.error("Error fetching gudang:", error)
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    }
+}
+
 export async function PUT(
     request: Request,
     { params }: { params: Promise<{ id: string }> }

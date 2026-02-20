@@ -1,4 +1,4 @@
-import { PrismaClient, Role, StokisOrderStatus, InvoiceStatus, PaymentMethod, MitraOrderStatus } from '@prisma/client'
+import { PrismaClient, Role, StokisOrderStatus, InvoiceStatus, PaymentMethod, MitraOrderStatus, GudangTransactionType } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -26,6 +26,11 @@ async function main() {
         where: { code: 'GDG-KERING' },
         update: {},
         create: { name: 'Gudang Kering', code: 'GDG-KERING', address: 'Jakarta Timur' },
+    })
+    const gudangBumbu = await prisma.gudang.upsert({
+        where: { code: 'GDG-BUMBU' },
+        update: {},
+        create: { name: 'Gudang Bumbu', code: 'GDG-BUMBU', address: 'Jakarta Selatan' },
     })
 
     // 2. Create Products
@@ -69,11 +74,26 @@ async function main() {
         create: { name: 'Manager Pusat', email: 'finance@dfresto.com', password: hashedPassword, role: Role.FINANCE, phone: '0822222222' }
     })
 
-    // Gudang Staff
+    // Gudang Staff (4 users — 1 per gudang)
     await prisma.user.upsert({
         where: { email: 'gudang.ayam@dfresto.com' },
-        update: {},
+        update: { gudangId: gudangAyam.id },
         create: { name: 'Staff Gudang Ayam', email: 'gudang.ayam@dfresto.com', password: hashedPassword, role: Role.GUDANG, gudangId: gudangAyam.id }
+    })
+    await prisma.user.upsert({
+        where: { email: 'gudang.bumbu@dfresto.com' },
+        update: { gudangId: gudangBumbu.id },
+        create: { name: 'Staff Gudang Bumbu', email: 'gudang.bumbu@dfresto.com', password: hashedPassword, role: Role.GUDANG, gudangId: gudangBumbu.id }
+    })
+    await prisma.user.upsert({
+        where: { email: 'gudang.kering@dfresto.com' },
+        update: { gudangId: gudangKering.id },
+        create: { name: 'Staff Gudang Kering', email: 'gudang.kering@dfresto.com', password: hashedPassword, role: Role.GUDANG, gudangId: gudangKering.id }
+    })
+    await prisma.user.upsert({
+        where: { email: 'gudang.tepung@dfresto.com' },
+        update: { gudangId: gudangTepung.id },
+        create: { name: 'Staff Gudang Tepung', email: 'gudang.tepung@dfresto.com', password: hashedPassword, role: Role.GUDANG, gudangId: gudangTepung.id }
     })
 
     // 4. Create DC (7 DCs)
@@ -442,14 +462,58 @@ async function main() {
         } // end for j (orders per stokis)
     } // end for stokisId
 
+    // 8. Seed Sample Gudang Transactions (Gudang Ayam)
+    console.log('📦 Creating sample Gudang Transactions...')
+    await prisma.gudangTransaction.deleteMany({ where: { notes: { startsWith: 'Dummy' } } })
+
+    const gudangAyamUser = await prisma.user.findFirst({ where: { email: 'gudang.ayam@dfresto.com' } })
+    if (gudangAyamUser) {
+        const suppliers = ['PT Sumber Ayam', 'CV Ayam Jaya', 'UD Peternakan Makmur']
+        for (let i = 0; i < 10; i++) {
+            const txDate = new Date()
+            txDate.setDate(txDate.getDate() - randomInt(0, 30))
+            // Masuk Ayam
+            await prisma.gudangTransaction.create({
+                data: {
+                    gudangId: gudangAyam.id,
+                    type: GudangTransactionType.MASUK,
+                    transactionDate: txDate,
+                    createdBy: gudangAyamUser.id,
+                    supplierName: randomItem(suppliers),
+                    suratJalan: `SJ-${String(1000 + i).padStart(4, '0')}`,
+                    ekor: randomInt(100, 500),
+                    kg: randomInt(200, 1000),
+                    notes: 'Dummy masuk ayam'
+                }
+            })
+        }
+        for (let i = 0; i < 8; i++) {
+            const txDate = new Date()
+            txDate.setDate(txDate.getDate() - randomInt(0, 30))
+            // Keluar Ayam
+            await prisma.gudangTransaction.create({
+                data: {
+                    gudangId: gudangAyam.id,
+                    type: GudangTransactionType.KELUAR,
+                    transactionDate: txDate,
+                    createdBy: gudangAyamUser.id,
+                    userName: gudangAyamUser.name,
+                    ekor: randomInt(50, 200),
+                    barangKeluar: randomItem(['Ayam Potong', 'Ayam Fillet', 'Sayap Ayam']),
+                    notes: 'Dummy keluar ayam'
+                }
+            })
+        }
+    }
+
     console.log('✅ Dummy Data Generation Completed!')
     console.log('   - 7 DCs (Palembang, Makassar, Medan, Bengkulu, Pekanbaru, Jatim, Jateng)')
     console.log('   - 7 Finance DC (1 per area)')
     console.log('   - 1 Finance All Area')
     console.log('   - 14 Stokis DC (2 per DC: stokis1-14)')
-    console.log('   - 4 Stokis Pusat (tanpa DC: stokis15-18)')
-    console.log('   - 24 Mitra (mitra1-20 DC, mitra21-24 Pusat)')
-    console.log('   - 54 Orders (3 per Stokis, 42 DC + 12 Pusat)')
+    console.log('   - 4 Gudang Users (Ayam, Bumbu, Kering, Tepung)')
+    console.log('   - 4 Gudang Entities (GDG-AYAM, GDG-BUMBU, GDG-KERING, GDG-TEPUNG)')
+    console.log('   - Sample Gudang Transactions (Gudang Ayam)')
     console.log('   - Password all users: password123')
 }
 

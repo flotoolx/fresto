@@ -18,10 +18,40 @@ import {
     Store,
     HelpCircle,
     CreditCard,
-    FileText
+    FileText,
+    ArrowDownCircle,
+    ArrowUpCircle,
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import Image from "next/image"
+
+// Gudang-specific menus based on gudang code
+const gudangMenusByCode: Record<string, { label: string; href: string; icon: React.ReactNode }[]> = {
+    "GDG-AYAM": [
+        { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
+        { label: "Gudang Ayam", href: "/dashboard/gudang-ayam", icon: <Warehouse size={20} /> },
+        { label: "PO Masuk", href: "/dashboard/po-masuk", icon: <ShoppingCart size={20} /> },
+        { label: "Inventory", href: "/dashboard/inventory", icon: <Package size={20} /> },
+    ],
+    "GDG-BUMBU": [
+        { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
+        { label: "Gudang Bumbu", href: "/dashboard/gudang-bumbu", icon: <Warehouse size={20} /> },
+        { label: "PO Masuk", href: "/dashboard/po-masuk", icon: <ShoppingCart size={20} /> },
+        { label: "Inventory", href: "/dashboard/inventory", icon: <Package size={20} /> },
+    ],
+    "GDG-KERING": [
+        { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
+        { label: "Gudang Kering", href: "/dashboard/gudang-kering", icon: <Warehouse size={20} /> },
+        { label: "PO Masuk", href: "/dashboard/po-masuk", icon: <ShoppingCart size={20} /> },
+        { label: "Inventory", href: "/dashboard/inventory", icon: <Package size={20} /> },
+    ],
+    "GDG-TEPUNG": [
+        { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
+        { label: "Gudang Tepung", href: "/dashboard/gudang-tepung", icon: <Warehouse size={20} /> },
+        { label: "PO Masuk", href: "/dashboard/po-masuk", icon: <ShoppingCart size={20} /> },
+        { label: "Inventory", href: "/dashboard/inventory", icon: <Package size={20} /> },
+    ],
+}
 
 const roleMenus: Record<string, { label: string; href: string; icon: React.ReactNode }[]> = {
     PUSAT: [
@@ -102,13 +132,33 @@ export default function Sidebar() {
     const { data: session } = useSession()
     const pathname = usePathname()
     const [mobileOpen, setMobileOpen] = useState(false)
+    const [gudangCode, setGudangCode] = useState<string | null>(null)
 
     const role = session?.user?.role || "MITRA"
-    const menus = roleMenus[role] || roleMenus.MITRA
     const accentColor = roleAccentColors[role] || "bg-blue-500"
+
+    // For GUDANG role, use gudang-specific menus if code is known
+    const menus = role === "GUDANG" && gudangCode && gudangMenusByCode[gudangCode]
+        ? gudangMenusByCode[gudangCode]
+        : roleMenus[role] || roleMenus.MITRA
 
     // Badge count for GUDANG PO Masuk
     const [poBadgeCount, setPoBadgeCount] = useState(0)
+
+    // Fetch gudang code for dynamic sidebar
+    useEffect(() => {
+        if (role !== "GUDANG" || !session?.user?.gudangId) return
+        const fetchGudangCode = async () => {
+            try {
+                const res = await fetch(`/api/gudang/${session.user.gudangId}`)
+                if (res.ok) {
+                    const data = await res.json()
+                    setGudangCode(data.code || null)
+                }
+            } catch { /* ignore */ }
+        }
+        fetchGudangCode()
+    }, [role, session?.user?.gudangId])
 
     useEffect(() => {
         if (role !== "GUDANG") return

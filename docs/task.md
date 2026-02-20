@@ -659,3 +659,27 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 - [x] PO Masuk: ganti filter tanggal raw ke periode style reports (7/30/90/365 Hari + Custom toggle) ✅
 - [x] Pembayaran: MANAGER_PUSAT hanya view-only (sembunyikan kolom Action, tombol Bayar, payment modal) ✅
 - [x] PO Masuk GUDANG: filter API hanya tampilkan PO dari Stokis Area Pusat (dcId=null) ✅
+
+## Fase Gudang Roles — 20 Februari 2026
+
+### Fase A: Gudang Ayam (Database + API + Frontend + Sidebar)
+- [x] Tambah `GudangTransactionType` enum (MASUK, KELUAR, PEMAKAIAN, PRODUKSI) ke schema.prisma
+- [x] Tambah model `GudangTransaction` dengan field universal (supplier, ekor, kg, qty, unit, category, dll.)
+- [x] Tambah relasi `transactions` ke model `Gudang`
+- [x] Prisma generate + db push ✅
+- [x] Tambah entity `Gudang Bumbu` (GDG-BUMBU) ke seed.ts
+- [x] Tambah 4 user gudang (ayam, bumbu, kering, tepung) ke seed.ts
+- [x] Tambah sample `GudangTransaction` (10 masuk + 8 keluar) untuk Gudang Ayam ke seed.ts
+- [x] Buat API `GET/POST /api/gudang-transactions` — scoped by gudangId dari session
+- [x] Buat API `DELETE /api/gudang-transactions/[id]` — verifikasi ownership gudangId
+- [x] Buat API `GET /api/gudang-inventory` — summary kalkulasi stok (masuk - keluar)
+- [x] Tambah `GET /api/gudang/[id]` — endpoint untuk fetch kode gudang
+- [x] Buat halaman `/dashboard/gudang-ayam` dengan 3 tab: Masuk Ayam, Keluar Ayam, Inventory
+- [x] Form input Masuk Ayam: Tanggal, Surat Jalan, Supplier, Ekor, Kg, Catatan
+- [x] Form input Keluar Ayam: Tanggal, Ekor, Barang Keluar, Catatan
+- [x] Tabel data transaksi dengan search/filter
+- [x] Inventory tab: summary cards + tabel ringkasan (Total Masuk, Total Keluar, Stok Saat Ini)
+- [x] Update Sidebar.tsx: menu dinamis berdasarkan kode gudang (GDG-AYAM, GDG-BUMBU, GDG-KERING, GDG-TEPUNG)
+- [x] Sidebar fetch gudang code via `/api/gudang/[id]` untuk menentukan menu yang tampil
+- [x] Build sukses ✅
+- [x] Seed sukses (4 gudang user, 4 entity, sample transaksi) ✅
