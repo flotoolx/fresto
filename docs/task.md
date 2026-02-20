@@ -683,3 +683,4 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 - [x] Sidebar fetch gudang code via `/api/gudang/[id]` untuk menentukan menu yang tampil
 - [x] Build sukses ✅
 - [x] Seed sukses (4 gudang user, 4 entity, sample transaksi) ✅
+- [x] Git commit ✅ `3862cd5`

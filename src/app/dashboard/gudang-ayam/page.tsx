@@ -10,7 +10,7 @@ interface GudangTransaction {
     supplierName: string | null
     suratJalan: string | null
     ekor: number | null
-    kg: number | null
+    kg: string | number | null
     barangKeluar: string | null
     userName: string | null
     notes: string | null
@@ -78,7 +78,7 @@ export default function GudangAyamPage() {
         const masuk = transactions.filter(t => t.type === "MASUK")
         const keluar = transactions.filter(t => t.type === "KELUAR")
         const totalMasukEkor = masuk.reduce((sum, t) => sum + (t.ekor || 0), 0)
-        const totalMasukKg = masuk.reduce((sum, t) => sum + (t.kg || 0), 0)
+        const totalMasukKg = masuk.reduce((sum, t) => sum + Number(t.kg || 0), 0)
         const totalKeluarEkor = keluar.reduce((sum, t) => sum + (t.ekor || 0), 0)
         return {
             totalMasukEkor,
@@ -175,7 +175,7 @@ export default function GudangAyamPage() {
     const formatDate = (date: string) =>
         new Date(date).toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" })
 
-    const formatNumber = (n: number) => n.toLocaleString("id-ID")
+    const formatNumber = (n: number) => Number.isInteger(n) ? n.toLocaleString("id-ID") : n.toLocaleString("id-ID", { minimumFractionDigits: 0, maximumFractionDigits: 2 })
 
     const tabs: { key: TabType; label: string; icon: React.ReactNode }[] = [
         { key: "masuk", label: "Masuk Ayam", icon: <ArrowDownCircle size={18} /> },
@@ -201,8 +201,8 @@ export default function GudangAyamPage() {
                         key={tab.key}
                         onClick={() => { setActiveTab(tab.key); setShowForm(false) }}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.key
-                                ? "bg-white text-red-600 shadow-sm"
-                                : "text-gray-500 hover:text-gray-700"
+                            ? "bg-white text-red-600 shadow-sm"
+                            : "text-gray-500 hover:text-gray-700"
                             }`}
                     >
                         {tab.icon}
@@ -390,7 +390,7 @@ export default function GudangAyamPage() {
                                                         <td className="px-4 py-3 text-gray-600 font-mono text-xs">{tx.suratJalan || "-"}</td>
                                                         <td className="px-4 py-3 text-gray-700 font-medium">{tx.supplierName || "-"}</td>
                                                         <td className="px-4 py-3 text-right font-semibold text-green-600">{formatNumber(tx.ekor || 0)}</td>
-                                                        <td className="px-4 py-3 text-right font-semibold text-blue-600">{formatNumber(tx.kg || 0)}</td>
+                                                        <td className="px-4 py-3 text-right font-semibold text-blue-600">{formatNumber(Number(tx.kg || 0))}</td>
                                                     </>
                                                 )}
                                                 {activeTab === "keluar" && (
