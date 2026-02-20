@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Package, ArrowDownCircle, ArrowUpCircle, BarChart3, Plus, Search, Calendar, X, Factory } from "lucide-react"
+import { Package, ArrowDownCircle, ArrowUpCircle, BarChart3, Plus, Search, Calendar, X, Factory, Beaker, FlaskConical, Droplets } from "lucide-react"
 
 interface GudangTransaction {
     id: string
@@ -17,222 +17,247 @@ interface GudangTransaction {
     userName: string | null
     notes: string | null
     category: string | null
+    jenisBumbu: string | null
     createdAt: string
 }
 
-type TabType = "masuk" | "keluar" | "produksi" | "inventory"
+type SectionType = "bahan_baku" | "bumbu_jadi"
+type BahanBakuTab = "pemakaian" | "masuk" | "inventory"
+type BumbuJenis = "BIANG" | "TEPUNG" | "MARINASI"
+type BumbuJadiOp = "masuk" | "keluar" | "inventory"
 
 export default function GudangBumbuPage() {
     const [transactions, setTransactions] = useState<GudangTransaction[]>([])
     const [loading, setLoading] = useState(true)
-    const [activeTab, setActiveTab] = useState<TabType>("masuk")
+    const [section, setSection] = useState<SectionType>("bahan_baku")
+    const [bbTab, setBbTab] = useState<BahanBakuTab>("pemakaian")
+    const [bjJenis, setBjJenis] = useState<BumbuJenis>("BIANG")
+    const [bjOp, setBjOp] = useState<BumbuJadiOp>("masuk")
     const [search, setSearch] = useState("")
     const [showForm, setShowForm] = useState(false)
     const [submitting, setSubmitting] = useState(false)
 
-    const [masukForm, setMasukForm] = useState({
-        transactionDate: new Date().toISOString().split("T")[0],
-        supplierName: "",
-        suratJalan: "",
-        productName: "",
-        kemasan: "",
-        qty: "",
-        unit: "kg",
-        category: "BAHAN_BAKU_BUMBU",
-        notes: ""
-    })
+    const resetDate = () => new Date().toISOString().split("T")[0]
 
-    const [keluarForm, setKeluarForm] = useState({
-        transactionDate: new Date().toISOString().split("T")[0],
-        productName: "",
-        qty: "",
-        unit: "kg",
-        barangKeluar: "",
-        category: "BUMBU_JADI",
-        notes: ""
-    })
-
-    const [produksiForm, setProduksiForm] = useState({
-        transactionDate: new Date().toISOString().split("T")[0],
-        productName: "",
-        qty: "",
-        unit: "kg",
-        category: "BUMBU_JADI",
-        notes: ""
-    })
+    const [pemakaianForm, setPemakaianForm] = useState({ transactionDate: resetDate(), productName: "", kemasan: "", qty: "", unit: "kg", notes: "" })
+    const [masukSupplierForm, setMasukSupplierForm] = useState({ transactionDate: resetDate(), supplierName: "", suratJalan: "", productName: "", kemasan: "", qty: "", unit: "kg", notes: "" })
+    const [masukHasilForm, setMasukHasilForm] = useState({ transactionDate: resetDate(), jenisBumbu: "", qty: "", unit: "kg", notes: "" })
+    const [bjMasukForm, setBjMasukForm] = useState({ transactionDate: resetDate(), productName: "", qty: "", unit: "kg", notes: "" })
+    const [bjKeluarForm, setBjKeluarForm] = useState({ transactionDate: resetDate(), productName: "", qty: "", unit: "kg", barangKeluar: "", notes: "" })
 
     const fetchTransactions = async () => {
         try {
-            let typeFilter = ""
-            if (activeTab === "masuk") typeFilter = "&type=MASUK"
-            else if (activeTab === "keluar") typeFilter = "&type=KELUAR"
-            else if (activeTab === "produksi") typeFilter = "&type=PRODUKSI"
-            const res = await fetch(`/api/gudang-transactions?${typeFilter}`)
+            const res = await fetch(`/api/gudang-transactions?`)
             if (res.ok) {
                 const data = await res.json()
                 setTransactions(data.transactions || [])
             }
-        } catch (err) {
-            console.error("Fetch error:", err)
-        } finally {
-            setLoading(false)
-        }
+        } catch (err) { console.error("Fetch error:", err) }
+        finally { setLoading(false) }
     }
 
-    useEffect(() => {
-        setLoading(true)
-        fetchTransactions()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTab])
+    useEffect(() => { setLoading(true); fetchTransactions() }, [section, bbTab, bjJenis, bjOp])
 
-    const inventory = useMemo(() => {
-        const masuk = transactions.filter(t => t.type === "MASUK")
-        const keluar = transactions.filter(t => t.type === "KELUAR")
-        const produksi = transactions.filter(t => t.type === "PRODUKSI")
-        return {
-            totalMasukQty: masuk.reduce((s, t) => s + Number(t.qty || 0), 0),
-            totalKeluarQty: keluar.reduce((s, t) => s + Number(t.qty || 0), 0),
-            totalProduksiQty: produksi.reduce((s, t) => s + Number(t.qty || 0), 0),
-            stokQty: masuk.reduce((s, t) => s + Number(t.qty || 0), 0) - keluar.reduce((s, t) => s + Number(t.qty || 0), 0),
+    // Filter transactions based on current view
+    const viewTransactions = useMemo(() => {
+        if (section === "bahan_baku") {
+            if (bbTab === "pemakaian") return transactions.filter(t => t.type === "PEMAKAIAN" && t.category === "BAHAN_BAKU_BUMBU")
+            if (bbTab === "masuk") return transactions.filter(t => (t.type === "MASUK" || t.type === "PRODUKSI") && t.category === "BAHAN_BAKU_BUMBU")
+            if (bbTab === "inventory") return transactions.filter(t => t.category === "BAHAN_BAKU_BUMBU")
+        } else {
+            if (bjOp === "masuk") return transactions.filter(t => t.type === "MASUK" && t.category === "BUMBU_JADI" && t.jenisBumbu === bjJenis)
+            if (bjOp === "keluar") return transactions.filter(t => t.type === "KELUAR" && t.category === "BUMBU_JADI" && t.jenisBumbu === bjJenis)
+            if (bjOp === "inventory") return transactions.filter(t => t.category === "BUMBU_JADI" && t.jenisBumbu === bjJenis)
         }
-    }, [transactions])
+        return []
+    }, [transactions, section, bbTab, bjJenis, bjOp])
+
+    const filteredTransactions = useMemo(() => {
+        if (!search) return viewTransactions
+        const q = search.toLowerCase()
+        return viewTransactions.filter(t =>
+            (t.supplierName?.toLowerCase().includes(q)) || (t.productName?.toLowerCase().includes(q)) ||
+            (t.barangKeluar?.toLowerCase().includes(q)) || (t.notes?.toLowerCase().includes(q))
+        )
+    }, [viewTransactions, search])
 
     const inventoryByProduct = useMemo(() => {
-        const map: Record<string, { masuk: number; keluar: number; produksi: number; unit: string; category: string }> = {}
-        transactions.forEach(t => {
+        const src = section === "bahan_baku"
+            ? transactions.filter(t => t.category === "BAHAN_BAKU_BUMBU")
+            : transactions.filter(t => t.category === "BUMBU_JADI" && t.jenisBumbu === bjJenis)
+        const map: Record<string, { masuk: number; keluar: number; pemakaian: number; produksi: number; unit: string }> = {}
+        src.forEach(t => {
             const name = t.productName || t.barangKeluar || "Lainnya"
-            if (!map[name]) map[name] = { masuk: 0, keluar: 0, produksi: 0, unit: t.unit || "kg", category: t.category || "-" }
+            if (!map[name]) map[name] = { masuk: 0, keluar: 0, pemakaian: 0, produksi: 0, unit: t.unit || "kg" }
             if (t.type === "MASUK") map[name].masuk += Number(t.qty || 0)
             if (t.type === "KELUAR") map[name].keluar += Number(t.qty || 0)
+            if (t.type === "PEMAKAIAN") map[name].pemakaian += Number(t.qty || 0)
             if (t.type === "PRODUKSI") map[name].produksi += Number(t.qty || 0)
         })
         return Object.entries(map).map(([name, d]) => ({
-            name, ...d, stok: d.masuk + d.produksi - d.keluar
+            name, ...d,
+            stok: section === "bahan_baku"
+                ? d.masuk + d.produksi - d.keluar - d.pemakaian
+                : d.masuk + d.produksi - d.keluar
         }))
-    }, [transactions])
+    }, [transactions, section, bjJenis])
 
-    const filteredTransactions = useMemo(() => {
-        if (!search) return transactions
-        const q = search.toLowerCase()
-        return transactions.filter(t =>
-            (t.supplierName && t.supplierName.toLowerCase().includes(q)) ||
-            (t.productName && t.productName.toLowerCase().includes(q)) ||
-            (t.barangKeluar && t.barangKeluar.toLowerCase().includes(q)) ||
-            (t.notes && t.notes.toLowerCase().includes(q))
-        )
-    }, [transactions, search])
-
-    const handleSubmit = async (e: React.FormEvent, type: string, form: Record<string, string>, resetFn: () => void) => {
+    const handleSubmit = async (e: React.FormEvent, type: string, category: string, form: Record<string, string>, jenisBumbu?: string) => {
         e.preventDefault()
         setSubmitting(true)
         try {
             const res = await fetch("/api/gudang-transactions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
+                method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    type,
+                    type, category,
                     transactionDate: form.transactionDate,
                     supplierName: form.supplierName || undefined,
                     suratJalan: form.suratJalan || undefined,
-                    productName: form.productName,
+                    productName: form.productName || undefined,
                     kemasan: form.kemasan || undefined,
                     qty: parseFloat(form.qty) || 0,
                     unit: form.unit,
                     barangKeluar: form.barangKeluar || undefined,
-                    category: form.category,
+                    jenisBumbu: jenisBumbu || form.jenisBumbu || undefined,
                     notes: form.notes
                 })
             })
-            if (res.ok) {
-                setShowForm(false)
-                resetFn()
-                fetchTransactions()
-            } else {
-                const data = await res.json()
-                alert(data.error || "Gagal menyimpan")
-            }
-        } catch {
-            alert("Error menyimpan data")
-        } finally {
-            setSubmitting(false)
-        }
+            if (res.ok) { setShowForm(false); fetchTransactions() }
+            else { const d = await res.json(); alert(d.error || "Gagal menyimpan") }
+        } catch { alert("Error menyimpan data") }
+        finally { setSubmitting(false) }
     }
 
     const handleDelete = async (id: string) => {
         if (!confirm("Hapus transaksi ini?")) return
-        try {
-            const res = await fetch(`/api/gudang-transactions/${id}`, { method: "DELETE" })
-            if (res.ok) fetchTransactions()
-        } catch { alert("Error menghapus") }
+        try { const r = await fetch(`/api/gudang-transactions/${id}`, { method: "DELETE" }); if (r.ok) fetchTransactions() }
+        catch { alert("Error menghapus") }
     }
 
     const formatDate = (d: string) => new Date(d).toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" })
     const formatNumber = (n: number) => Number.isInteger(n) ? n.toLocaleString("id-ID") : n.toLocaleString("id-ID", { maximumFractionDigits: 2 })
 
-    const categoryLabel: Record<string, string> = {
-        BAHAN_BAKU_BUMBU: "Bahan Baku",
-        BUMBU_JADI: "Bumbu Jadi",
+    const isInventoryView = (section === "bahan_baku" && bbTab === "inventory") || (section === "bumbu_jadi" && bjOp === "inventory")
+    const canAddForm = !isInventoryView
+
+    const jenisLabels: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+        BIANG: { label: "Bumbu Biang", icon: <Beaker size={16} />, color: "purple" },
+        TEPUNG: { label: "Bumbu Tepung", icon: <FlaskConical size={16} />, color: "indigo" },
+        MARINASI: { label: "Bumbu Marinasi", icon: <Droplets size={16} />, color: "pink" },
     }
 
-    const tabs: { key: TabType; label: string; icon: React.ReactNode }[] = [
-        { key: "masuk", label: "Bahan Masuk", icon: <ArrowDownCircle size={18} /> },
-        { key: "keluar", label: "Barang Keluar", icon: <ArrowUpCircle size={18} /> },
-        { key: "produksi", label: "Produksi", icon: <Factory size={18} /> },
-        { key: "inventory", label: "Inventory", icon: <BarChart3 size={18} /> },
-    ]
+    // Current form submission label
+    const getFormLabel = () => {
+        if (section === "bahan_baku") {
+            if (bbTab === "pemakaian") return "Catat Pemakaian"
+            return "Tambah Masuk"
+        }
+        return bjOp === "masuk" ? `Tambah Masuk ${jenisLabels[bjJenis].label}` : `Tambah Keluar ${jenisLabels[bjJenis].label}`
+    }
+
+    // Sub-form state for Masuk BBB toggle (supplier vs hasil produksi)
+    const [masukMode, setMasukMode] = useState<"supplier" | "hasil">("supplier")
 
     return (
         <div className="p-4 lg:p-8 max-w-7xl mx-auto">
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <Package className="text-emerald-600" size={28} />
-                    Gudang Bumbu
+                    <Package className="text-emerald-600" size={28} /> Gudang Bumbu
                 </h1>
-                <p className="text-gray-500 text-sm mt-1">Pencatatan bahan baku, produksi bumbu, dan inventory</p>
+                <p className="text-gray-500 text-sm mt-1">Pencatatan bahan baku bumbu & bumbu jadi</p>
             </div>
 
-            <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6 overflow-x-auto">
-                {tabs.map(tab => (
-                    <button key={tab.key} onClick={() => { setActiveTab(tab.key); setShowForm(false) }}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.key ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
-                            }`}>
-                        {tab.icon}{tab.label}
-                    </button>
-                ))}
+            {/* Section Tabs */}
+            <div className="flex gap-2 mb-4">
+                <button onClick={() => { setSection("bahan_baku"); setBbTab("pemakaian"); setShowForm(false) }}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${section === "bahan_baku" ? "bg-amber-500 text-white shadow-lg shadow-amber-200" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                    <Factory size={18} /> Bahan Baku Bumbu
+                </button>
+                <button onClick={() => { setSection("bumbu_jadi"); setBjJenis("BIANG"); setBjOp("masuk"); setShowForm(false) }}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${section === "bumbu_jadi" ? "bg-purple-600 text-white shadow-lg shadow-purple-200" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                    <Beaker size={18} /> Bumbu Jadi
+                </button>
             </div>
 
-            {/* Inventory */}
-            {activeTab === "inventory" && (
+            {/* Bahan Baku Sub-tabs */}
+            {section === "bahan_baku" && (
+                <div className="flex gap-1 bg-amber-50 p-1 rounded-xl mb-4 overflow-x-auto border border-amber-100">
+                    {([
+                        { key: "pemakaian" as BahanBakuTab, label: "Pemakaian BBB", icon: <ArrowUpCircle size={16} /> },
+                        { key: "masuk" as BahanBakuTab, label: "Masuk BBB", icon: <ArrowDownCircle size={16} /> },
+                        { key: "inventory" as BahanBakuTab, label: "Inventory BBB", icon: <BarChart3 size={16} /> },
+                    ]).map(tab => (
+                        <button key={tab.key} onClick={() => { setBbTab(tab.key); setShowForm(false) }}
+                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${bbTab === tab.key ? "bg-white text-amber-700 shadow-sm" : "text-amber-600/70 hover:text-amber-700"}`}>
+                            {tab.icon}{tab.label}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {/* Bumbu Jadi: Jenis tabs */}
+            {section === "bumbu_jadi" && (
+                <>
+                    <div className="flex gap-1 bg-purple-50 p-1 rounded-xl mb-2 overflow-x-auto border border-purple-100">
+                        {(["BIANG", "TEPUNG", "MARINASI"] as BumbuJenis[]).map(j => (
+                            <button key={j} onClick={() => { setBjJenis(j); setBjOp("masuk"); setShowForm(false) }}
+                                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${bjJenis === j ? "bg-white text-purple-700 shadow-sm" : "text-purple-500/70 hover:text-purple-700"}`}>
+                                {jenisLabels[j].icon}{jenisLabels[j].label}
+                            </button>
+                        ))}
+                    </div>
+                    {/* Operation sub-tabs */}
+                    <div className="flex gap-1 bg-gray-50 p-1 rounded-xl mb-4 border border-gray-100">
+                        {([
+                            { key: "masuk" as BumbuJadiOp, label: "Masuk", icon: <ArrowDownCircle size={15} /> },
+                            { key: "keluar" as BumbuJadiOp, label: "Keluar", icon: <ArrowUpCircle size={15} /> },
+                            { key: "inventory" as BumbuJadiOp, label: "Inventory", icon: <BarChart3 size={15} /> },
+                        ]).map(tab => (
+                            <button key={tab.key} onClick={() => { setBjOp(tab.key); setShowForm(false) }}
+                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${bjOp === tab.key ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+                                {tab.icon}{tab.label}
+                            </button>
+                        ))}
+                    </div>
+                </>
+            )}
+
+            {/* Inventory View */}
+            {isInventoryView && (
                 <>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-5 text-white">
-                            <p className="text-green-100 text-xs font-medium">Total Masuk</p>
-                            <p className="text-2xl font-bold mt-1">{formatNumber(inventory.totalMasukQty)}</p>
-                        </div>
-                        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-5 text-white">
-                            <p className="text-orange-100 text-xs font-medium">Total Keluar</p>
-                            <p className="text-2xl font-bold mt-1">{formatNumber(inventory.totalKeluarQty)}</p>
-                        </div>
-                        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white">
-                            <p className="text-blue-100 text-xs font-medium">Total Produksi</p>
-                            <p className="text-2xl font-bold mt-1">{formatNumber(inventory.totalProduksiQty)}</p>
-                        </div>
-                        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-5 text-white">
-                            <p className="text-purple-100 text-xs font-medium">Stok Saat Ini</p>
-                            <p className="text-2xl font-bold mt-1">{formatNumber(inventory.stokQty)}</p>
-                        </div>
+                        {(() => {
+                            const items = inventoryByProduct
+                            const totalMasuk = items.reduce((s, i) => s + i.masuk, 0)
+                            const totalKeluar = items.reduce((s, i) => s + i.keluar, 0)
+                            const totalPemakaian = items.reduce((s, i) => s + i.pemakaian, 0)
+                            const totalStok = items.reduce((s, i) => s + i.stok, 0)
+                            const cards = [
+                                { label: "Total Masuk", value: totalMasuk, gradient: "from-green-500 to-green-600", sub: "green" },
+                                { label: "Total Keluar", value: totalKeluar, gradient: "from-orange-500 to-orange-600", sub: "orange" },
+                            ]
+                            if (section === "bahan_baku") cards.push({ label: "Total Pemakaian", value: totalPemakaian, gradient: "from-red-500 to-red-600", sub: "red" })
+                            cards.push({ label: "Stok Saat Ini", value: totalStok, gradient: "from-purple-500 to-purple-600", sub: "purple" })
+                            return cards.map((c, i) => (
+                                <div key={i} className={`bg-gradient-to-br ${c.gradient} rounded-2xl p-5 text-white`}>
+                                    <p className={`text-${c.sub}-100 text-xs font-medium`}>{c.label}</p>
+                                    <p className="text-2xl font-bold mt-1">{formatNumber(c.value)}</p>
+                                </div>
+                            ))
+                        })()}
                     </div>
                     <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Stok per Produk</h3>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                            Stok per Produk {section === "bumbu_jadi" && `— ${jenisLabels[bjJenis].label}`}
+                        </h3>
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="bg-gray-50 border-b border-gray-100">
                                         <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">No</th>
                                         <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Nama Produk</th>
-                                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Kategori</th>
                                         <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Masuk</th>
-                                        <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Produksi</th>
+                                        {section === "bahan_baku" && <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Pemakaian</th>}
                                         <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Keluar</th>
                                         <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Stok</th>
                                         <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Satuan</th>
@@ -240,16 +265,15 @@ export default function GudangBumbuPage() {
                                 </thead>
                                 <tbody>
                                     {inventoryByProduct.length === 0 ? (
-                                        <tr><td colSpan={8} className="text-center py-8 text-gray-400">Belum ada data</td></tr>
+                                        <tr><td colSpan={7} className="text-center py-8 text-gray-400">Belum ada data</td></tr>
                                     ) : inventoryByProduct.map((item, idx) => (
                                         <tr key={item.name} className="border-b border-gray-50 hover:bg-gray-50/50">
                                             <td className="px-4 py-3 text-gray-500">{idx + 1}</td>
                                             <td className="px-4 py-3 text-gray-800 font-medium">{item.name}</td>
-                                            <td className="px-4 py-3"><span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">{categoryLabel[item.category] || item.category}</span></td>
                                             <td className="px-4 py-3 text-right text-green-600 font-semibold">{formatNumber(item.masuk)}</td>
-                                            <td className="px-4 py-3 text-right text-blue-600 font-semibold">{formatNumber(item.produksi)}</td>
+                                            {section === "bahan_baku" && <td className="px-4 py-3 text-right text-red-600 font-semibold">{formatNumber(item.pemakaian)}</td>}
                                             <td className="px-4 py-3 text-right text-orange-600 font-semibold">{formatNumber(item.keluar)}</td>
-                                            <td className="px-4 py-3 text-right text-purple-600 font-bold">{formatNumber(item.stok)}</td>
+                                            <td className={`px-4 py-3 text-right font-bold ${item.stok > 0 ? "text-purple-600" : "text-red-600"}`}>{formatNumber(item.stok)}</td>
                                             <td className="px-4 py-3 text-gray-500">{item.unit}</td>
                                         </tr>
                                     ))}
@@ -260,185 +284,269 @@ export default function GudangBumbuPage() {
                 </>
             )}
 
-            {/* Masuk / Keluar / Produksi */}
-            {activeTab !== "inventory" && (
+            {/* Non-inventory views: search + form + table */}
+            {!isInventoryView && (
                 <>
                     <div className="flex flex-col sm:flex-row gap-3 mb-4">
                         <div className="relative flex-1">
                             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input type="text" placeholder="Cari produk, supplier..."
-                                value={search} onChange={(e) => setSearch(e.target.value)}
+                            <input type="text" placeholder="Cari produk, supplier..." value={search} onChange={e => setSearch(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-300" />
                         </div>
-                        <button onClick={() => setShowForm(!showForm)}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 text-white rounded-xl text-sm font-medium hover:bg-emerald-600 transition-colors shadow-sm">
-                            {showForm ? <X size={18} /> : <Plus size={18} />}
-                            {showForm ? "Tutup Form" : activeTab === "masuk" ? "Tambah Masuk" : activeTab === "produksi" ? "Catat Produksi" : "Tambah Keluar"}
-                        </button>
+                        {canAddForm && (
+                            <button onClick={() => setShowForm(!showForm)}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 text-white rounded-xl text-sm font-medium hover:bg-emerald-600 transition-colors shadow-sm">
+                                {showForm ? <X size={18} /> : <Plus size={18} />}
+                                {showForm ? "Tutup Form" : getFormLabel()}
+                            </button>
+                        )}
                     </div>
 
-                    {/* Form Masuk */}
-                    {showForm && activeTab === "masuk" && (
-                        <form onSubmit={e => handleSubmit(e, "MASUK", masukForm, () => setMasukForm({ ...masukForm, supplierName: "", suratJalan: "", productName: "", kemasan: "", qty: "", notes: "" }))}
-                            className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 shadow-sm">
+                    {/* FORMS */}
+                    {/* Pemakaian BBB Form */}
+                    {showForm && section === "bahan_baku" && bbTab === "pemakaian" && (
+                        <form onSubmit={e => handleSubmit(e, "PEMAKAIAN", "BAHAN_BAKU_BUMBU", pemakaianForm)}
+                            className="bg-white border border-amber-200 rounded-2xl p-6 mb-6 shadow-sm">
                             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                <ArrowDownCircle size={20} className="text-green-500" /> Bahan Masuk (Supplier)
+                                <ArrowUpCircle size={20} className="text-amber-500" /> Pemakaian Bahan Baku Bumbu
                             </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div>
                                     <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal</label>
-                                    <input type="date" value={masukForm.transactionDate} onChange={e => setMasukForm({ ...masukForm, transactionDate: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20" required />
+                                    <input type="date" value={pemakaianForm.transactionDate} onChange={e => setPemakaianForm({ ...pemakaianForm, transactionDate: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Surat Jalan</label>
-                                    <input type="text" value={masukForm.suratJalan} onChange={e => setMasukForm({ ...masukForm, suratJalan: e.target.value })}
-                                        placeholder="No. SJ" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20" />
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Nama Produk</label>
+                                    <input type="text" value={pemakaianForm.productName} onChange={e => setPemakaianForm({ ...pemakaianForm, productName: e.target.value })}
+                                        placeholder="Bawang Merah, Cabe, dll" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Supplier</label>
-                                    <input type="text" value={masukForm.supplierName} onChange={e => setMasukForm({ ...masukForm, supplierName: e.target.value })}
-                                        placeholder="Nama supplier" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20" required />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Nama Bahan</label>
-                                    <input type="text" value={masukForm.productName} onChange={e => setMasukForm({ ...masukForm, productName: e.target.value })}
-                                        placeholder="Nama bahan baku" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20" required />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Kategori</label>
-                                    <select value={masukForm.category} onChange={e => setMasukForm({ ...masukForm, category: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
-                                        <option value="BAHAN_BAKU_BUMBU">Bahan Baku Bumbu</option>
-                                        <option value="BUMBU_JADI">Bumbu Jadi</option>
-                                    </select>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Kemasan</label>
+                                    <input type="text" value={pemakaianForm.kemasan} onChange={e => setPemakaianForm({ ...pemakaianForm, kemasan: e.target.value })}
+                                        placeholder="Karung, Pack, dll" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
                                 </div>
                                 <div className="flex gap-2">
                                     <div className="flex-1">
                                         <label className="block text-xs font-medium text-gray-600 mb-1">Jumlah</label>
-                                        <input type="number" step="0.01" value={masukForm.qty} onChange={e => setMasukForm({ ...masukForm, qty: e.target.value })}
-                                            placeholder="0" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20" required />
+                                        <input type="number" step="0.01" value={pemakaianForm.qty} onChange={e => setPemakaianForm({ ...pemakaianForm, qty: e.target.value })}
+                                            placeholder="0" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
                                     </div>
                                     <div className="w-20">
                                         <label className="block text-xs font-medium text-gray-600 mb-1">Satuan</label>
-                                        <select value={masukForm.unit} onChange={e => setMasukForm({ ...masukForm, unit: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
-                                            <option value="kg">Kg</option><option value="liter">Liter</option><option value="pcs">Pcs</option><option value="botol">Botol</option>
+                                        <select value={pemakaianForm.unit} onChange={e => setPemakaianForm({ ...pemakaianForm, unit: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                            <option value="kg">Kg</option><option value="liter">Liter</option><option value="pcs">Pcs</option>
                                         </select>
                                     </div>
                                 </div>
-                                <div className="sm:col-span-2 lg:col-span-3">
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Catatan</label>
-                                    <input type="text" value={masukForm.notes} onChange={e => setMasukForm({ ...masukForm, notes: e.target.value })}
-                                        placeholder="Catatan (opsional)" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20" />
-                                </div>
                             </div>
                             <div className="mt-4 flex justify-end">
-                                <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-green-500 text-white rounded-xl text-sm font-medium hover:bg-green-600 disabled:opacity-50">
-                                    {submitting ? "Menyimpan..." : "Simpan Bahan Masuk"}
+                                <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
+                                    {submitting ? "Menyimpan..." : "Simpan Pemakaian"}
                                 </button>
                             </div>
                         </form>
                     )}
 
-                    {/* Form Keluar */}
-                    {showForm && activeTab === "keluar" && (
-                        <form onSubmit={e => handleSubmit(e, "KELUAR", keluarForm, () => setKeluarForm({ ...keluarForm, productName: "", qty: "", barangKeluar: "", notes: "" }))}
-                            className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 shadow-sm">
+                    {/* Masuk BBB Form (Supplier / Hasil Produksi toggle) */}
+                    {showForm && section === "bahan_baku" && bbTab === "masuk" && (
+                        <div className="bg-white border border-green-200 rounded-2xl p-6 mb-6 shadow-sm">
+                            <div className="flex items-center gap-4 mb-4">
+                                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                    <ArrowDownCircle size={20} className="text-green-500" /> Masuk BBB
+                                </h3>
+                                <div className="flex bg-gray-100 rounded-lg p-0.5">
+                                    <button type="button" onClick={() => setMasukMode("supplier")}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${masukMode === "supplier" ? "bg-white text-gray-800 shadow-sm" : "text-gray-500"}`}>
+                                        Dari Supplier
+                                    </button>
+                                    <button type="button" onClick={() => setMasukMode("hasil")}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${masukMode === "hasil" ? "bg-white text-gray-800 shadow-sm" : "text-gray-500"}`}>
+                                        Hasil Produksi
+                                    </button>
+                                </div>
+                            </div>
+                            {masukMode === "supplier" ? (
+                                <form onSubmit={e => handleSubmit(e, "MASUK", "BAHAN_BAKU_BUMBU", masukSupplierForm)}>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Diterima</label>
+                                            <input type="date" value={masukSupplierForm.transactionDate} onChange={e => setMasukSupplierForm({ ...masukSupplierForm, transactionDate: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Surat Jalan</label>
+                                            <input type="text" value={masukSupplierForm.suratJalan} onChange={e => setMasukSupplierForm({ ...masukSupplierForm, suratJalan: e.target.value })}
+                                                placeholder="No. SJ" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Nama Supplier</label>
+                                            <input type="text" value={masukSupplierForm.supplierName} onChange={e => setMasukSupplierForm({ ...masukSupplierForm, supplierName: e.target.value })}
+                                                placeholder="Nama supplier" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Nama Produk</label>
+                                            <input type="text" value={masukSupplierForm.productName} onChange={e => setMasukSupplierForm({ ...masukSupplierForm, productName: e.target.value })}
+                                                placeholder="Nama bahan baku" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Kemasan</label>
+                                            <input type="text" value={masukSupplierForm.kemasan} onChange={e => setMasukSupplierForm({ ...masukSupplierForm, kemasan: e.target.value })}
+                                                placeholder="Karung, Pack" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <div className="flex-1">
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">Jumlah</label>
+                                                <input type="number" step="0.01" value={masukSupplierForm.qty} onChange={e => setMasukSupplierForm({ ...masukSupplierForm, qty: e.target.value })}
+                                                    placeholder="0" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
+                                            </div>
+                                            <div className="w-20">
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">Satuan</label>
+                                                <select value={masukSupplierForm.unit} onChange={e => setMasukSupplierForm({ ...masukSupplierForm, unit: e.target.value })}
+                                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                                    <option value="kg">Kg</option><option value="liter">Liter</option><option value="pcs">Pcs</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 flex justify-end">
+                                        <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-green-500 text-white rounded-xl text-sm font-medium hover:bg-green-600 disabled:opacity-50">
+                                            {submitting ? "Menyimpan..." : "Simpan Masuk Supplier"}
+                                        </button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <form onSubmit={e => handleSubmit(e, "PRODUKSI", "BAHAN_BAKU_BUMBU", masukHasilForm)}>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal</label>
+                                            <input type="date" value={masukHasilForm.transactionDate} onChange={e => setMasukHasilForm({ ...masukHasilForm, transactionDate: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Jenis Bumbu</label>
+                                            <input type="text" value={masukHasilForm.jenisBumbu} onChange={e => setMasukHasilForm({ ...masukHasilForm, jenisBumbu: e.target.value })}
+                                                placeholder="Bumbu Biang, Tepung, dll" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <div className="flex-1">
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">Jumlah</label>
+                                                <input type="number" step="0.01" value={masukHasilForm.qty} onChange={e => setMasukHasilForm({ ...masukHasilForm, qty: e.target.value })}
+                                                    placeholder="0" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
+                                            </div>
+                                            <div className="w-20">
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">Satuan</label>
+                                                <select value={masukHasilForm.unit} onChange={e => setMasukHasilForm({ ...masukHasilForm, unit: e.target.value })}
+                                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                                    <option value="kg">Kg</option><option value="liter">Liter</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 flex justify-end">
+                                        <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-medium hover:bg-blue-600 disabled:opacity-50">
+                                            {submitting ? "Menyimpan..." : "Simpan Hasil Produksi"}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Bumbu Jadi Masuk Form */}
+                    {showForm && section === "bumbu_jadi" && bjOp === "masuk" && (
+                        <form onSubmit={e => handleSubmit(e, "MASUK", "BUMBU_JADI", bjMasukForm, bjJenis)}
+                            className="bg-white border border-purple-200 rounded-2xl p-6 mb-6 shadow-sm">
                             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                <ArrowUpCircle size={20} className="text-orange-500" /> Barang Keluar
+                                <ArrowDownCircle size={20} className="text-purple-500" /> Masuk {jenisLabels[bjJenis].label}
                             </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div>
                                     <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal</label>
-                                    <input type="date" value={keluarForm.transactionDate} onChange={e => setKeluarForm({ ...keluarForm, transactionDate: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20" required />
+                                    <input type="date" value={bjMasukForm.transactionDate} onChange={e => setBjMasukForm({ ...bjMasukForm, transactionDate: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-gray-600 mb-1">Nama Produk</label>
-                                    <input type="text" value={keluarForm.productName} onChange={e => setKeluarForm({ ...keluarForm, productName: e.target.value })}
-                                        placeholder="Nama produk" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20" required />
+                                    <input type="text" value={bjMasukForm.productName} onChange={e => setBjMasukForm({ ...bjMasukForm, productName: e.target.value })}
+                                        placeholder={`Nama ${jenisLabels[bjJenis].label.toLowerCase()}`} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
                                 </div>
                                 <div className="flex gap-2">
                                     <div className="flex-1">
                                         <label className="block text-xs font-medium text-gray-600 mb-1">Jumlah</label>
-                                        <input type="number" step="0.01" value={keluarForm.qty} onChange={e => setKeluarForm({ ...keluarForm, qty: e.target.value })}
-                                            placeholder="0" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20" required />
+                                        <input type="number" step="0.01" value={bjMasukForm.qty} onChange={e => setBjMasukForm({ ...bjMasukForm, qty: e.target.value })}
+                                            placeholder="0" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
                                     </div>
                                     <div className="w-20">
                                         <label className="block text-xs font-medium text-gray-600 mb-1">Satuan</label>
-                                        <select value={keluarForm.unit} onChange={e => setKeluarForm({ ...keluarForm, unit: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
-                                            <option value="kg">Kg</option><option value="liter">Liter</option><option value="pcs">Pcs</option><option value="botol">Botol</option>
+                                        <select value={bjMasukForm.unit} onChange={e => setBjMasukForm({ ...bjMasukForm, unit: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                            <option value="kg">Kg</option><option value="liter">Liter</option><option value="pcs">Pcs</option>
                                         </select>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Keterangan</label>
-                                    <input type="text" value={keluarForm.barangKeluar} onChange={e => setKeluarForm({ ...keluarForm, barangKeluar: e.target.value })}
-                                        placeholder="Tujuan keluar" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20" />
-                                </div>
-                                <div className="sm:col-span-2">
                                     <label className="block text-xs font-medium text-gray-600 mb-1">Catatan</label>
-                                    <input type="text" value={keluarForm.notes} onChange={e => setKeluarForm({ ...keluarForm, notes: e.target.value })}
-                                        placeholder="Catatan (opsional)" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20" />
+                                    <input type="text" value={bjMasukForm.notes} onChange={e => setBjMasukForm({ ...bjMasukForm, notes: e.target.value })}
+                                        placeholder="Opsional" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                                </div>
+                            </div>
+                            <div className="mt-4 flex justify-end">
+                                <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-purple-500 text-white rounded-xl text-sm font-medium hover:bg-purple-600 disabled:opacity-50">
+                                    {submitting ? "Menyimpan..." : `Simpan Masuk ${jenisLabels[bjJenis].label}`}
+                                </button>
+                            </div>
+                        </form>
+                    )}
+
+                    {/* Bumbu Jadi Keluar Form */}
+                    {showForm && section === "bumbu_jadi" && bjOp === "keluar" && (
+                        <form onSubmit={e => handleSubmit(e, "KELUAR", "BUMBU_JADI", bjKeluarForm, bjJenis)}
+                            className="bg-white border border-orange-200 rounded-2xl p-6 mb-6 shadow-sm">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                <ArrowUpCircle size={20} className="text-orange-500" /> Keluar {jenisLabels[bjJenis].label}
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal</label>
+                                    <input type="date" value={bjKeluarForm.transactionDate} onChange={e => setBjKeluarForm({ ...bjKeluarForm, transactionDate: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Nama Produk</label>
+                                    <input type="text" value={bjKeluarForm.productName} onChange={e => setBjKeluarForm({ ...bjKeluarForm, productName: e.target.value })}
+                                        placeholder={`Nama ${jenisLabels[bjJenis].label.toLowerCase()}`} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
+                                </div>
+                                <div className="flex gap-2">
+                                    <div className="flex-1">
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">Jumlah</label>
+                                        <input type="number" step="0.01" value={bjKeluarForm.qty} onChange={e => setBjKeluarForm({ ...bjKeluarForm, qty: e.target.value })}
+                                            placeholder="0" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
+                                    </div>
+                                    <div className="w-20">
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">Satuan</label>
+                                        <select value={bjKeluarForm.unit} onChange={e => setBjKeluarForm({ ...bjKeluarForm, unit: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                            <option value="kg">Kg</option><option value="liter">Liter</option><option value="pcs">Pcs</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Tujuan Keluar</label>
+                                    <input type="text" value={bjKeluarForm.barangKeluar} onChange={e => setBjKeluarForm({ ...bjKeluarForm, barangKeluar: e.target.value })}
+                                        placeholder="Kirim ke..." className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
                                 </div>
                             </div>
                             <div className="mt-4 flex justify-end">
                                 <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 disabled:opacity-50">
-                                    {submitting ? "Menyimpan..." : "Simpan Barang Keluar"}
+                                    {submitting ? "Menyimpan..." : `Simpan Keluar ${jenisLabels[bjJenis].label}`}
                                 </button>
                             </div>
                         </form>
                     )}
 
-                    {/* Form Produksi */}
-                    {showForm && activeTab === "produksi" && (
-                        <form onSubmit={e => handleSubmit(e, "PRODUKSI", produksiForm, () => setProduksiForm({ ...produksiForm, productName: "", qty: "", notes: "" }))}
-                            className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 shadow-sm">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                <Factory size={20} className="text-blue-500" /> Catat Hasil Produksi Bumbu
-                            </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Produksi</label>
-                                    <input type="date" value={produksiForm.transactionDate} onChange={e => setProduksiForm({ ...produksiForm, transactionDate: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20" required />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Nama Bumbu Hasil</label>
-                                    <input type="text" value={produksiForm.productName} onChange={e => setProduksiForm({ ...produksiForm, productName: e.target.value })}
-                                        placeholder="Bumbu Marinasi, Bumbu Ungkep, dll" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20" required />
-                                </div>
-                                <div className="flex gap-2">
-                                    <div className="flex-1">
-                                        <label className="block text-xs font-medium text-gray-600 mb-1">Hasil (Qty)</label>
-                                        <input type="number" step="0.01" value={produksiForm.qty} onChange={e => setProduksiForm({ ...produksiForm, qty: e.target.value })}
-                                            placeholder="0" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20" required />
-                                    </div>
-                                    <div className="w-20">
-                                        <label className="block text-xs font-medium text-gray-600 mb-1">Satuan</label>
-                                        <select value={produksiForm.unit} onChange={e => setProduksiForm({ ...produksiForm, unit: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
-                                            <option value="kg">Kg</option><option value="liter">Liter</option><option value="botol">Botol</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className="sm:col-span-2 lg:col-span-3">
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Catatan</label>
-                                    <input type="text" value={produksiForm.notes} onChange={e => setProduksiForm({ ...produksiForm, notes: e.target.value })}
-                                        placeholder="Catatan produksi" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20" />
-                                </div>
-                            </div>
-                            <div className="mt-4 flex justify-end">
-                                <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-medium hover:bg-blue-600 disabled:opacity-50">
-                                    {submitting ? "Menyimpan..." : "Simpan Hasil Produksi"}
-                                </button>
-                            </div>
-                        </form>
-                    )}
-
-                    {/* Table */}
+                    {/* Data Table */}
                     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
@@ -446,17 +554,17 @@ export default function GudangBumbuPage() {
                                     <tr className="bg-gray-50 border-b border-gray-100">
                                         <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">No</th>
                                         <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Tanggal</th>
-                                        {activeTab === "masuk" && (
+                                        {section === "bahan_baku" && bbTab === "masuk" && (
                                             <>
+                                                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Tipe</th>
                                                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">SJ</th>
                                                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Supplier</th>
                                             </>
                                         )}
                                         <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Produk</th>
-                                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Kategori</th>
                                         <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Qty</th>
                                         <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Satuan</th>
-                                        {activeTab === "keluar" && <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Keterangan</th>}
+                                        {(section === "bumbu_jadi" && bjOp === "keluar") && <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Tujuan</th>}
                                         <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Catatan</th>
                                         <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">Aksi</th>
                                     </tr>
@@ -470,17 +578,19 @@ export default function GudangBumbuPage() {
                                         <tr key={tx.id} className="border-b border-gray-50 hover:bg-gray-50/50">
                                             <td className="px-4 py-3 text-gray-500">{idx + 1}</td>
                                             <td className="px-4 py-3 text-gray-700 whitespace-nowrap"><span className="flex items-center gap-1.5"><Calendar size={14} className="text-gray-400" />{formatDate(tx.transactionDate)}</span></td>
-                                            {activeTab === "masuk" && (
+                                            {section === "bahan_baku" && bbTab === "masuk" && (
                                                 <>
+                                                    <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded text-xs font-medium ${tx.type === "MASUK" ? "bg-green-50 text-green-700" : "bg-blue-50 text-blue-700"}`}>{tx.type === "MASUK" ? "Supplier" : "Hasil Produksi"}</span></td>
                                                     <td className="px-4 py-3 text-gray-600 font-mono text-xs">{tx.suratJalan || "-"}</td>
                                                     <td className="px-4 py-3 text-gray-700 font-medium">{tx.supplierName || "-"}</td>
                                                 </>
                                             )}
-                                            <td className="px-4 py-3 text-gray-800">{tx.productName || "-"}</td>
-                                            <td className="px-4 py-3"><span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">{categoryLabel[tx.category || ""] || tx.category || "-"}</span></td>
-                                            <td className={`px-4 py-3 text-right font-semibold ${activeTab === "masuk" ? "text-green-600" : activeTab === "produksi" ? "text-blue-600" : "text-orange-600"}`}>{formatNumber(Number(tx.qty || 0))}</td>
+                                            <td className="px-4 py-3 text-gray-800">{tx.productName || tx.jenisBumbu || "-"}</td>
+                                            <td className={`px-4 py-3 text-right font-semibold ${tx.type === "MASUK" || tx.type === "PRODUKSI" ? "text-green-600" : tx.type === "PEMAKAIAN" ? "text-red-600" : "text-orange-600"}`}>
+                                                {formatNumber(Number(tx.qty || 0))}
+                                            </td>
                                             <td className="px-4 py-3 text-gray-500">{tx.unit || "-"}</td>
-                                            {activeTab === "keluar" && <td className="px-4 py-3 text-gray-600">{tx.barangKeluar || "-"}</td>}
+                                            {(section === "bumbu_jadi" && bjOp === "keluar") && <td className="px-4 py-3 text-gray-600">{tx.barangKeluar || "-"}</td>}
                                             <td className="px-4 py-3 text-gray-500 text-xs">{tx.notes || "-"}</td>
                                             <td className="px-4 py-3 text-center">
                                                 <button onClick={() => handleDelete(tx.id)} className="text-red-400 hover:text-red-600 text-xs font-medium">Hapus</button>

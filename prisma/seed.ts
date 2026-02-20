@@ -618,70 +618,78 @@ async function main() {
         }
     }
 
-    // 11. Seed Gudang Bumbu Transactions
+    // 11. Seed Gudang Bumbu Transactions (Redesign: Bahan Baku + Bumbu Jadi per jenis)
     console.log('📦 Creating Gudang Bumbu Transactions...')
     const gudangBumbuUser = await prisma.user.findFirst({ where: { email: 'gudang.bumbu@dfresto.com' } })
     if (gudangBumbuUser) {
-        // 3 Masuk bahan baku bumbu
+        // === BAHAN BAKU BUMBU ===
+        // 3 Masuk dari Supplier
         const bahanBumbu = ['Bawang Merah', 'Cabe Rawit', 'Kunyit Segar']
-        const satuanBumbu = ['kg', 'kg', 'kg']
         for (let i = 0; i < 3; i++) {
             const txDate = new Date()
-            txDate.setDate(txDate.getDate() - randomInt(0, 30))
+            txDate.setDate(txDate.getDate() - randomInt(5, 30))
             await prisma.gudangTransaction.create({
                 data: {
-                    gudangId: gudangBumbu.id,
-                    type: GudangTransactionType.MASUK,
-                    transactionDate: txDate,
-                    createdBy: gudangBumbuUser.id,
+                    gudangId: gudangBumbu.id, type: GudangTransactionType.MASUK,
+                    transactionDate: txDate, createdBy: gudangBumbuUser.id,
                     supplierName: randomItem(['CV Rempah Nusantara', 'PT Bumbu Jaya', 'UD Pasar Segar']),
                     suratJalan: `SJ-BMB-${String(100 + i).padStart(4, '0')}`,
-                    productName: bahanBumbu[i],
-                    qty: randomInt(20, 100),
-                    unit: satuanBumbu[i],
-                    category: 'BAHAN_BAKU_BUMBU',
-                    notes: 'Dummy masuk bahan bumbu'
+                    productName: bahanBumbu[i], qty: randomInt(20, 100), unit: 'kg',
+                    category: 'BAHAN_BAKU_BUMBU', notes: 'Dummy masuk supplier'
                 }
             })
         }
-        // 3 Produksi bumbu jadi
-        const hasilBumbu = ['Bumbu Marinasi', 'Bumbu Ungkep', 'Bumbu Saus Pedas']
-        const satuanHasil = ['kg', 'kg', 'liter']
-        for (let i = 0; i < 3; i++) {
-            const txDate = new Date()
-            txDate.setDate(txDate.getDate() - randomInt(0, 20))
-            await prisma.gudangTransaction.create({
-                data: {
-                    gudangId: gudangBumbu.id,
-                    type: GudangTransactionType.PRODUKSI,
-                    transactionDate: txDate,
-                    createdBy: gudangBumbuUser.id,
-                    productName: hasilBumbu[i],
-                    qty: randomInt(10, 50),
-                    unit: satuanHasil[i],
-                    category: 'BUMBU_JADI',
-                    notes: 'Dummy produksi bumbu'
-                }
-            })
-        }
-        // 3 Keluar bumbu jadi
+        // 3 Pemakaian Bahan Baku
         for (let i = 0; i < 3; i++) {
             const txDate = new Date()
             txDate.setDate(txDate.getDate() - randomInt(0, 15))
             await prisma.gudangTransaction.create({
                 data: {
-                    gudangId: gudangBumbu.id,
-                    type: GudangTransactionType.KELUAR,
-                    transactionDate: txDate,
-                    createdBy: gudangBumbuUser.id,
-                    productName: hasilBumbu[i],
-                    qty: randomInt(5, 20),
-                    unit: satuanHasil[i],
-                    category: 'BUMBU_JADI',
-                    barangKeluar: randomItem(['Kirim Gudang Ayam', 'Distribusi outlet', 'Kirim DC Makassar']),
-                    notes: 'Dummy keluar bumbu'
+                    gudangId: gudangBumbu.id, type: GudangTransactionType.PEMAKAIAN,
+                    transactionDate: txDate, createdBy: gudangBumbuUser.id,
+                    productName: bahanBumbu[i], qty: randomInt(5, 30), unit: 'kg',
+                    kemasan: randomItem(['Karung', 'Pack']),
+                    category: 'BAHAN_BAKU_BUMBU', notes: 'Dummy pemakaian bahan baku'
                 }
             })
+        }
+
+        // === BUMBU JADI (per jenisBumbu: BIANG, TEPUNG, MARINASI) ===
+        const jenisArr: { jenis: string; products: string[] }[] = [
+            { jenis: 'BIANG', products: ['Bumbu Biang Original', 'Bumbu Biang Pedas'] },
+            { jenis: 'TEPUNG', products: ['Bumbu Tepung Crispy', 'Bumbu Tepung Pedas'] },
+            { jenis: 'MARINASI', products: ['Bumbu Marinasi Ayam', 'Bumbu Marinasi Ikan'] },
+        ]
+        for (const { jenis, products } of jenisArr) {
+            // 2 Masuk per jenis
+            for (let i = 0; i < 2; i++) {
+                const txDate = new Date()
+                txDate.setDate(txDate.getDate() - randomInt(0, 25))
+                await prisma.gudangTransaction.create({
+                    data: {
+                        gudangId: gudangBumbu.id, type: GudangTransactionType.MASUK,
+                        transactionDate: txDate, createdBy: gudangBumbuUser.id,
+                        productName: products[i], qty: randomInt(10, 50), unit: 'kg',
+                        category: 'BUMBU_JADI', jenisBumbu: jenis,
+                        notes: `Dummy masuk ${jenis.toLowerCase()}`
+                    }
+                })
+            }
+            // 2 Keluar per jenis
+            for (let i = 0; i < 2; i++) {
+                const txDate = new Date()
+                txDate.setDate(txDate.getDate() - randomInt(0, 15))
+                await prisma.gudangTransaction.create({
+                    data: {
+                        gudangId: gudangBumbu.id, type: GudangTransactionType.KELUAR,
+                        transactionDate: txDate, createdBy: gudangBumbuUser.id,
+                        productName: products[i], qty: randomInt(3, 15), unit: 'kg',
+                        category: 'BUMBU_JADI', jenisBumbu: jenis,
+                        barangKeluar: randomItem(['Kirim Gudang Ayam', 'Distribusi outlet', 'Kirim DC']),
+                        notes: `Dummy keluar ${jenis.toLowerCase()}`
+                    }
+                })
+            }
         }
     }
 

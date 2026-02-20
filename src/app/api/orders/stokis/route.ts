@@ -49,7 +49,25 @@ export async function GET(request: Request) {
             where = { stokis: { dcId: dcId } }
         } else if (role === "GUDANG") {
             // GUDANG only sees orders from Stokis Area Pusat (dcId = null)
-            where = { stokis: { dcId: null }, status: { in: ["PENDING_PUSAT", "PO_ISSUED", "PROCESSING", "SHIPPED"] } }
+            // AND containing products from their specific gudang
+            const gudangId = session.user.gudangId
+            where = {
+                stokis: { dcId: null },
+                status: { in: ["PENDING_PUSAT", "PO_ISSUED", "PROCESSING", "SHIPPED"] },
+            }
+
+            if (gudangId) {
+                where = {
+                    ...where,
+                    items: {
+                        some: {
+                            product: {
+                                gudangId: gudangId
+                            }
+                        }
+                    }
+                }
+            }
         } else {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
