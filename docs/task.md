@@ -686,3 +686,26 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 - [x] Git commit ✅ `3862cd5`
 - [x] Fix: Prisma Decimal `kg` ditampilkan sebagai string concatenation — perbaiki dengan `Number()` conversion ✅
 - [x] Git commit fix ✅ `0cdce1e`
+
+### Fase B: Gudang Kering (Frontend)
+- [x] Buat halaman `/dashboard/gudang-kering` dengan 3 tab: Barang Masuk, Barang Keluar, Inventory
+- [x] Form masuk: Tanggal, SJ, Supplier, Nama Produk, Kemasan, Qty, Unit (kg/pcs/liter/karton/bal/sak)
+- [x] Form keluar: Tanggal, Nama Produk, Qty, Unit, Keterangan, Catatan
+- [x] Inventory tab: summary cards + tabel stok per produk (grouped by productName)
+- [x] Theme warna amber
+
+### Fase C: Gudang Tepung (Frontend)
+- [x] Buat halaman `/dashboard/gudang-tepung` dengan 4 tab: Bahan Masuk, Barang Keluar, Produksi, Inventory
+- [x] Tab Produksi: catat hasil produksi tepung bumbu (productName, qty, unit, category)
+- [x] Kategori tracking: Bahan Baku Tepung / Tepung Bumbu
+- [x] Inventory per-produk dengan kolom Masuk + Produksi + Keluar + Stok
+- [x] Theme warna indigo
+
+### Fase D: Gudang Bumbu (Frontend)
+- [x] Buat halaman `/dashboard/gudang-bumbu` dengan 4 tab: Bahan Masuk, Barang Keluar, Produksi, Inventory
+- [x] Tab Produksi: catat hasil produksi bumbu (Bumbu Marinasi, Bumbu Ungkep, dll.)
+- [x] Kategori tracking: Bahan Baku Bumbu / Bumbu Jadi
+- [x] Satuan: kg/liter/pcs/botol
+- [x] Theme warna emerald
+- [x] Build sukses (4 halaman gudang: ayam, kering, tepung, bumbu) ✅
+- [x] Git commit ✅ `72f7e28`

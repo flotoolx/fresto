@@ -507,6 +507,184 @@ async function main() {
         }
     }
 
+    // 9. Seed Gudang Kering Transactions
+    console.log('📦 Creating Gudang Kering Transactions...')
+    const gudangKeringUser = await prisma.user.findFirst({ where: { email: 'gudang.kering@dfresto.com' } })
+    if (gudangKeringUser) {
+        const keringProducts = ['Minyak Goreng', 'Saus Sambal', 'Kemasan Box', 'Kantong Plastik']
+        const keringUnits = ['liter', 'botol', 'pcs', 'pack']
+        for (let i = 0; i < 3; i++) {
+            const txDate = new Date()
+            txDate.setDate(txDate.getDate() - randomInt(0, 30))
+            const prodIdx = i % keringProducts.length
+            await prisma.gudangTransaction.create({
+                data: {
+                    gudangId: gudangKering.id,
+                    type: GudangTransactionType.MASUK,
+                    transactionDate: txDate,
+                    createdBy: gudangKeringUser.id,
+                    supplierName: randomItem(['CV Sumber Makmur', 'PT Indo Supplies', 'UD Jaya Abadi']),
+                    suratJalan: `SJ-KRG-${String(100 + i).padStart(4, '0')}`,
+                    productName: keringProducts[prodIdx],
+                    qty: randomInt(10, 100),
+                    unit: keringUnits[prodIdx],
+                    kemasan: randomItem(['Karton', 'Bal', 'Dus']),
+                    notes: 'Dummy masuk kering'
+                }
+            })
+        }
+        for (let i = 0; i < 3; i++) {
+            const txDate = new Date()
+            txDate.setDate(txDate.getDate() - randomInt(0, 30))
+            const prodIdx = i % keringProducts.length
+            await prisma.gudangTransaction.create({
+                data: {
+                    gudangId: gudangKering.id,
+                    type: GudangTransactionType.KELUAR,
+                    transactionDate: txDate,
+                    createdBy: gudangKeringUser.id,
+                    productName: keringProducts[prodIdx],
+                    qty: randomInt(5, 30),
+                    unit: keringUnits[prodIdx],
+                    barangKeluar: randomItem(['Kirim ke outlet', 'Distribusi DC', 'Pemakaian internal']),
+                    notes: 'Dummy keluar kering'
+                }
+            })
+        }
+    }
+
+    // 10. Seed Gudang Tepung Transactions
+    console.log('📦 Creating Gudang Tepung Transactions...')
+    const gudangTepungUser = await prisma.user.findFirst({ where: { email: 'gudang.tepung@dfresto.com' } })
+    if (gudangTepungUser) {
+        // 3 Masuk bahan baku
+        const bahanTepung = ['Tepung Terigu', 'Tepung Tapioka', 'Bawang Putih Bubuk']
+        for (let i = 0; i < 3; i++) {
+            const txDate = new Date()
+            txDate.setDate(txDate.getDate() - randomInt(0, 30))
+            await prisma.gudangTransaction.create({
+                data: {
+                    gudangId: gudangTepung.id,
+                    type: GudangTransactionType.MASUK,
+                    transactionDate: txDate,
+                    createdBy: gudangTepungUser.id,
+                    supplierName: randomItem(['PT Bogasari', 'CV Tepung Nusantara', 'UD Rempah Jaya']),
+                    suratJalan: `SJ-TPG-${String(100 + i).padStart(4, '0')}`,
+                    productName: bahanTepung[i],
+                    qty: randomInt(50, 200),
+                    unit: 'kg',
+                    category: 'BAHAN_BAKU_TEPUNG',
+                    notes: 'Dummy masuk bahan tepung'
+                }
+            })
+        }
+        // 3 Produksi tepung bumbu
+        const hasilTepung = ['Tepung Bumbu Original', 'Tepung Bumbu Spicy', 'Tepung Bumbu Crispy']
+        for (let i = 0; i < 3; i++) {
+            const txDate = new Date()
+            txDate.setDate(txDate.getDate() - randomInt(0, 20))
+            await prisma.gudangTransaction.create({
+                data: {
+                    gudangId: gudangTepung.id,
+                    type: GudangTransactionType.PRODUKSI,
+                    transactionDate: txDate,
+                    createdBy: gudangTepungUser.id,
+                    productName: hasilTepung[i],
+                    qty: randomInt(20, 80),
+                    unit: 'kg',
+                    category: 'TEPUNG_BUMBU',
+                    notes: 'Dummy produksi tepung bumbu'
+                }
+            })
+        }
+        // 3 Keluar
+        for (let i = 0; i < 3; i++) {
+            const txDate = new Date()
+            txDate.setDate(txDate.getDate() - randomInt(0, 15))
+            await prisma.gudangTransaction.create({
+                data: {
+                    gudangId: gudangTepung.id,
+                    type: GudangTransactionType.KELUAR,
+                    transactionDate: txDate,
+                    createdBy: gudangTepungUser.id,
+                    productName: hasilTepung[i],
+                    qty: randomInt(10, 30),
+                    unit: 'kg',
+                    category: 'TEPUNG_BUMBU',
+                    barangKeluar: randomItem(['Kirim Gudang Ayam', 'Kirim DC Palembang', 'Distribusi outlet']),
+                    notes: 'Dummy keluar tepung'
+                }
+            })
+        }
+    }
+
+    // 11. Seed Gudang Bumbu Transactions
+    console.log('📦 Creating Gudang Bumbu Transactions...')
+    const gudangBumbuUser = await prisma.user.findFirst({ where: { email: 'gudang.bumbu@dfresto.com' } })
+    if (gudangBumbuUser) {
+        // 3 Masuk bahan baku bumbu
+        const bahanBumbu = ['Bawang Merah', 'Cabe Rawit', 'Kunyit Segar']
+        const satuanBumbu = ['kg', 'kg', 'kg']
+        for (let i = 0; i < 3; i++) {
+            const txDate = new Date()
+            txDate.setDate(txDate.getDate() - randomInt(0, 30))
+            await prisma.gudangTransaction.create({
+                data: {
+                    gudangId: gudangBumbu.id,
+                    type: GudangTransactionType.MASUK,
+                    transactionDate: txDate,
+                    createdBy: gudangBumbuUser.id,
+                    supplierName: randomItem(['CV Rempah Nusantara', 'PT Bumbu Jaya', 'UD Pasar Segar']),
+                    suratJalan: `SJ-BMB-${String(100 + i).padStart(4, '0')}`,
+                    productName: bahanBumbu[i],
+                    qty: randomInt(20, 100),
+                    unit: satuanBumbu[i],
+                    category: 'BAHAN_BAKU_BUMBU',
+                    notes: 'Dummy masuk bahan bumbu'
+                }
+            })
+        }
+        // 3 Produksi bumbu jadi
+        const hasilBumbu = ['Bumbu Marinasi', 'Bumbu Ungkep', 'Bumbu Saus Pedas']
+        const satuanHasil = ['kg', 'kg', 'liter']
+        for (let i = 0; i < 3; i++) {
+            const txDate = new Date()
+            txDate.setDate(txDate.getDate() - randomInt(0, 20))
+            await prisma.gudangTransaction.create({
+                data: {
+                    gudangId: gudangBumbu.id,
+                    type: GudangTransactionType.PRODUKSI,
+                    transactionDate: txDate,
+                    createdBy: gudangBumbuUser.id,
+                    productName: hasilBumbu[i],
+                    qty: randomInt(10, 50),
+                    unit: satuanHasil[i],
+                    category: 'BUMBU_JADI',
+                    notes: 'Dummy produksi bumbu'
+                }
+            })
+        }
+        // 3 Keluar bumbu jadi
+        for (let i = 0; i < 3; i++) {
+            const txDate = new Date()
+            txDate.setDate(txDate.getDate() - randomInt(0, 15))
+            await prisma.gudangTransaction.create({
+                data: {
+                    gudangId: gudangBumbu.id,
+                    type: GudangTransactionType.KELUAR,
+                    transactionDate: txDate,
+                    createdBy: gudangBumbuUser.id,
+                    productName: hasilBumbu[i],
+                    qty: randomInt(5, 20),
+                    unit: satuanHasil[i],
+                    category: 'BUMBU_JADI',
+                    barangKeluar: randomItem(['Kirim Gudang Ayam', 'Distribusi outlet', 'Kirim DC Makassar']),
+                    notes: 'Dummy keluar bumbu'
+                }
+            })
+        }
+    }
+
     console.log('✅ Dummy Data Generation Completed!')
     console.log('   - 7 DCs (Palembang, Makassar, Medan, Bengkulu, Pekanbaru, Jatim, Jateng)')
     console.log('   - 7 Finance DC (1 per area)')
@@ -514,7 +692,7 @@ async function main() {
     console.log('   - 14 Stokis DC (2 per DC: stokis1-14)')
     console.log('   - 4 Gudang Users (Ayam, Bumbu, Kering, Tepung)')
     console.log('   - 4 Gudang Entities (GDG-AYAM, GDG-BUMBU, GDG-KERING, GDG-TEPUNG)')
-    console.log('   - Sample Gudang Transactions (Gudang Ayam)')
+    console.log('   - Sample Gudang Transactions: Ayam(18), Kering(6), Tepung(9), Bumbu(9)')
     console.log('   - Password all users: password123')
 }
 
