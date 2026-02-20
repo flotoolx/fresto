@@ -21,6 +21,7 @@ interface InventorySummary {
     totalMasukEkor: number
     totalMasukKg: number
     totalKeluarEkor: number
+    totalKeluarKg: number
     stokEkor: number
     stokKg: number
 }
@@ -49,6 +50,7 @@ export default function GudangAyamPage() {
     const [keluarForm, setKeluarForm] = useState({
         transactionDate: new Date().toISOString().split("T")[0],
         ekor: "",
+        kg: "",
         barangKeluar: "",
         notes: ""
     })
@@ -80,12 +82,14 @@ export default function GudangAyamPage() {
         const totalMasukEkor = masuk.reduce((sum, t) => sum + (t.ekor || 0), 0)
         const totalMasukKg = masuk.reduce((sum, t) => sum + Number(t.kg || 0), 0)
         const totalKeluarEkor = keluar.reduce((sum, t) => sum + (t.ekor || 0), 0)
+        const totalKeluarKg = keluar.reduce((sum, t) => sum + Number(t.kg || 0), 0)
         return {
             totalMasukEkor,
             totalMasukKg,
             totalKeluarEkor,
+            totalKeluarKg,
             stokEkor: totalMasukEkor - totalKeluarEkor,
-            stokKg: totalMasukKg
+            stokKg: totalMasukKg - totalKeluarKg
         }
     }, [transactions])
 
@@ -143,13 +147,14 @@ export default function GudangAyamPage() {
                     type: "KELUAR",
                     transactionDate: keluarForm.transactionDate,
                     ekor: parseInt(keluarForm.ekor) || 0,
+                    kg: parseFloat(keluarForm.kg) || 0,
                     barangKeluar: keluarForm.barangKeluar,
                     notes: keluarForm.notes
                 })
             })
             if (res.ok) {
                 setShowForm(false)
-                setKeluarForm({ transactionDate: new Date().toISOString().split("T")[0], ekor: "", barangKeluar: "", notes: "" })
+                setKeluarForm({ transactionDate: new Date().toISOString().split("T")[0], ekor: "", kg: "", barangKeluar: "", notes: "" })
                 fetchTransactions()
             } else {
                 const data = await res.json()
@@ -328,6 +333,11 @@ export default function GudangAyamPage() {
                                     <input type="text" value={keluarForm.barangKeluar} onChange={e => setKeluarForm({ ...keluarForm, barangKeluar: e.target.value })}
                                         placeholder="Jenis barang" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20" required />
                                 </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Berat (Kg)</label>
+                                    <input type="number" step="0.01" value={keluarForm.kg} onChange={e => setKeluarForm({ ...keluarForm, kg: e.target.value })}
+                                        placeholder="0" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20" required />
+                                </div>
                                 <div className="sm:col-span-2 lg:col-span-3">
                                     <label className="block text-xs font-medium text-gray-600 mb-1">Catatan</label>
                                     <input type="text" value={keluarForm.notes} onChange={e => setKeluarForm({ ...keluarForm, notes: e.target.value })}
@@ -363,6 +373,7 @@ export default function GudangAyamPage() {
                                             <>
                                                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">User</th>
                                                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Ekor</th>
+                                                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Kg</th>
                                                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Barang Keluar</th>
                                             </>
                                         )}
@@ -397,6 +408,7 @@ export default function GudangAyamPage() {
                                                     <>
                                                         <td className="px-4 py-3 text-gray-600">{tx.userName || "-"}</td>
                                                         <td className="px-4 py-3 text-right font-semibold text-orange-600">{formatNumber(tx.ekor || 0)}</td>
+                                                        <td className="px-4 py-3 text-right font-semibold text-orange-600">{formatNumber(Number(tx.kg || 0))}</td>
                                                         <td className="px-4 py-3 text-gray-700">{tx.barangKeluar || "-"}</td>
                                                     </>
                                                 )}
@@ -439,7 +451,7 @@ export default function GudangAyamPage() {
                                 <tr className="border-b border-gray-50">
                                     <td className="px-4 py-3 text-orange-700 font-medium">Total Keluar</td>
                                     <td className="px-4 py-3 text-right font-semibold text-orange-600">{formatNumber(inventory.totalKeluarEkor)}</td>
-                                    <td className="px-4 py-3 text-right text-gray-400">-</td>
+                                    <td className="px-4 py-3 text-right font-semibold text-orange-600">{formatNumber(inventory.totalKeluarKg)}</td>
                                 </tr>
                                 <tr className="bg-purple-50">
                                     <td className="px-4 py-3 text-purple-700 font-bold">Stok Saat Ini</td>

@@ -684,3 +684,5 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 - [x] Build sukses ✅
 - [x] Seed sukses (4 gudang user, 4 entity, sample transaksi) ✅
 - [x] Git commit ✅ `3862cd5`
+- [x] Fix: Prisma Decimal `kg` ditampilkan sebagai string concatenation — perbaiki dengan `Number()` conversion ✅
+- [x] Git commit fix ✅ `0cdce1e`

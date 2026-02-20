@@ -499,6 +499,7 @@ async function main() {
                     createdBy: gudangAyamUser.id,
                     userName: gudangAyamUser.name,
                     ekor: randomInt(50, 200),
+                    kg: randomInt(100, 400),
                     barangKeluar: randomItem(['Ayam Potong', 'Ayam Fillet', 'Sayap Ayam']),
                     notes: 'Dummy keluar ayam'
                 }
