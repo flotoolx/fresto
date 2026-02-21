@@ -2,7 +2,8 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { generateOrderNumber, formatCurrency } from "@/lib/utils"
+import { formatCurrency } from "@/lib/utils"
+import { generatePONumber, getAreaCode } from "@/lib/invoice"
 import { sendPushToUser, PushTemplates } from "@/lib/push"
 
 // GET mitra orders - for Mitra (own orders) or Stokis (orders from their mitra)
@@ -130,10 +131,14 @@ export async function POST(request: Request) {
             }
         })
 
+        // Generate area-based PO number
+        const areaCode = await getAreaCode(stokisId)
+        const orderNumber = await generatePONumber(areaCode, 'M')
+
         // Create order
         const order = await prisma.mitraOrder.create({
             data: {
-                orderNumber: generateOrderNumber("MTR"),
+                orderNumber,
                 mitraId,
                 stokisId,
                 totalAmount,

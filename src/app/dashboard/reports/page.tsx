@@ -20,6 +20,7 @@ import {
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 import * as XLSX from "xlsx"
+import { toLocalDateString } from "@/lib/utils"
 
 interface SummaryData {
     period: number
@@ -195,18 +196,18 @@ export default function ReportsPage() {
     const [invoiceDateFrom, setInvoiceDateFrom] = useState(() => {
         const d = new Date()
         d.setDate(d.getDate() - 30)
-        return d.toISOString().split("T")[0]
+        return toLocalDateString(d)
     })
-    const [invoiceDateTo, setInvoiceDateTo] = useState(() => new Date().toISOString().split("T")[0])
+    const [invoiceDateTo, setInvoiceDateTo] = useState(() => toLocalDateString())
 
     // Custom date range for Overview
     const [useCustomDate, setUseCustomDate] = useState(false)
     const [customDateFrom, setCustomDateFrom] = useState(() => {
         const d = new Date()
         d.setDate(d.getDate() - 30)
-        return d.toISOString().split("T")[0]
+        return toLocalDateString(d)
     })
-    const [customDateTo, setCustomDateTo] = useState(() => new Date().toISOString().split("T")[0])
+    const [customDateTo, setCustomDateTo] = useState(() => toLocalDateString())
 
     // Report data
     const [summary, setSummary] = useState<SummaryData | null>(null)
@@ -430,7 +431,7 @@ export default function ReportsPage() {
             })
         }
 
-        doc.save(`${title.replace(/ /g, "_")}_${new Date().toISOString().split("T")[0]}.pdf`)
+        doc.save(`${title.replace(/ /g, "_")}_${toLocalDateString()}.pdf`)
     }
 
     // Export to Excel
@@ -525,7 +526,7 @@ export default function ReportsPage() {
             const wsDetails = XLSX.utils.json_to_sheet(data)
             XLSX.utils.book_append_sheet(wb, wsSummary, "Ringkasan")
             XLSX.utils.book_append_sheet(wb, wsDetails, "Detail Invoice")
-            XLSX.writeFile(wb, `${title.replace(/ /g, "_")}_${new Date().toISOString().split("T")[0]}.xlsx`)
+            XLSX.writeFile(wb, `${title.replace(/ /g, "_")}_${toLocalDateString()}.xlsx`)
             return
         }
 
@@ -533,7 +534,7 @@ export default function ReportsPage() {
             const ws = XLSX.utils.json_to_sheet(data)
             const wb = XLSX.utils.book_new()
             XLSX.utils.book_append_sheet(wb, ws, "Report")
-            XLSX.writeFile(wb, `${title.replace(/ /g, "_")}_${new Date().toISOString().split("T")[0]}.xlsx`)
+            XLSX.writeFile(wb, `${title.replace(/ /g, "_")}_${toLocalDateString()}.xlsx`)
         }
     }
 

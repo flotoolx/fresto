@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react"
 import { Package, Clock, Truck, ChevronRight, Printer, Search, CheckCircle, AlertCircle, Calendar } from "lucide-react"
 import ExportButton from "@/components/ExportButton"
 import Link from "next/link"
+import { toLocalDateString } from "@/lib/utils"
 
 interface OrderItem {
     id: string
@@ -42,9 +43,9 @@ export default function GudangPOMasukPage() {
     const [customDateFrom, setCustomDateFrom] = useState(() => {
         const d = new Date()
         d.setDate(d.getDate() - 30)
-        return d.toISOString().split("T")[0]
+        return toLocalDateString(d)
     })
-    const [customDateTo, setCustomDateTo] = useState(() => new Date().toISOString().split("T")[0])
+    const [customDateTo, setCustomDateTo] = useState(() => toLocalDateString())
 
     useEffect(() => {
         fetchOrders()

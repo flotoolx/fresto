@@ -731,6 +731,7 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 - [x] Info bar: Tanggal, Jenis Bumbu Jadi (dropdown), Catatan (opsional) ✅
 - [x] Tabel bahan baku dinamis: Bahan Baku, Value, Satuan, Kemasan, Hapus ✅
 - [x] Tombol "+ Tambah Bahan Baku" dan "Simpan Batch Produksi" ✅
+- [x] Dropdown bahan baku (20 item: Bawang Merah, Cabe Rawit, Kunyit, dll) ✅
 - [x] Tambah kolom "Batch" di tabel Pemakaian (tampilkan batchId) ✅
 
 ### Seed Data (2 Dummy Batch)
@@ -742,3 +743,45 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 
 ### Git Commits
 - [x] Git commit ✅ (21 Feb 2026)
+
+---
+
+## Fase 19: Invoice & PO Number Format Baru (22 Feb 2026) ✅ SELESAI
+
+### Invoice Number Format
+- [x] Update `invoice.ts` — format baru `{AREA}-{S/M}-{DDMMYY}-{XXXX}` + area code lookup dari DC ✅
+- [x] Area codes: PLM, MKS, MON, BKL, PKU, JTM, JTG, PST ✅
+- [x] Sequential numbering per area per hari ✅
+- [x] Update `seed.ts` — dummy invoice format baru + due date 20 hari ✅
+
+### PO (Order) Number Format
+- [x] Tambah `generatePONumber` di `invoice.ts` — format `PO-{AREA}-{S/M}-{DDMMYY}-{XXXX}` ✅
+- [x] Update `POST /api/orders/stokis` — pakai `generatePONumber(areaCode, 'S')` ✅
+- [x] Update `POST /api/orders/mitra` — pakai `generatePONumber(areaCode, 'M')` ✅
+- [x] Update `seed.ts` — dummy order numbers pakai format PO baru ✅
+
+### UI Fix
+- [x] Fix label kolom "No Invoice" → "Nomor PO" di `history-pusat`, `order-mitra`, `orders-stokis` ✅
+
+### Build & Verifikasi
+- [x] Build sukses (`next build` exit 0, TypeScript pass) ✅
+
+---
+
+## Fase 20: Perbaikan Bug Timezone Filter Tanggal (22 Feb 2026) ✅ SELESAI
+
+### Masalah & Akar Penyebab
+- [x] Identifikasi bug: Pesanan baru tidak muncul di dashboard/filter sebelum jam 07:00 WIB (UTC+7) ✅
+- [x] Akar penyebab: Penggunaan `toISOString().split('T')[0]` menghasilkan tanggal UTC. Di UTC+7 sebelum jam 07:00, tanggal UTC masih "kemarin", sehingga `endDate` menyaring order hari ini ✅
+
+### Perbaikan
+- [x] Tambah helper `toLocalDateString()` di `src/lib/utils.ts` (menggunakan timezone lokal) ✅
+- [x] Implementasi di Dashboard Page (7 instansi) ✅
+- [x] Implementasi di Order Mitra Page ✅
+- [x] Implementasi di Orders Stokis Page ✅
+- [x] Implementasi di PO Masuk Page ✅
+- [x] Implementasi di Reports Page (6 instansi termasuk nama file export) ✅
+
+### Verifikasi
+- [x] Build sukses (`next build` exit 0) ✅
+

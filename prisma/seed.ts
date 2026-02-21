@@ -7,6 +7,17 @@ const prisma = new PrismaClient()
 const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
 const randomItem = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]
 
+// Invoice area code mapping (DC location → invoice area code)
+const INVOICE_AREA_CODES: Record<string, string> = {
+    'Palembang': 'PLM',
+    'Makassar': 'MKS',
+    'Medan': 'MON',
+    'Bengkulu': 'BKL',
+    'Pekanbaru': 'PKU',
+    'Jatim': 'JTM',
+    'Jateng': 'JTG',
+}
+
 async function main() {
     console.log('🌱 Seeding database...')
 
@@ -326,6 +337,9 @@ async function main() {
     // Clean old dummy mitra orders
     await prisma.mitraOrderItem.deleteMany({ where: { order: { orderNumber: { startsWith: 'MTR-DUMMY-' } } } })
     await prisma.mitraOrder.deleteMany({ where: { orderNumber: { startsWith: 'MTR-DUMMY-' } } })
+    // Also clean new PO-format dummy mitra orders
+    await prisma.mitraOrderItem.deleteMany({ where: { order: { orderNumber: { startsWith: 'PO-' } } } })
+    await prisma.mitraOrder.deleteMany({ where: { orderNumber: { startsWith: 'PO-' } } })
 
     const mitraOrderStatuses = Object.values(MitraOrderStatus)
     let mitraOrderIdx = 0
@@ -346,9 +360,21 @@ async function main() {
             const orderDate = new Date()
             orderDate.setDate(orderDate.getDate() - randomInt(0, 30))
 
+            // Resolve area code for this stokis
+            const mitraStokisUser = await prisma.user.findUnique({ where: { id: stokisId }, select: { dcId: true, dc: { select: { name: true } } } })
+            let mitraAreaCode = 'PST'
+            if (mitraStokisUser?.dc?.name) {
+                for (const [loc, code] of Object.entries(INVOICE_AREA_CODES)) {
+                    if (mitraStokisUser.dc.name.includes(loc)) { mitraAreaCode = code; break }
+                }
+            }
+            const mdd = String(orderDate.getDate()).padStart(2, '0')
+            const mmm2 = String(orderDate.getMonth() + 1).padStart(2, '0')
+            const myy = String(orderDate.getFullYear()).slice(-2)
+
             await prisma.mitraOrder.create({
                 data: {
-                    orderNumber: `MTR-DUMMY-${String(1000 + mitraOrderIdx).padStart(4, '0')}`,
+                    orderNumber: `PO-${mitraAreaCode}-M-${mdd}${mmm2}${myy}-${String(1000 + mitraOrderIdx).padStart(4, '0')}`,
                     mitraId,
                     stokisId,
                     status,
@@ -372,14 +398,43 @@ async function main() {
     // Clean up old dummy data first to avoid unique constraint errors
     await prisma.payment.deleteMany({ where: { notes: 'Dummy payment' } })
     await prisma.invoice.deleteMany({ where: { invoiceNumber: { startsWith: 'INV-DUMMY-' } } })
+    // Also clean up new-format dummy invoices (area-code prefixed)
+    for (const areaCode of [...Object.values(INVOICE_AREA_CODES), 'PST']) {
+        await prisma.invoice.deleteMany({ where: { invoiceNumber: { startsWith: `${areaCode}-S-` } } })
+    }
     await prisma.stokisOrderItem.deleteMany({ where: { order: { orderNumber: { startsWith: 'ORD-DUMMY-' } } } })
     await prisma.stokisOrder.deleteMany({ where: { orderNumber: { startsWith: 'ORD-DUMMY-' } } })
+    // Also clean new PO-format dummy stokis orders
+    await prisma.stokisOrderItem.deleteMany({ where: { order: { orderNumber: { startsWith: 'PO-' } } } })
+    await prisma.stokisOrder.deleteMany({ where: { orderNumber: { startsWith: 'PO-' } } })
 
     const orderStatuses = Object.values(StokisOrderStatus)
 
+    // Track sequential invoice counters per area+date
+    const invoiceCounters: Record<string, number> = {}
+    function nextInvoiceNumber(areaCode: string): string {
+        const now = new Date()
+        const dd = String(now.getDate()).padStart(2, '0')
+        const mm = String(now.getMonth() + 1).padStart(2, '0')
+        const yy = String(now.getFullYear()).slice(-2)
+        const prefix = `${areaCode}-S-${dd}${mm}${yy}`
+        const key = prefix
+        invoiceCounters[key] = (invoiceCounters[key] || 0) + 1
+        return `${prefix}-${String(invoiceCounters[key]).padStart(4, '0')}`
+    }
+
     // Generate 3 orders per Stokis (= 42 orders total, 6 per DC area)
     let orderIdx = 0
-    for (const stokisId of stokisIds) {
+    for (let si = 0; si < stokisIds.length; si++) {
+        const stokisId = stokisIds[si]
+        // Determine area code for this stokis
+        let stkAreaCode = 'PST'
+        if (si < 14) {
+            // DC stokis: index 0-13, dcIndex = si % 7
+            const dcIndex = si % 7
+            stkAreaCode = INVOICE_AREA_CODES[dcLocations[dcIndex]] || 'PST'
+        }
+
         // Determine useful statuses for testing: PENDING, PO_ISSUED, SHIPPED
         const statusesForStokis: StokisOrderStatus[] = [
             'PENDING_PUSAT' as StokisOrderStatus,
@@ -403,7 +458,7 @@ async function main() {
 
             const order = await prisma.stokisOrder.create({
                 data: {
-                    orderNumber: `ORD-DUMMY-${1000 + orderIdx}`,
+                    orderNumber: `PO-${stkAreaCode}-S-${String(orderDate.getDate()).padStart(2, '0')}${String(orderDate.getMonth() + 1).padStart(2, '0')}${String(orderDate.getFullYear()).slice(-2)}-${String(1000 + orderIdx).padStart(4, '0')}`,
                     stokisId,
                     status,
                     totalAmount: total,
@@ -432,12 +487,12 @@ async function main() {
 
                 const invoice = await prisma.invoice.create({
                     data: {
-                        invoiceNumber: `INV-DUMMY-${1000 + orderIdx}`,
+                        invoiceNumber: nextInvoiceNumber(stkAreaCode),
                         orderId: order.id,
                         amount: total,
                         paidAmount,
                         status: invoiceStatus as InvoiceStatus,
-                        dueDate: new Date(orderDate.getTime() + (7 * 24 * 60 * 60 * 1000)), // +7 days
+                        dueDate: new Date(orderDate.getTime() + (20 * 24 * 60 * 60 * 1000)), // +20 days
                         paidAt,
                         createdAt: orderDate
                     }

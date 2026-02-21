@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { Store, Clock, CheckCircle, Truck, Package, XCircle, ChevronRight, Calendar, TrendingUp, Users, Edit3, Printer } from "lucide-react"
 import Link from "next/link"
+import { toLocalDateString } from "@/lib/utils"
 
 interface OrderItem {
     id: string
@@ -63,8 +64,8 @@ export default function StokisOrderMitraPage() {
             const end = new Date()
             const start = new Date()
             start.setDate(start.getDate() - parseInt(period))
-            setEndDate(end.toISOString().split("T")[0])
-            setStartDate(start.toISOString().split("T")[0])
+            setEndDate(toLocalDateString(end))
+            setStartDate(toLocalDateString(start))
         }
     }, [period])
 
@@ -314,7 +315,7 @@ export default function StokisOrderMitraPage() {
                             <thead className="bg-gray-50 border-b">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tanggal</th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">No Invoice</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nomor PO</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Mitra</th>
                                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Nominal</th>
                                 </tr>

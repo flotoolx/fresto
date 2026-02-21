@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { ShoppingCart, Clock, CheckCircle, Truck, Package, XCircle, Printer, AlertTriangle, Edit3, Calendar } from "lucide-react"
 import ExportButton from "@/components/ExportButton"
 import Link from "next/link"
+import { toLocalDateString } from "@/lib/utils"
 
 interface OrderItem {
     id: string
@@ -65,9 +66,9 @@ export default function PusatOrdersStokisPage() {
     const [customDateFrom, setCustomDateFrom] = useState(() => {
         const d = new Date()
         d.setDate(d.getDate() - 30)
-        return d.toISOString().split("T")[0]
+        return toLocalDateString(d)
     })
-    const [customDateTo, setCustomDateTo] = useState(() => new Date().toISOString().split("T")[0])
+    const [customDateTo, setCustomDateTo] = useState(() => toLocalDateString())
 
     // Outstanding check
     const [outstanding, setOutstanding] = useState<OutstandingData | null>(null)
@@ -343,7 +344,7 @@ export default function PusatOrdersStokisPage() {
                             <thead>
                                 <tr className="bg-gray-50 border-b border-gray-200">
                                     <th className="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Tanggal/Waktu</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">No Invoice</th>
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Nomor PO</th>
                                     <th className="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Stokis</th>
                                     <th className="text-right px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Nominal</th>
                                     <th className="text-center px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Status</th>

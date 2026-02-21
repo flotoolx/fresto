@@ -15,6 +15,7 @@ import {
     Building2
 } from "lucide-react"
 import Link from "next/link"
+import { toLocalDateString } from "@/lib/utils"
 
 interface DashboardStats {
     totalMitra: number
@@ -104,9 +105,9 @@ export default function DashboardPage() {
     const [startDate, setStartDate] = useState(() => {
         const d = new Date()
         d.setDate(d.getDate() - 30)
-        return d.toISOString().split("T")[0]
+        return toLocalDateString(d)
     })
-    const [endDate, setEndDate] = useState(() => new Date().toISOString().split("T")[0])
+    const [endDate, setEndDate] = useState(() => toLocalDateString())
 
     const [stats, setStats] = useState<StatCard[]>([])
     const [loading, setLoading] = useState(true)
@@ -119,9 +120,9 @@ export default function DashboardPage() {
     const [mitraStartDate, setMitraStartDate] = useState(() => {
         const d = new Date()
         d.setDate(d.getDate() - 30)
-        return d.toISOString().split("T")[0]
+        return toLocalDateString(d)
     })
-    const [mitraEndDate, setMitraEndDate] = useState(() => new Date().toISOString().split("T")[0])
+    const [mitraEndDate, setMitraEndDate] = useState(() => toLocalDateString())
     const [selectedMitraOrder, setSelectedMitraOrder] = useState<MitraOrder | null>(null)
 
     // FINANCE_ALL state
@@ -135,8 +136,8 @@ export default function DashboardPage() {
             const end = new Date()
             const start = new Date()
             start.setDate(start.getDate() - parseInt(mitraPeriod))
-            setMitraEndDate(end.toISOString().split("T")[0])
-            setMitraStartDate(start.toISOString().split("T")[0])
+            setMitraEndDate(toLocalDateString(end))
+            setMitraStartDate(toLocalDateString(start))
         }
     }, [role, mitraPeriod])
 
@@ -316,7 +317,7 @@ export default function DashboardPage() {
                     const processing = Array.isArray(orders) ? orders.filter((o: { status: string }) => o.status === "PROCESSING") : []
 
                     // Count today's shipped
-                    const today = new Date().toISOString().split("T")[0]
+                    const today = toLocalDateString()
                     const shippedToday = Array.isArray(orders) ? orders.filter((o: { status: string; shippedAt?: string }) =>
                         o.status === "SHIPPED" && o.shippedAt && o.shippedAt.startsWith(today)
                     ).length : 0
@@ -483,8 +484,8 @@ export default function DashboardPage() {
                                         const end = new Date()
                                         const start = new Date()
                                         start.setDate(start.getDate() - parseInt(val))
-                                        setStartDate(start.toISOString().split("T")[0])
-                                        setEndDate(end.toISOString().split("T")[0])
+                                        setStartDate(toLocalDateString(start))
+                                        setEndDate(toLocalDateString(end))
                                     }}
                                     className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 >
@@ -505,8 +506,8 @@ export default function DashboardPage() {
                                     const end = new Date()
                                     const start = new Date()
                                     start.setDate(start.getDate() - 30)
-                                    setStartDate(start.toISOString().split("T")[0])
-                                    setEndDate(end.toISOString().split("T")[0])
+                                    setStartDate(toLocalDateString(start))
+                                    setEndDate(toLocalDateString(end))
                                 } else {
                                     setPusatPeriod("custom")
                                 }

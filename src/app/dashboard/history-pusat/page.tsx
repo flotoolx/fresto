@@ -253,7 +253,7 @@ export default function StokisOrderHistoryPage() {
                             <thead className="bg-gray-50 border-b">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tanggal</th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">No Invoice</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nomor PO</th>
                                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Nominal</th>
                                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Status</th>
                                 </tr>

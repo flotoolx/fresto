@@ -1,14 +1,101 @@
 import { prisma } from './prisma'
 
 /**
- * Generate unique invoice number
- * Format: INV-YYYYMMDD-XXX
+ * Area code mapping for invoice numbers
+ * Maps DC location name → invoice area code
  */
-export function generateInvoiceNumber(): string {
-    const date = new Date()
-    const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '')
-    const random = Math.random().toString(36).substring(2, 5).toUpperCase()
-    return `INV-${dateStr}-${random}`
+const DC_LOCATION_TO_AREA: Record<string, string> = {
+    'Palembang': 'PLM',
+    'Makassar': 'MKS',
+    'Medan': 'MON',
+    'Bengkulu': 'BKL',
+    'Pekanbaru': 'PKU',
+    'Jatim': 'JTM',
+    'Jateng': 'JTG',
+}
+
+/**
+ * Get area code from DC user's name
+ * DC names are like "Admin Palembang", "Admin Medan", etc.
+ */
+function getAreaCodeFromDCName(dcName: string): string {
+    for (const [location, code] of Object.entries(DC_LOCATION_TO_AREA)) {
+        if (dcName.includes(location)) {
+            return code
+        }
+    }
+    return 'PST' // fallback to Pusat
+}
+
+/**
+ * Get area code for a stokis by looking up their DC
+ * Returns 'PST' for pusat-direct stokis (no DC)
+ */
+export async function getAreaCode(stokisId: string): Promise<string> {
+    const stokis = await prisma.user.findUnique({
+        where: { id: stokisId },
+        select: {
+            dcId: true,
+            dc: { select: { name: true } }
+        }
+    })
+
+    if (!stokis || !stokis.dcId || !stokis.dc) {
+        return 'PST'
+    }
+
+    return getAreaCodeFromDCName(stokis.dc.name)
+}
+
+/**
+ * Generate unique invoice number
+ * Format: {AREA}-{S/M}-{DDMMYY}-{0001}
+ * 
+ * @param areaCode - Area code (BKL, JTG, MON, PKU, PLM, MKS, JTM, PST)
+ * @param type - 'S' for Stokis, 'M' for Mitra
+ */
+export async function generateInvoiceNumber(areaCode: string, type: 'S' | 'M'): Promise<string> {
+    const now = new Date()
+    const dd = String(now.getDate()).padStart(2, '0')
+    const mm = String(now.getMonth() + 1).padStart(2, '0')
+    const yy = String(now.getFullYear()).slice(-2)
+    const dateStr = `${dd}${mm}${yy}`
+    const prefix = `${areaCode}-${type}-${dateStr}-`
+
+    // Count existing invoices with same prefix today for sequential numbering
+    const count = await prisma.invoice.count({
+        where: { invoiceNumber: { startsWith: prefix } }
+    })
+    const seq = String(count + 1).padStart(4, '0')
+    return `${prefix}${seq}`
+}
+
+/**
+ * Generate unique PO (order) number
+ * Format: PO-{AREA}-{S/M}-{DDMMYY}-{0001}
+ * 
+ * @param areaCode - Area code (BKL, JTG, MON, PKU, PLM, MKS, JTM, PST)
+ * @param type - 'S' for Stokis order, 'M' for Mitra order
+ */
+export async function generatePONumber(areaCode: string, type: 'S' | 'M'): Promise<string> {
+    const now = new Date()
+    const dd = String(now.getDate()).padStart(2, '0')
+    const mm = String(now.getMonth() + 1).padStart(2, '0')
+    const yy = String(now.getFullYear()).slice(-2)
+    const dateStr = `${dd}${mm}${yy}`
+    const prefix = `PO-${areaCode}-${type}-${dateStr}-`
+
+    // Count existing orders with same prefix from both tables
+    const [stokisCount, mitraCount] = await Promise.all([
+        prisma.stokisOrder.count({
+            where: { orderNumber: { startsWith: prefix } }
+        }),
+        prisma.mitraOrder.count({
+            where: { orderNumber: { startsWith: prefix } }
+        })
+    ])
+    const seq = String(stokisCount + mitraCount + 1).padStart(4, '0')
+    return `${prefix}${seq}`
 }
 
 /**
@@ -35,11 +122,17 @@ export async function generateInvoice(orderId: string) {
         return existing
     }
 
-    // Get order details
+    // Get order details with stokis info for area code
     const order = await prisma.stokisOrder.findUnique({
         where: { id: orderId },
         include: {
-            stokis: true,
+            stokis: {
+                select: {
+                    id: true,
+                    dcId: true,
+                    dc: { select: { name: true } }
+                }
+            },
             items: { include: { product: true } }
         }
     })
@@ -48,10 +141,15 @@ export async function generateInvoice(orderId: string) {
         throw new Error(`Order ${orderId} not found`)
     }
 
-    // Create invoice
+    // Determine area code from stokis DC
+    const areaCode = order.stokis.dcId && order.stokis.dc
+        ? getAreaCodeFromDCName(order.stokis.dc.name)
+        : 'PST'
+
+    // Create invoice with new format
     const invoice = await prisma.invoice.create({
         data: {
-            invoiceNumber: generateInvoiceNumber(),
+            invoiceNumber: await generateInvoiceNumber(areaCode, 'S'),
             orderId: order.id,
             amount: order.totalAmount,
             dueDate: calculateDueDate(),

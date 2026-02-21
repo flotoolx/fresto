@@ -2,7 +2,8 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { generateOrderNumber, formatCurrency } from "@/lib/utils"
+import { formatCurrency } from "@/lib/utils"
+import { generatePONumber, getAreaCode } from "@/lib/invoice"
 import { sendPushToRole } from "@/lib/push"
 import { Role } from "@prisma/client"
 
@@ -126,9 +127,13 @@ export async function POST(request: Request) {
             }
         })
 
+        // Generate area-based PO number
+        const areaCode = await getAreaCode(stokisId)
+        const orderNumber = await generatePONumber(areaCode, 'S')
+
         const order = await prisma.stokisOrder.create({
             data: {
-                orderNumber: generateOrderNumber("STK"),
+                orderNumber,
                 stokisId,
                 totalAmount,
                 notes,
