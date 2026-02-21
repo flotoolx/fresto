@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { Package, ArrowDownCircle, ArrowUpCircle, BarChart3, Plus, Search, Calendar, X, Factory, Beaker, FlaskConical, Droplets } from "lucide-react"
+import { useState, useEffect, useMemo, useCallback } from "react"
+import { Package, ArrowDownCircle, ArrowUpCircle, BarChart3, Plus, Search, Calendar, X, Factory, Beaker, FlaskConical, Droplets, ClipboardList } from "lucide-react"
 
 interface GudangTransaction {
     id: string
@@ -18,7 +18,16 @@ interface GudangTransaction {
     notes: string | null
     category: string | null
     jenisBumbu: string | null
+    batchId: string | null
     createdAt: string
+}
+
+interface BatchItem {
+    id: string
+    productName: string
+    qty: string
+    unit: string
+    kemasan: string
 }
 
 type SectionType = "bahan_baku" | "bumbu_jadi"
@@ -39,7 +48,21 @@ export default function GudangBumbuPage() {
 
     const resetDate = () => new Date().toISOString().split("T")[0]
 
-    const [pemakaianForm, setPemakaianForm] = useState({ transactionDate: resetDate(), productName: "", kemasan: "", qty: "", unit: "kg", notes: "" })
+    const generateBatchId = useCallback(() => {
+        const now = new Date()
+        const pad = (n: number) => n.toString().padStart(2, "0")
+        return `BATCH-BMB-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`
+    }, [])
+
+    const createEmptyItem = (): BatchItem => ({ id: crypto.randomUUID(), productName: "", qty: "", unit: "kg", kemasan: "" })
+
+    const [batchForm, setBatchForm] = useState({
+        transactionDate: resetDate(),
+        jenisBumbu: "BIANG" as string,
+        notes: "",
+        items: [createEmptyItem()]
+    })
+    const [batchId, setBatchIdState] = useState(generateBatchId())
     const [masukSupplierForm, setMasukSupplierForm] = useState({ transactionDate: resetDate(), supplierName: "", suratJalan: "", productName: "", kemasan: "", qty: "", unit: "kg", notes: "" })
     const [masukHasilForm, setMasukHasilForm] = useState({ transactionDate: resetDate(), jenisBumbu: "", qty: "", unit: "kg", notes: "" })
     const [bjMasukForm, setBjMasukForm] = useState({ transactionDate: resetDate(), productName: "", qty: "", unit: "kg", notes: "" })
@@ -127,6 +150,37 @@ export default function GudangBumbuPage() {
         } catch { alert("Error menyimpan data") }
         finally { setSubmitting(false) }
     }
+
+    // Batch Produksi submit
+    const handleBatchSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        const filledItems = batchForm.items.filter(it => it.productName.trim() && Number(it.qty) > 0)
+        if (filledItems.length === 0) { alert("Minimal 1 bahan baku harus diisi"); return }
+        setSubmitting(true)
+        try {
+            const res = await fetch("/api/gudang-transactions/batch", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    transactionDate: batchForm.transactionDate,
+                    jenisBumbu: batchForm.jenisBumbu,
+                    notes: batchForm.notes,
+                    items: filledItems.map(it => ({ productName: it.productName, qty: it.qty, unit: it.unit, kemasan: it.kemasan }))
+                })
+            })
+            if (res.ok) {
+                setShowForm(false)
+                setBatchForm({ transactionDate: resetDate(), jenisBumbu: "BIANG", notes: "", items: [createEmptyItem()] })
+                setBatchIdState(generateBatchId())
+                fetchTransactions()
+            } else { const d = await res.json(); alert(d.error || "Gagal menyimpan batch") }
+        } catch { alert("Error menyimpan batch") }
+        finally { setSubmitting(false) }
+    }
+
+    // Batch item management
+    const addBatchItem = () => setBatchForm(f => ({ ...f, items: [...f.items, createEmptyItem()] }))
+    const removeBatchItem = (id: string) => setBatchForm(f => ({ ...f, items: f.items.length > 1 ? f.items.filter(it => it.id !== id) : f.items }))
+    const updateBatchItem = (id: string, field: keyof BatchItem, value: string) => setBatchForm(f => ({ ...f, items: f.items.map(it => it.id === id ? { ...it, [field]: value } : it) }))
 
     const handleDelete = async (id: string) => {
         if (!confirm("Hapus transaksi ini?")) return
@@ -303,47 +357,115 @@ export default function GudangBumbuPage() {
                     </div>
 
                     {/* FORMS */}
-                    {/* Pemakaian BBB Form */}
+                    {/* Batch Produksi BBB Form */}
                     {showForm && section === "bahan_baku" && bbTab === "pemakaian" && (
-                        <form onSubmit={e => handleSubmit(e, "PEMAKAIAN", "BAHAN_BAKU_BUMBU", pemakaianForm)}
-                            className="bg-white border border-amber-200 rounded-2xl p-6 mb-6 shadow-sm">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                <ArrowUpCircle size={20} className="text-amber-500" /> Pemakaian Bahan Baku Bumbu
-                            </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal</label>
-                                    <input type="date" value={pemakaianForm.transactionDate} onChange={e => setPemakaianForm({ ...pemakaianForm, transactionDate: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Nama Produk</label>
-                                    <input type="text" value={pemakaianForm.productName} onChange={e => setPemakaianForm({ ...pemakaianForm, productName: e.target.value })}
-                                        placeholder="Bawang Merah, Cabe, dll" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Kemasan</label>
-                                    <input type="text" value={pemakaianForm.kemasan} onChange={e => setPemakaianForm({ ...pemakaianForm, kemasan: e.target.value })}
-                                        placeholder="Karung, Pack, dll" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-                                </div>
-                                <div className="flex gap-2">
-                                    <div className="flex-1">
-                                        <label className="block text-xs font-medium text-gray-600 mb-1">Jumlah</label>
-                                        <input type="number" step="0.01" value={pemakaianForm.qty} onChange={e => setPemakaianForm({ ...pemakaianForm, qty: e.target.value })}
-                                            placeholder="0" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" required />
+                        <form onSubmit={handleBatchSubmit}
+                            className="bg-white border-2 border-amber-300 rounded-2xl p-6 mb-6 shadow-md">
+                            {/* Header */}
+                            <div className="mb-1">
+                                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                    <ClipboardList size={22} className="text-amber-600" /> Batch Produksi Baru
+                                </h3>
+                                <p className="text-xs text-gray-500 mt-0.5 font-mono">Batch No: {batchId} <span className="text-gray-400">(auto-generated)</span></p>
+                            </div>
+
+                            {/* Info Bar */}
+                            <div className="bg-amber-50/70 border border-amber-100 rounded-xl p-4 mt-3 mb-5">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-amber-800 mb-1">Tanggal</label>
+                                        <div className="relative">
+                                            <Calendar size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-400" />
+                                            <input type="date" value={batchForm.transactionDate}
+                                                onChange={e => setBatchForm(f => ({ ...f, transactionDate: e.target.value }))}
+                                                className="w-full pl-9 pr-3 py-2.5 bg-white border border-amber-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-300 focus:border-amber-300" required />
+                                        </div>
                                     </div>
-                                    <div className="w-20">
-                                        <label className="block text-xs font-medium text-gray-600 mb-1">Satuan</label>
-                                        <select value={pemakaianForm.unit} onChange={e => setPemakaianForm({ ...pemakaianForm, unit: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                                            <option value="kg">Kg</option><option value="liter">Liter</option><option value="pcs">Pcs</option>
-                                        </select>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-amber-800 mb-1">Jenis Bumbu Jadi</label>
+                                        <div className="relative">
+                                            <ClipboardList size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-400" />
+                                            <select value={batchForm.jenisBumbu}
+                                                onChange={e => setBatchForm(f => ({ ...f, jenisBumbu: e.target.value }))}
+                                                className="w-full pl-9 pr-3 py-2.5 bg-white border border-amber-200 rounded-lg text-sm appearance-none focus:ring-2 focus:ring-amber-300 focus:border-amber-300">
+                                                <option value="BIANG">Bumbu Biang</option>
+                                                <option value="TEPUNG">Bumbu Tepung</option>
+                                                <option value="MARINASI">Bumbu Marinasi</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-amber-800 mb-1">Catatan</label>
+                                        <input type="text" value={batchForm.notes}
+                                            onChange={e => setBatchForm(f => ({ ...f, notes: e.target.value }))}
+                                            placeholder="Opsional" className="w-full px-3 py-2.5 bg-white border border-amber-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-300 focus:border-amber-300" />
                                     </div>
                                 </div>
                             </div>
-                            <div className="mt-4 flex justify-end">
-                                <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
-                                    {submitting ? "Menyimpan..." : "Simpan Pemakaian"}
+
+                            {/* Items Table */}
+                            <div className="mb-4">
+                                <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                                    <Package size={16} className="text-amber-600" />
+                                    BAHAN BAKU YANG DIPAKAI ({batchForm.items.length} ITEM)
+                                </h4>
+                                <div className="space-y-2">
+                                    {/* Table Header */}
+                                    <div className="hidden sm:grid sm:grid-cols-[40px_1fr_100px_80px_120px_36px] gap-2 px-2 pb-1">
+                                        <span className="text-xs font-semibold text-gray-500"></span>
+                                        <span className="text-xs font-semibold text-gray-500">Bahan Baku</span>
+                                        <span className="text-xs font-semibold text-gray-500">Value</span>
+                                        <span className="text-xs font-semibold text-gray-500">Satuan</span>
+                                        <span className="text-xs font-semibold text-gray-500">Kemasan</span>
+                                        <span></span>
+                                    </div>
+                                    {/* Items */}
+                                    {batchForm.items.map((item, idx) => (
+                                        <div key={item.id}
+                                            className={`grid grid-cols-1 sm:grid-cols-[40px_1fr_100px_80px_120px_36px] gap-2 items-center px-3 py-3 rounded-xl border ${idx % 2 === 0 ? "bg-gray-50/80 border-gray-200" : "bg-white border-gray-100"
+                                                }`}>
+                                            <span className="text-sm font-bold text-gray-400 hidden sm:block text-center">{idx + 1}</span>
+                                            <input type="text" value={item.productName}
+                                                onChange={e => updateBatchItem(item.id, "productName", e.target.value)}
+                                                placeholder="Bawang Merah, Cabe, dll"
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-300" />
+                                            <input type="number" step="0.01" value={item.qty}
+                                                onChange={e => updateBatchItem(item.id, "qty", e.target.value)}
+                                                placeholder="0"
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-300" />
+                                            <select value={item.unit}
+                                                onChange={e => updateBatchItem(item.id, "unit", e.target.value)}
+                                                className="w-full px-2 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-300">
+                                                <option value="kg">Kg</option>
+                                                <option value="liter">Liter</option>
+                                                <option value="pcs">Pcs</option>
+                                            </select>
+                                            <input type="text" value={item.kemasan}
+                                                onChange={e => updateBatchItem(item.id, "kemasan", e.target.value)}
+                                                placeholder="Karung, Pack"
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-300" />
+                                            <button type="button" onClick={() => removeBatchItem(item.id)}
+                                                className="w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Hapus item">
+                                                <X size={18} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Add Item Button */}
+                                <button type="button" onClick={addBatchItem}
+                                    className="mt-3 flex items-center gap-1.5 text-amber-600 hover:text-amber-700 font-semibold text-sm px-3 py-2 rounded-lg hover:bg-amber-50 transition-colors">
+                                    <Plus size={16} /> Tambah Bahan Baku
+                                </button>
+                            </div>
+
+                            {/* Submit */}
+                            <div className="flex justify-end border-t border-gray-100 pt-4">
+                                <button type="submit" disabled={submitting}
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-semibold hover:bg-amber-600 disabled:opacity-50 shadow-sm shadow-amber-200 transition-colors">
+                                    <Package size={16} />
+                                    {submitting ? "Menyimpan..." : "Simpan Batch Produksi"}
                                 </button>
                             </div>
                         </form>
@@ -554,6 +676,9 @@ export default function GudangBumbuPage() {
                                     <tr className="bg-gray-50 border-b border-gray-100">
                                         <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">No</th>
                                         <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Tanggal</th>
+                                        {section === "bahan_baku" && bbTab === "pemakaian" && (
+                                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Batch</th>
+                                        )}
                                         {section === "bahan_baku" && bbTab === "masuk" && (
                                             <>
                                                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Tipe</th>
@@ -578,6 +703,13 @@ export default function GudangBumbuPage() {
                                         <tr key={tx.id} className="border-b border-gray-50 hover:bg-gray-50/50">
                                             <td className="px-4 py-3 text-gray-500">{idx + 1}</td>
                                             <td className="px-4 py-3 text-gray-700 whitespace-nowrap"><span className="flex items-center gap-1.5"><Calendar size={14} className="text-gray-400" />{formatDate(tx.transactionDate)}</span></td>
+                                            {section === "bahan_baku" && bbTab === "pemakaian" && (
+                                                <td className="px-4 py-3">
+                                                    {tx.batchId ? (
+                                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-700 font-mono">{tx.batchId}</span>
+                                                    ) : <span className="text-gray-400 text-xs">-</span>}
+                                                </td>
+                                            )}
                                             {section === "bahan_baku" && bbTab === "masuk" && (
                                                 <>
                                                     <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded text-xs font-medium ${tx.type === "MASUK" ? "bg-green-50 text-green-700" : "bg-blue-50 text-blue-700"}`}>{tx.type === "MASUK" ? "Supplier" : "Hasil Produksi"}</span></td>

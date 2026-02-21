@@ -639,17 +639,46 @@ async function main() {
                 }
             })
         }
-        // 3 Pemakaian Bahan Baku
-        for (let i = 0; i < 3; i++) {
-            const txDate = new Date()
-            txDate.setDate(txDate.getDate() - randomInt(0, 15))
+        // 2 Batch Produksi (Pemakaian Bahan Baku per batch)
+        // Batch 1: Bumbu Biang — 3 bahan baku
+        const batch1Date = new Date()
+        batch1Date.setDate(batch1Date.getDate() - 5)
+        const batch1Id = 'BATCH-BMB-20260216-0830'
+        const batch1Items = [
+            { productName: 'Bawang Merah', qty: 50, kemasan: 'Karung' },
+            { productName: 'Cabe Rawit', qty: 20, kemasan: 'Pack' },
+            { productName: 'Kunyit Segar', qty: 10, kemasan: 'Pack' },
+        ]
+        for (const item of batch1Items) {
             await prisma.gudangTransaction.create({
                 data: {
                     gudangId: gudangBumbu.id, type: GudangTransactionType.PEMAKAIAN,
-                    transactionDate: txDate, createdBy: gudangBumbuUser.id,
-                    productName: bahanBumbu[i], qty: randomInt(5, 30), unit: 'kg',
-                    kemasan: randomItem(['Karung', 'Pack']),
-                    category: 'BAHAN_BAKU_BUMBU', notes: 'Dummy pemakaian bahan baku'
+                    transactionDate: batch1Date, createdBy: gudangBumbuUser.id,
+                    productName: item.productName, qty: item.qty, unit: 'kg',
+                    kemasan: item.kemasan, category: 'BAHAN_BAKU_BUMBU',
+                    jenisBumbu: 'BIANG', batchId: batch1Id,
+                    notes: 'Dummy batch produksi bumbu biang'
+                }
+            })
+        }
+
+        // Batch 2: Bumbu Marinasi — 2 bahan baku
+        const batch2Date = new Date()
+        batch2Date.setDate(batch2Date.getDate() - 2)
+        const batch2Id = 'BATCH-BMB-20260219-1430'
+        const batch2Items = [
+            { productName: 'Bawang Putih', qty: 15, kemasan: 'Karung' },
+            { productName: 'Kecap Manis', qty: 8, kemasan: 'Jerigen' },
+        ]
+        for (const item of batch2Items) {
+            await prisma.gudangTransaction.create({
+                data: {
+                    gudangId: gudangBumbu.id, type: GudangTransactionType.PEMAKAIAN,
+                    transactionDate: batch2Date, createdBy: gudangBumbuUser.id,
+                    productName: item.productName, qty: item.qty, unit: 'kg',
+                    kemasan: item.kemasan, category: 'BAHAN_BAKU_BUMBU',
+                    jenisBumbu: 'MARINASI', batchId: batch2Id,
+                    notes: 'Dummy batch produksi bumbu marinasi'
                 }
             })
         }

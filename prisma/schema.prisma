@@ -324,9 +324,13 @@ model GudangTransaction {
   category        String?
   jenisBumbu      String?
 
+  // Batch produksi grouping
+  batchId         String?
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   @@index([gudangId, type])
   @@index([gudangId, transactionDate])
+  @@index([batchId])
 }
