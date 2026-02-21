@@ -35,6 +35,14 @@ type BahanBakuTab = "pemakaian" | "masuk" | "inventory"
 type BumbuJenis = "BIANG" | "TEPUNG" | "MARINASI"
 type BumbuJadiOp = "masuk" | "keluar" | "inventory"
 
+const DAFTAR_BAHAN_BAKU = [
+    "Bawang Merah", "Bawang Putih", "Cabe Rawit", "Cabe Merah Besar",
+    "Kunyit Segar", "Jahe Segar", "Lengkuas", "Serai",
+    "Kemiri", "Ketumbar", "Merica Butir", "Garam",
+    "Gula Merah", "Kecap Manis", "Asam Jawa",
+    "Daun Jeruk", "Daun Salam", "Terasi", "Santan", "Minyak Goreng"
+]
+
 export default function GudangBumbuPage() {
     const [transactions, setTransactions] = useState<GudangTransaction[]>([])
     const [loading, setLoading] = useState(true)
@@ -425,10 +433,14 @@ export default function GudangBumbuPage() {
                                             className={`grid grid-cols-1 sm:grid-cols-[40px_1fr_100px_80px_120px_36px] gap-2 items-center px-3 py-3 rounded-xl border ${idx % 2 === 0 ? "bg-gray-50/80 border-gray-200" : "bg-white border-gray-100"
                                                 }`}>
                                             <span className="text-sm font-bold text-gray-400 hidden sm:block text-center">{idx + 1}</span>
-                                            <input type="text" value={item.productName}
+                                            <select value={item.productName}
                                                 onChange={e => updateBatchItem(item.id, "productName", e.target.value)}
-                                                placeholder="Bawang Merah, Cabe, dll"
-                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-300" />
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-300 appearance-none bg-white">
+                                                <option value="">-- Pilih Bahan --</option>
+                                                {DAFTAR_BAHAN_BAKU.map(b => (
+                                                    <option key={b} value={b}>{b}</option>
+                                                ))}
+                                            </select>
                                             <input type="number" step="0.01" value={item.qty}
                                                 onChange={e => updateBatchItem(item.id, "qty", e.target.value)}
                                                 placeholder="0"
