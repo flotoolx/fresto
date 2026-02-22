@@ -57,7 +57,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json()
-        const { type, transactionDate, supplierName, suratJalan, ekor, kg, productName, kemasan, qty, unit, barangKeluar, notes, category, jenisBumbu } = body
+        const { type, transactionDate, supplierName, suratJalan, ekor, kg, productName, kemasan, qty, unit, barangKeluar, notes, category, jenisBumbu, batchId } = body
 
         if (!type) {
             return NextResponse.json({ error: "Tipe transaksi wajib diisi" }, { status: 400 })
@@ -82,6 +82,7 @@ export async function POST(request: Request) {
                 notes: notes || null,
                 category: category || null,
                 jenisBumbu: jenisBumbu || null,
+                batchId: batchId || null,
             },
         })
 

@@ -104,7 +104,7 @@ export default function GudangBumbuPage() {
     }
     const [masukSupplierForm, setMasukSupplierForm] = useState({ transactionDate: resetDate(), supplierName: "", suratJalan: "", productName: "", kemasan: "", qty: "", unit: "kg", notes: "" })
     const [masukHasilForm, setMasukHasilForm] = useState({ transactionDate: resetDate(), jenisBumbu: "", qty: "", unit: "kg", notes: "" })
-    const [bjMasukForm, setBjMasukForm] = useState({ transactionDate: resetDate(), productName: "", qty: "", unit: "kg", notes: "" })
+    const [bjMasukForm, setBjMasukForm] = useState({ transactionDate: resetDate(), productName: "", qty: "", unit: "kg", notes: "", batchId: "" })
     const [bjKeluarForm, setBjKeluarForm] = useState({ transactionDate: resetDate(), productName: "", qty: "", unit: "kg", barangKeluar: "", notes: "" })
 
     const fetchTransactions = async () => {
@@ -164,6 +164,44 @@ export default function GudangBumbuPage() {
         }))
     }, [transactions, section, bjJenis])
 
+    // Detect pending batches: batches from PEMAKAIAN BBB that don't yet have a MASUK in BUMBU_JADI
+    const pendingBatches = useMemo(() => {
+        const pemakaianBatches = new Map<string, { batchId: string; jenisBumbu: string; date: string; itemCount: number }>()
+        transactions.forEach(t => {
+            if (t.type === "PEMAKAIAN" && t.category === "BAHAN_BAKU_BUMBU" && t.batchId && t.jenisBumbu) {
+                const existing = pemakaianBatches.get(t.batchId)
+                if (existing) {
+                    existing.itemCount++
+                } else {
+                    pemakaianBatches.set(t.batchId, { batchId: t.batchId, jenisBumbu: t.jenisBumbu, date: t.transactionDate, itemCount: 1 })
+                }
+            }
+        })
+        const masukBatchIds = new Set(
+            transactions.filter(t => t.type === "MASUK" && t.category === "BUMBU_JADI" && t.batchId).map(t => t.batchId)
+        )
+        return Array.from(pemakaianBatches.values()).filter(b => !masukBatchIds.has(b.batchId))
+    }, [transactions])
+
+    // Filter pending batches for current jenis bumbu
+    const currentPendingBatches = useMemo(() => {
+        if (section !== "bumbu_jadi" || bjOp !== "masuk") return []
+        return pendingBatches.filter(b => b.jenisBumbu === bjJenis)
+    }, [pendingBatches, section, bjOp, bjJenis])
+
+    // Pre-fill BJ Masuk form from a pending batch
+    const handleBatchPrefill = (batch: { batchId: string; jenisBumbu: string; date: string }) => {
+        setBjMasukForm({
+            transactionDate: batch.date.split("T")[0],
+            productName: jenisLabels[batch.jenisBumbu]?.label || batch.jenisBumbu,
+            qty: "",
+            unit: "kg",
+            notes: `Dari batch ${batch.batchId}`,
+            batchId: batch.batchId,
+        })
+        setShowForm(true)
+    }
+
     const handleSubmit = async (e: React.FormEvent, type: string, category: string, form: Record<string, string>, jenisBumbu?: string) => {
         e.preventDefault()
         setSubmitting(true)
@@ -181,10 +219,11 @@ export default function GudangBumbuPage() {
                     unit: form.unit,
                     barangKeluar: form.barangKeluar || undefined,
                     jenisBumbu: jenisBumbu || form.jenisBumbu || undefined,
-                    notes: form.notes
+                    notes: form.notes,
+                    batchId: form.batchId || undefined,
                 })
             })
-            if (res.ok) { setShowForm(false); fetchTransactions() }
+            if (res.ok) { setShowForm(false); setBjMasukForm({ transactionDate: resetDate(), productName: "", qty: "", unit: "kg", notes: "", batchId: "" }); fetchTransactions() }
             else { const d = await res.json(); alert(d.error || "Gagal menyimpan") }
         } catch { alert("Error menyimpan data") }
         finally { setSubmitting(false) }
@@ -572,12 +611,40 @@ export default function GudangBumbuPage() {
                         </div>
                     )}
 
+                    {/* Pending Batches from Pemakaian BBB */}
+                    {section === "bumbu_jadi" && bjOp === "masuk" && currentPendingBatches.length > 0 && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 mb-4">
+                            <h4 className="text-sm font-semibold text-yellow-800 mb-3 flex items-center gap-2">
+                                <ClipboardList size={16} /> Batch Produksi Belum Dicatat Masuk
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                                {currentPendingBatches.map(batch => (
+                                    <button key={batch.batchId} type="button"
+                                        onClick={() => handleBatchPrefill(batch)}
+                                        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-yellow-300 rounded-xl text-sm font-medium text-yellow-800 hover:bg-yellow-100 hover:border-yellow-400 transition-all shadow-sm">
+                                        <Package size={14} className="text-yellow-600" />
+                                        <span className="font-mono text-xs">{batch.batchId}</span>
+                                        <span className="text-yellow-500">•</span>
+                                        <span className="text-xs text-yellow-600">{formatDate(batch.date)}</span>
+                                        <span className="text-yellow-500">•</span>
+                                        <span className="text-xs text-yellow-600">{batch.itemCount} bahan</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Bumbu Jadi Masuk Form */}
                     {showForm && section === "bumbu_jadi" && bjOp === "masuk" && (
                         <form onSubmit={e => handleSubmit(e, "MASUK", "BUMBU_JADI", bjMasukForm, bjJenis)}
                             className="bg-white border border-red-200 rounded-2xl p-6 mb-6 shadow-sm">
                             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                                 <ArrowDownCircle size={20} className="text-red-600" /> Masuk {jenisLabels[bjJenis].label}
+                                {bjMasukForm.batchId && (
+                                    <span className="ml-2 px-2 py-0.5 bg-yellow-50 border border-yellow-200 rounded text-xs font-mono text-yellow-700">
+                                        {bjMasukForm.batchId}
+                                    </span>
+                                )}
                             </h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div>
