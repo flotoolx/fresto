@@ -27,7 +27,6 @@ interface BatchItem {
     productName: string
     qty: string
     unit: string
-    kemasan: string
 }
 
 type SectionType = "bahan_baku" | "bumbu_jadi"
@@ -35,13 +34,39 @@ type BahanBakuTab = "pemakaian" | "masuk" | "inventory"
 type BumbuJenis = "BIANG" | "TEPUNG" | "MARINASI"
 type BumbuJadiOp = "masuk" | "keluar" | "inventory"
 
-const DAFTAR_BAHAN_BAKU = [
-    "Bawang Merah", "Bawang Putih", "Cabe Rawit", "Cabe Merah Besar",
-    "Kunyit Segar", "Jahe Segar", "Lengkuas", "Serai",
-    "Kemiri", "Ketumbar", "Merica Butir", "Garam",
-    "Gula Merah", "Kecap Manis", "Asam Jawa",
-    "Daun Jeruk", "Daun Salam", "Terasi", "Santan", "Minyak Goreng"
-]
+const BAHAN_BAKU_PER_JENIS: Record<string, { name: string; unit: string }[]> = {
+    BIANG: [
+        { name: "Bawang Merah", unit: "kg" },
+        { name: "Bawang Putih", unit: "kg" },
+        { name: "Cabe Rawit", unit: "kg" },
+        { name: "Cabe Merah Besar", unit: "kg" },
+        { name: "Masako", unit: "kg" },
+        { name: "Lada", unit: "kg" },
+        { name: "Garam", unit: "kg" },
+        { name: "Gula Merah", unit: "kg" },
+        { name: "Kunyit Segar", unit: "kg" },
+        { name: "Jahe Segar", unit: "kg" },
+    ],
+    TEPUNG: [
+        { name: "Tepung Tapioka", unit: "kg" },
+        { name: "Tepung Terigu", unit: "kg" },
+        { name: "Royco", unit: "kg" },
+        { name: "Bawang Putih Bubuk", unit: "kg" },
+        { name: "Merica Bubuk", unit: "kg" },
+        { name: "Garam", unit: "kg" },
+        { name: "Ketumbar Bubuk", unit: "kg" },
+    ],
+    MARINASI: [
+        { name: "Bawang Putih", unit: "kg" },
+        { name: "Kecap Manis", unit: "liter" },
+        { name: "Jahe Segar", unit: "kg" },
+        { name: "Kunyit Segar", unit: "kg" },
+        { name: "Ketumbar", unit: "kg" },
+        { name: "Garam", unit: "kg" },
+        { name: "Asam Jawa", unit: "kg" },
+        { name: "Santan", unit: "liter" },
+    ],
+}
 
 export default function GudangBumbuPage() {
     const [transactions, setTransactions] = useState<GudangTransaction[]>([])
@@ -59,18 +84,24 @@ export default function GudangBumbuPage() {
     const generateBatchId = useCallback(() => {
         const now = new Date()
         const pad = (n: number) => n.toString().padStart(2, "0")
-        return `BATCH-BMB-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`
+        return `BB-${pad(now.getDate())}${pad(now.getMonth() + 1)}${String(now.getFullYear()).slice(-2)}-${pad(now.getHours())}${pad(now.getMinutes())}`
     }, [])
 
-    const createEmptyItem = (): BatchItem => ({ id: crypto.randomUUID(), productName: "", qty: "", unit: "kg", kemasan: "" })
+    const createItemsFromJenis = (jenis: string): BatchItem[] =>
+        (BAHAN_BAKU_PER_JENIS[jenis] || []).map(b => ({ id: crypto.randomUUID(), productName: b.name, qty: "", unit: b.unit }))
 
     const [batchForm, setBatchForm] = useState({
         transactionDate: resetDate(),
         jenisBumbu: "BIANG" as string,
         notes: "",
-        items: [createEmptyItem()]
+        items: createItemsFromJenis("BIANG")
     })
     const [batchId, setBatchIdState] = useState(generateBatchId())
+
+    // When jenis bumbu changes, auto-populate items
+    const handleJenisChange = (newJenis: string) => {
+        setBatchForm(f => ({ ...f, jenisBumbu: newJenis, items: createItemsFromJenis(newJenis) }))
+    }
     const [masukSupplierForm, setMasukSupplierForm] = useState({ transactionDate: resetDate(), supplierName: "", suratJalan: "", productName: "", kemasan: "", qty: "", unit: "kg", notes: "" })
     const [masukHasilForm, setMasukHasilForm] = useState({ transactionDate: resetDate(), jenisBumbu: "", qty: "", unit: "kg", notes: "" })
     const [bjMasukForm, setBjMasukForm] = useState({ transactionDate: resetDate(), productName: "", qty: "", unit: "kg", notes: "" })
@@ -172,12 +203,12 @@ export default function GudangBumbuPage() {
                     transactionDate: batchForm.transactionDate,
                     jenisBumbu: batchForm.jenisBumbu,
                     notes: batchForm.notes,
-                    items: filledItems.map(it => ({ productName: it.productName, qty: it.qty, unit: it.unit, kemasan: it.kemasan }))
+                    items: filledItems.map(it => ({ productName: it.productName, qty: it.qty, unit: it.unit }))
                 })
             })
             if (res.ok) {
                 setShowForm(false)
-                setBatchForm({ transactionDate: resetDate(), jenisBumbu: "BIANG", notes: "", items: [createEmptyItem()] })
+                setBatchForm({ transactionDate: resetDate(), jenisBumbu: "BIANG", notes: "", items: createItemsFromJenis("BIANG") })
                 setBatchIdState(generateBatchId())
                 fetchTransactions()
             } else { const d = await res.json(); alert(d.error || "Gagal menyimpan batch") }
@@ -186,8 +217,6 @@ export default function GudangBumbuPage() {
     }
 
     // Batch item management
-    const addBatchItem = () => setBatchForm(f => ({ ...f, items: [...f.items, createEmptyItem()] }))
-    const removeBatchItem = (id: string) => setBatchForm(f => ({ ...f, items: f.items.length > 1 ? f.items.filter(it => it.id !== id) : f.items }))
     const updateBatchItem = (id: string, field: keyof BatchItem, value: string) => setBatchForm(f => ({ ...f, items: f.items.map(it => it.id === id ? { ...it, [field]: value } : it) }))
 
     const handleDelete = async (id: string) => {
@@ -368,114 +397,69 @@ export default function GudangBumbuPage() {
                     {/* Batch Produksi BBB Form */}
                     {showForm && section === "bahan_baku" && bbTab === "pemakaian" && (
                         <form onSubmit={handleBatchSubmit}
-                            className="bg-white border-2 border-amber-300 rounded-2xl p-6 mb-6 shadow-md">
-                            {/* Header */}
-                            <div className="mb-1">
-                                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                    <ClipboardList size={22} className="text-amber-600" /> Batch Produksi Baru
-                                </h3>
-                                <p className="text-xs text-gray-500 mt-0.5 font-mono">Batch No: {batchId} <span className="text-gray-400">(auto-generated)</span></p>
-                            </div>
-
-                            {/* Info Bar */}
-                            <div className="bg-amber-50/70 border border-amber-100 rounded-xl p-4 mt-3 mb-5">
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-semibold text-amber-800 mb-1">Tanggal</label>
-                                        <div className="relative">
-                                            <Calendar size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-400" />
-                                            <input type="date" value={batchForm.transactionDate}
-                                                onChange={e => setBatchForm(f => ({ ...f, transactionDate: e.target.value }))}
-                                                className="w-full pl-9 pr-3 py-2.5 bg-white border border-amber-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-300 focus:border-amber-300" required />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-amber-800 mb-1">Jenis Bumbu Jadi</label>
-                                        <div className="relative">
-                                            <ClipboardList size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-400" />
-                                            <select value={batchForm.jenisBumbu}
-                                                onChange={e => setBatchForm(f => ({ ...f, jenisBumbu: e.target.value }))}
-                                                className="w-full pl-9 pr-3 py-2.5 bg-white border border-amber-200 rounded-lg text-sm appearance-none focus:ring-2 focus:ring-amber-300 focus:border-amber-300">
-                                                <option value="BIANG">Bumbu Biang</option>
-                                                <option value="TEPUNG">Bumbu Tepung</option>
-                                                <option value="MARINASI">Bumbu Marinasi</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-amber-800 mb-1">Catatan</label>
-                                        <input type="text" value={batchForm.notes}
-                                            onChange={e => setBatchForm(f => ({ ...f, notes: e.target.value }))}
-                                            placeholder="Opsional" className="w-full px-3 py-2.5 bg-white border border-amber-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-300 focus:border-amber-300" />
-                                    </div>
+                            className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
+                            {/* Jenis Bumbu Selector */}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+                                <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">Jenis Bumbu</label>
+                                <select value={batchForm.jenisBumbu}
+                                    onChange={e => handleJenisChange(e.target.value)}
+                                    className="px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-slate-400 focus:border-slate-400 appearance-none min-w-[200px]">
+                                    <option value="BIANG">Bumbu Biang</option>
+                                    <option value="TEPUNG">Bumbu Tepung</option>
+                                    <option value="MARINASI">Bumbu Marinasi</option>
+                                </select>
+                                <div className="sm:ml-auto flex items-center gap-4 text-xs text-slate-400">
+                                    <input type="date" value={batchForm.transactionDate}
+                                        onChange={e => setBatchForm(f => ({ ...f, transactionDate: e.target.value }))}
+                                        className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-300" required />
                                 </div>
                             </div>
 
-                            {/* Items Table */}
-                            <div className="mb-4">
-                                <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                                    <Package size={16} className="text-amber-600" />
-                                    BAHAN BAKU YANG DIPAKAI ({batchForm.items.length} ITEM)
-                                </h4>
-                                <div className="space-y-2">
-                                    {/* Table Header */}
-                                    <div className="hidden sm:grid sm:grid-cols-[40px_1fr_100px_80px_120px_36px] gap-2 px-2 pb-1">
-                                        <span className="text-xs font-semibold text-gray-500"></span>
-                                        <span className="text-xs font-semibold text-gray-500">Bahan Baku</span>
-                                        <span className="text-xs font-semibold text-gray-500">Value</span>
-                                        <span className="text-xs font-semibold text-gray-500">Satuan</span>
-                                        <span className="text-xs font-semibold text-gray-500">Kemasan</span>
-                                        <span></span>
-                                    </div>
-                                    {/* Items */}
-                                    {batchForm.items.map((item, idx) => (
-                                        <div key={item.id}
-                                            className={`grid grid-cols-1 sm:grid-cols-[40px_1fr_100px_80px_120px_36px] gap-2 items-center px-3 py-3 rounded-xl border ${idx % 2 === 0 ? "bg-gray-50/80 border-gray-200" : "bg-white border-gray-100"
-                                                }`}>
-                                            <span className="text-sm font-bold text-gray-400 hidden sm:block text-center">{idx + 1}</span>
-                                            <select value={item.productName}
-                                                onChange={e => updateBatchItem(item.id, "productName", e.target.value)}
-                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-300 appearance-none bg-white">
-                                                <option value="">-- Pilih Bahan --</option>
-                                                {DAFTAR_BAHAN_BAKU.map(b => (
-                                                    <option key={b} value={b}>{b}</option>
-                                                ))}
-                                            </select>
+                            {/* Auto / Manual Indicator */}
+                            <div className="grid grid-cols-4 gap-px bg-slate-100 rounded-t-lg text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                                <span className="bg-slate-50 py-2">Auto</span>
+                                <span className="bg-slate-50 py-2">Auto</span>
+                                <span className="bg-slate-50 py-2">Auto</span>
+                                <span className="bg-slate-50 py-2">Manual</span>
+                            </div>
+
+                            {/* Table */}
+                            <div className="border border-slate-200 rounded-b-lg overflow-hidden">
+                                {/* Table Header */}
+                                <div className="grid grid-cols-4 gap-px bg-slate-600 text-white text-xs font-semibold uppercase tracking-wider">
+                                    <span className="bg-slate-700 px-4 py-3">No Batch</span>
+                                    <span className="bg-slate-700 px-4 py-3">Tanggal</span>
+                                    <span className="bg-slate-700 px-4 py-3">Nama Produk</span>
+                                    <span className="bg-slate-700 px-4 py-3">Qty ({batchForm.items[0]?.unit || "kg"})</span>
+                                </div>
+                                {/* Table Rows */}
+                                {batchForm.items.map((item) => (
+                                    <div key={item.id} className="grid grid-cols-4 gap-px bg-slate-100 border-t border-slate-100">
+                                        <span className="bg-white px-4 py-3 text-sm font-mono text-slate-500">{batchId}</span>
+                                        <span className="bg-white px-4 py-3 text-sm text-slate-500">
+                                            {new Date(batchForm.transactionDate).toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                                        </span>
+                                        <span className="bg-white px-4 py-3 text-sm font-medium text-slate-800">{item.productName}</span>
+                                        <div className="bg-white px-2 py-1.5 flex items-center">
                                             <input type="number" step="0.01" value={item.qty}
                                                 onChange={e => updateBatchItem(item.id, "qty", e.target.value)}
                                                 placeholder="0"
-                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-300" />
-                                            <select value={item.unit}
-                                                onChange={e => updateBatchItem(item.id, "unit", e.target.value)}
-                                                className="w-full px-2 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-300">
-                                                <option value="kg">Kg</option>
-                                                <option value="liter">Liter</option>
-                                                <option value="pcs">Pcs</option>
-                                            </select>
-                                            <input type="text" value={item.kemasan}
-                                                onChange={e => updateBatchItem(item.id, "kemasan", e.target.value)}
-                                                placeholder="Karung, Pack"
-                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-300" />
-                                            <button type="button" onClick={() => removeBatchItem(item.id)}
-                                                className="w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Hapus item">
-                                                <X size={18} />
-                                            </button>
+                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-center font-medium focus:ring-2 focus:ring-slate-400 focus:border-slate-400 placeholder:text-slate-300" />
                                         </div>
-                                    ))}
-                                </div>
-
-                                {/* Add Item Button */}
-                                <button type="button" onClick={addBatchItem}
-                                    className="mt-3 flex items-center gap-1.5 text-amber-600 hover:text-amber-700 font-semibold text-sm px-3 py-2 rounded-lg hover:bg-amber-50 transition-colors">
-                                    <Plus size={16} /> Tambah Bahan Baku
-                                </button>
+                                    </div>
+                                ))}
                             </div>
 
-                            {/* Submit */}
-                            <div className="flex justify-end border-t border-gray-100 pt-4">
+                            {/* Notes + Submit */}
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-5">
+                                <div className="flex-1">
+                                    <input type="text" value={batchForm.notes}
+                                        onChange={e => setBatchForm(f => ({ ...f, notes: e.target.value }))}
+                                        placeholder="Catatan (opsional)"
+                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-300 focus:border-slate-300 placeholder:text-slate-400" />
+                                </div>
                                 <button type="submit" disabled={submitting}
-                                    className="flex items-center gap-2 px-6 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-semibold hover:bg-amber-600 disabled:opacity-50 shadow-sm shadow-amber-200 transition-colors">
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-slate-700 text-white rounded-lg text-sm font-semibold hover:bg-slate-800 disabled:opacity-50 shadow-sm transition-colors">
                                     <Package size={16} />
                                     {submitting ? "Menyimpan..." : "Simpan Batch Produksi"}
                                 </button>
