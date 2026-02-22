@@ -253,7 +253,7 @@ export default function GudangBumbuPage() {
         <div className="p-4 lg:p-8 max-w-7xl mx-auto">
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <Package className="text-emerald-600" size={28} /> Gudang Bumbu
+                    <Package className="text-red-700" size={28} /> Gudang Bumbu
                 </h1>
                 <p className="text-gray-500 text-sm mt-1">Pencatatan bahan baku bumbu & bumbu jadi</p>
             </div>
@@ -261,25 +261,25 @@ export default function GudangBumbuPage() {
             {/* Section Tabs */}
             <div className="flex gap-2 mb-4">
                 <button onClick={() => { setSection("bahan_baku"); setBbTab("pemakaian"); setShowForm(false) }}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${section === "bahan_baku" ? "bg-amber-500 text-white shadow-lg shadow-amber-200" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${section === "bahan_baku" ? "bg-red-700 text-white shadow-lg shadow-red-200" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
                     <Factory size={18} /> Bahan Baku Bumbu
                 </button>
                 <button onClick={() => { setSection("bumbu_jadi"); setBjJenis("BIANG"); setBjOp("masuk"); setShowForm(false) }}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${section === "bumbu_jadi" ? "bg-purple-600 text-white shadow-lg shadow-purple-200" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${section === "bumbu_jadi" ? "bg-red-800 text-white shadow-lg shadow-red-200" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
                     <Beaker size={18} /> Bumbu Jadi
                 </button>
             </div>
 
             {/* Bahan Baku Sub-tabs */}
             {section === "bahan_baku" && (
-                <div className="flex gap-1 bg-amber-50 p-1 rounded-xl mb-4 overflow-x-auto border border-amber-100">
+                <div className="flex gap-1 bg-red-50 p-1 rounded-xl mb-4 overflow-x-auto border border-red-100">
                     {([
                         { key: "pemakaian" as BahanBakuTab, label: "Pemakaian BBB", icon: <ArrowUpCircle size={16} /> },
                         { key: "masuk" as BahanBakuTab, label: "Masuk BBB", icon: <ArrowDownCircle size={16} /> },
                         { key: "inventory" as BahanBakuTab, label: "Inventory BBB", icon: <BarChart3 size={16} /> },
                     ]).map(tab => (
                         <button key={tab.key} onClick={() => { setBbTab(tab.key); setShowForm(false) }}
-                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${bbTab === tab.key ? "bg-white text-amber-700 shadow-sm" : "text-amber-600/70 hover:text-amber-700"}`}>
+                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${bbTab === tab.key ? "bg-white text-red-700 shadow-sm" : "text-red-600/70 hover:text-red-700"}`}>
                             {tab.icon}{tab.label}
                         </button>
                     ))}
@@ -289,10 +289,10 @@ export default function GudangBumbuPage() {
             {/* Bumbu Jadi: Jenis tabs */}
             {section === "bumbu_jadi" && (
                 <>
-                    <div className="flex gap-1 bg-purple-50 p-1 rounded-xl mb-2 overflow-x-auto border border-purple-100">
+                    <div className="flex gap-1 bg-red-50 p-1 rounded-xl mb-2 overflow-x-auto border border-red-100">
                         {(["BIANG", "TEPUNG", "MARINASI"] as BumbuJenis[]).map(j => (
                             <button key={j} onClick={() => { setBjJenis(j); setBjOp("masuk"); setShowForm(false) }}
-                                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${bjJenis === j ? "bg-white text-purple-700 shadow-sm" : "text-purple-500/70 hover:text-purple-700"}`}>
+                                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${bjJenis === j ? "bg-white text-red-700 shadow-sm" : "text-red-500/70 hover:text-red-700"}`}>
                                 {jenisLabels[j].icon}{jenisLabels[j].label}
                             </button>
                         ))}
@@ -327,8 +327,8 @@ export default function GudangBumbuPage() {
                                 { label: "Total Masuk", value: totalMasuk, gradient: "from-green-500 to-green-600", sub: "green" },
                                 { label: "Total Keluar", value: totalKeluar, gradient: "from-orange-500 to-orange-600", sub: "orange" },
                             ]
-                            if (section === "bahan_baku") cards.push({ label: "Total Pemakaian", value: totalPemakaian, gradient: "from-red-500 to-red-600", sub: "red" })
-                            cards.push({ label: "Stok Saat Ini", value: totalStok, gradient: "from-purple-500 to-purple-600", sub: "purple" })
+                            if (section === "bahan_baku") cards.push({ label: "Total Pemakaian", value: totalPemakaian, gradient: "from-red-700 to-red-800", sub: "red" })
+                            cards.push({ label: "Stok Saat Ini", value: totalStok, gradient: "from-red-600 to-red-700", sub: "red" })
                             return cards.map((c, i) => (
                                 <div key={i} className={`bg-gradient-to-br ${c.gradient} rounded-2xl p-5 text-white`}>
                                     <p className={`text-${c.sub}-100 text-xs font-medium`}>{c.label}</p>
@@ -364,7 +364,7 @@ export default function GudangBumbuPage() {
                                             <td className="px-4 py-3 text-right text-green-600 font-semibold">{formatNumber(item.masuk)}</td>
                                             {section === "bahan_baku" && <td className="px-4 py-3 text-right text-red-600 font-semibold">{formatNumber(item.pemakaian)}</td>}
                                             <td className="px-4 py-3 text-right text-orange-600 font-semibold">{formatNumber(item.keluar)}</td>
-                                            <td className={`px-4 py-3 text-right font-bold ${item.stok > 0 ? "text-purple-600" : "text-red-600"}`}>{formatNumber(item.stok)}</td>
+                                            <td className={`px-4 py-3 text-right font-bold ${item.stok > 0 ? "text-red-700" : "text-red-500"}`}>{formatNumber(item.stok)}</td>
                                             <td className="px-4 py-3 text-gray-500">{item.unit}</td>
                                         </tr>
                                     ))}
@@ -382,11 +382,11 @@ export default function GudangBumbuPage() {
                         <div className="relative flex-1">
                             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input type="text" placeholder="Cari produk, supplier..." value={search} onChange={e => setSearch(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-300" />
+                                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-300" />
                         </div>
                         {canAddForm && (
                             <button onClick={() => setShowForm(!showForm)}
-                                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 text-white rounded-xl text-sm font-medium hover:bg-emerald-600 transition-colors shadow-sm">
+                                className="flex items-center gap-2 px-4 py-2.5 bg-red-700 text-white rounded-xl text-sm font-medium hover:bg-red-800 transition-colors shadow-sm">
                                 {showForm ? <X size={18} /> : <Plus size={18} />}
                                 {showForm ? "Tutup Form" : getFormLabel()}
                             </button>
@@ -397,54 +397,54 @@ export default function GudangBumbuPage() {
                     {/* Batch Produksi BBB Form */}
                     {showForm && section === "bahan_baku" && bbTab === "pemakaian" && (
                         <form onSubmit={handleBatchSubmit}
-                            className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
+                            className="bg-white border border-red-200 rounded-2xl p-6 mb-6 shadow-sm">
                             {/* Jenis Bumbu Selector */}
                             <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
-                                <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">Jenis Bumbu</label>
+                                <label className="text-sm font-semibold text-red-800 whitespace-nowrap">Jenis Bumbu</label>
                                 <select value={batchForm.jenisBumbu}
                                     onChange={e => handleJenisChange(e.target.value)}
-                                    className="px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-slate-400 focus:border-slate-400 appearance-none min-w-[200px]">
+                                    className="px-4 py-2.5 bg-white border border-red-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-red-400 focus:border-red-400 appearance-none min-w-[200px]">
                                     <option value="BIANG">Bumbu Biang</option>
                                     <option value="TEPUNG">Bumbu Tepung</option>
                                     <option value="MARINASI">Bumbu Marinasi</option>
                                 </select>
-                                <div className="sm:ml-auto flex items-center gap-4 text-xs text-slate-400">
+                                <div className="sm:ml-auto flex items-center gap-4 text-xs text-gray-400">
                                     <input type="date" value={batchForm.transactionDate}
                                         onChange={e => setBatchForm(f => ({ ...f, transactionDate: e.target.value }))}
-                                        className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-300" required />
+                                        className="px-3 py-2 border border-red-200 rounded-lg text-sm focus:ring-2 focus:ring-red-300" required />
                                 </div>
                             </div>
 
                             {/* Auto / Manual Indicator */}
-                            <div className="grid grid-cols-4 gap-px bg-slate-100 rounded-t-lg text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                                <span className="bg-slate-50 py-2">Auto</span>
-                                <span className="bg-slate-50 py-2">Auto</span>
-                                <span className="bg-slate-50 py-2">Auto</span>
-                                <span className="bg-slate-50 py-2">Manual</span>
+                            <div className="grid grid-cols-4 gap-px bg-red-100 rounded-t-lg text-center text-[11px] font-semibold text-red-400 uppercase tracking-wider">
+                                <span className="bg-red-50 py-2">Auto</span>
+                                <span className="bg-red-50 py-2">Auto</span>
+                                <span className="bg-red-50 py-2">Auto</span>
+                                <span className="bg-yellow-50 py-2 text-yellow-600">Manual</span>
                             </div>
 
                             {/* Table */}
-                            <div className="border border-slate-200 rounded-b-lg overflow-hidden">
+                            <div className="border border-red-200 rounded-b-lg overflow-hidden">
                                 {/* Table Header */}
-                                <div className="grid grid-cols-4 gap-px bg-slate-600 text-white text-xs font-semibold uppercase tracking-wider">
-                                    <span className="bg-slate-700 px-4 py-3">No Batch</span>
-                                    <span className="bg-slate-700 px-4 py-3">Tanggal</span>
-                                    <span className="bg-slate-700 px-4 py-3">Nama Produk</span>
-                                    <span className="bg-slate-700 px-4 py-3">Qty ({batchForm.items[0]?.unit || "kg"})</span>
+                                <div className="grid grid-cols-4 gap-px bg-red-700 text-white text-xs font-semibold uppercase tracking-wider">
+                                    <span className="bg-red-800 px-4 py-3">No Batch</span>
+                                    <span className="bg-red-800 px-4 py-3">Tanggal</span>
+                                    <span className="bg-red-800 px-4 py-3">Nama Produk</span>
+                                    <span className="bg-red-800 px-4 py-3">Qty ({batchForm.items[0]?.unit || "kg"})</span>
                                 </div>
                                 {/* Table Rows */}
                                 {batchForm.items.map((item) => (
-                                    <div key={item.id} className="grid grid-cols-4 gap-px bg-slate-100 border-t border-slate-100">
-                                        <span className="bg-white px-4 py-3 text-sm font-mono text-slate-500">{batchId}</span>
-                                        <span className="bg-white px-4 py-3 text-sm text-slate-500">
+                                    <div key={item.id} className="grid grid-cols-4 gap-px bg-red-50 border-t border-red-50">
+                                        <span className="bg-white px-4 py-3 text-sm font-mono text-red-400">{batchId}</span>
+                                        <span className="bg-white px-4 py-3 text-sm text-gray-500">
                                             {new Date(batchForm.transactionDate).toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" })}
                                         </span>
-                                        <span className="bg-white px-4 py-3 text-sm font-medium text-slate-800">{item.productName}</span>
+                                        <span className="bg-white px-4 py-3 text-sm font-medium text-gray-800">{item.productName}</span>
                                         <div className="bg-white px-2 py-1.5 flex items-center">
                                             <input type="number" step="0.01" value={item.qty}
                                                 onChange={e => updateBatchItem(item.id, "qty", e.target.value)}
                                                 placeholder="0"
-                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-center font-medium focus:ring-2 focus:ring-slate-400 focus:border-slate-400 placeholder:text-slate-300" />
+                                                className="w-full px-3 py-2 border border-red-200 rounded-lg text-sm text-center font-medium focus:ring-2 focus:ring-red-400 focus:border-red-400 placeholder:text-red-300" />
                                         </div>
                                     </div>
                                 ))}
@@ -456,10 +456,10 @@ export default function GudangBumbuPage() {
                                     <input type="text" value={batchForm.notes}
                                         onChange={e => setBatchForm(f => ({ ...f, notes: e.target.value }))}
                                         placeholder="Catatan (opsional)"
-                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-slate-300 focus:border-slate-300 placeholder:text-slate-400" />
+                                        className="w-full px-4 py-2.5 border border-red-200 rounded-lg text-sm focus:ring-2 focus:ring-red-300 focus:border-red-300 placeholder:text-gray-400" />
                                 </div>
                                 <button type="submit" disabled={submitting}
-                                    className="flex items-center gap-2 px-6 py-2.5 bg-slate-700 text-white rounded-lg text-sm font-semibold hover:bg-slate-800 disabled:opacity-50 shadow-sm transition-colors">
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-red-700 text-white rounded-lg text-sm font-semibold hover:bg-red-800 disabled:opacity-50 shadow-sm transition-colors">
                                     <Package size={16} />
                                     {submitting ? "Menyimpan..." : "Simpan Batch Produksi"}
                                 </button>
@@ -575,9 +575,9 @@ export default function GudangBumbuPage() {
                     {/* Bumbu Jadi Masuk Form */}
                     {showForm && section === "bumbu_jadi" && bjOp === "masuk" && (
                         <form onSubmit={e => handleSubmit(e, "MASUK", "BUMBU_JADI", bjMasukForm, bjJenis)}
-                            className="bg-white border border-purple-200 rounded-2xl p-6 mb-6 shadow-sm">
+                            className="bg-white border border-red-200 rounded-2xl p-6 mb-6 shadow-sm">
                             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                <ArrowDownCircle size={20} className="text-purple-500" /> Masuk {jenisLabels[bjJenis].label}
+                                <ArrowDownCircle size={20} className="text-red-600" /> Masuk {jenisLabels[bjJenis].label}
                             </h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div>
@@ -611,7 +611,7 @@ export default function GudangBumbuPage() {
                                 </div>
                             </div>
                             <div className="mt-4 flex justify-end">
-                                <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-purple-500 text-white rounded-xl text-sm font-medium hover:bg-purple-600 disabled:opacity-50">
+                                <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-red-700 text-white rounded-xl text-sm font-medium hover:bg-red-800 disabled:opacity-50">
                                     {submitting ? "Menyimpan..." : `Simpan Masuk ${jenisLabels[bjJenis].label}`}
                                 </button>
                             </div>
@@ -621,9 +621,9 @@ export default function GudangBumbuPage() {
                     {/* Bumbu Jadi Keluar Form */}
                     {showForm && section === "bumbu_jadi" && bjOp === "keluar" && (
                         <form onSubmit={e => handleSubmit(e, "KELUAR", "BUMBU_JADI", bjKeluarForm, bjJenis)}
-                            className="bg-white border border-orange-200 rounded-2xl p-6 mb-6 shadow-sm">
+                            className="bg-white border border-red-200 rounded-2xl p-6 mb-6 shadow-sm">
                             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                <ArrowUpCircle size={20} className="text-orange-500" /> Keluar {jenisLabels[bjJenis].label}
+                                <ArrowUpCircle size={20} className="text-red-600" /> Keluar {jenisLabels[bjJenis].label}
                             </h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div>
@@ -657,7 +657,7 @@ export default function GudangBumbuPage() {
                                 </div>
                             </div>
                             <div className="mt-4 flex justify-end">
-                                <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 disabled:opacity-50">
+                                <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-red-700 text-white rounded-xl text-sm font-medium hover:bg-red-800 disabled:opacity-50">
                                     {submitting ? "Menyimpan..." : `Simpan Keluar ${jenisLabels[bjJenis].label}`}
                                 </button>
                             </div>
@@ -702,7 +702,7 @@ export default function GudangBumbuPage() {
                                             {section === "bahan_baku" && bbTab === "pemakaian" && (
                                                 <td className="px-4 py-3">
                                                     {tx.batchId ? (
-                                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-700 font-mono">{tx.batchId}</span>
+                                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-50 text-yellow-700 font-mono">{tx.batchId}</span>
                                                     ) : <span className="text-gray-400 text-xs">-</span>}
                                                 </td>
                                             )}
