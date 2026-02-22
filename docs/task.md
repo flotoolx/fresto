@@ -712,7 +712,7 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 
 ---
 
-## Fase 18: Batch Produksi Gudang Bumbu (21 Feb 2026) ✅ SELESAI
+## Fase 18: Batch Produksi Gudang Bumbu (21-22 Feb 2026) ✅ SELESAI
 
 ### Database & Skema
 - [x] Tambah field `batchId` ke model `GudangTransaction` ✅
@@ -721,17 +721,16 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 
 ### Backend API
 - [x] Buat endpoint baru `POST /api/gudang-transactions/batch` ✅
-- [x] Auto-generate `batchId` format: `BATCH-BMB-YYYYMMDD-HHmm` ✅
+- [x] Auto-generate `batchId` format: `BB-DDMMYY-HHmm` ✅
 - [x] Simpan N item PEMAKAIAN dalam satu `prisma.$transaction()` (atomik) ✅
 - [x] Validasi: minimal 1 item, jenis bumbu wajib, nama & qty per item ✅
 
-### Frontend UI (Gudang Bumbu — Tab Pemakaian BBB)
-- [x] Ganti form single-item Pemakaian BBB → form multi-item **Batch Produksi** ✅
-- [x] Header: "Batch Produksi Baru" + Batch No auto-generated ✅
-- [x] Info bar: Tanggal, Jenis Bumbu Jadi (dropdown), Catatan (opsional) ✅
-- [x] Tabel bahan baku dinamis: Bahan Baku, Value, Satuan, Kemasan, Hapus ✅
-- [x] Tombol "+ Tambah Bahan Baku" dan "Simpan Batch Produksi" ✅
-- [x] Dropdown bahan baku (20 item: Bawang Merah, Cabe Rawit, Kunyit, dll) ✅
+### Frontend UI (Batch Produksi Redesign — 22 Feb 2026)
+- [x] Ganti form multi-item menjadi format **Preset Bahan Baku** per Jenis Bumbu ✅
+- [x] Tabel disederhanakan (4 kolom): No Batch, Tanggal, Nama Produk, Qty ✅
+- [x] Auto-populate baris produk sesuai Jenis Bumbu (Biang/Tepung/Marinasi) ✅
+- [x] User hanya input jumlah Qty (kolom Manual) ✅
+- [x] Perubahan warna UI: Amber/Orange → **Neutral Slate/Zinc** ✅
 - [x] Tambah kolom "Batch" di tabel Pemakaian (tampilkan batchId) ✅
 
 ### Seed Data (2 Dummy Batch)
@@ -739,10 +738,10 @@ DC	Stokis di area-nya	stokis.dcId == userId ✅ sudah jalan
 - [x] Batch 2: `BATCH-BMB-20260219-1430` — Bumbu Marinasi (2 bahan baku) ✅
 
 ### Build & Verifikasi
-- [x] Build sukses (`next build` exit 0, TypeScript pass) ✅
+- [x] Build sukses (`next build` exit 0, TypeScript pass) ✅ (22 Feb 2026)
 
 ### Git Commits
-- [x] Git commit ✅ (21 Feb 2026)
+- [x] Git commit ✅ (21-22 Feb 2026)
 
 ---
 

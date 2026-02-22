@@ -117,14 +117,14 @@ const roleMenus: Record<string, { label: string; href: string; icon: React.React
 }
 
 const roleAccentColors: Record<string, string> = {
-    PUSAT: "bg-[#E31E24]",
+    PUSAT: "bg-[#B71C1C]",
     FINANCE: "bg-[#5B2B4E]",
     FINANCE_DC: "bg-[#5B2B4E]",
     FINANCE_ALL: "bg-[#5B2B4E]",
     MANAGER_PUSAT: "bg-[#5B2B4E]",
-    GUDANG: "bg-[#E31E24]",
-    STOKIS: "bg-[#E31E24]",
-    MITRA: "bg-[#E31E24]",
+    GUDANG: "bg-[#B71C1C]",
+    STOKIS: "bg-[#B71C1C]",
+    MITRA: "bg-[#B71C1C]",
     DC: "bg-[#5B2B4E]",
 }
 
